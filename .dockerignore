@@ -1,0 +1,134 @@
+# =============================================================================
+# .dockerignore - Optimize build context and improve security
+# =============================================================================
+
+# Development files
+.nuxt
+.output
+.nitro
+.cache
+.temp
+.tmp
+
+# Dependencies (will be installed in container)
+node_modules/
+npm-debug.log
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Git and version control
+.git
+.gitignore
+.gitattributes
+.gitkeep
+
+# IDE and editor files
+.vscode/
+.idea
+*.swp
+*.swo
+*~
+
+# Github and CI/CD
+.github/
+ci/
+
+# Lint configuration
+.eslintrc.js
+.eslintrc.cjs
+.eslintrc.json
+.eslintignore
+.stylelintrc.js
+.stylelintrc.cjs
+.editorconfig
+
+# Commitlint
+.commitlintrc.json
+
+# LintStaged
+.lintstagedrc.json
+
+# ReleasePlease
+.release-please-manifest.json
+release-please-config.json
+
+# Turbo
+.turbo/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Environment files (should be handled via Kubernetes secrets)
+.env*
+!.env.example
+
+# Testing and coverage
+coverage
+.coverage
+.nyc_output
+jest_*
+test-results/
+
+# Docker files (except the Dockerfile itself)
+docker-compose*.yml
+docker-compose*.yaml
+Dockerfile.*
+
+# Documentation
+*.md
+*.MD
+docs/
+README*
+
+# Build artifacts
+dist/
+build/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Security files
+.secrets
+*.key
+*.pem
+*.p12
+*.crt
+
+# Package manager files
+.pnpm-store
+.yarn
+.npm
+
+# Kubernetes and Helm
+k8s/
+helm/
+turbo.json
+
+# Tests
+coverage
+
+# Docker
+Dockerfile
+.dockerignore
+docker/
+
+# Helm
+helm/
+
+# CI
+ci/
+!ci/scripts
+
+# Build
+dist/
+
+# Husky
+.husky/

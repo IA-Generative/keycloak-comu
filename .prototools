@@ -1,0 +1,6 @@
+node = "22.19.0"
+pnpm = "10.15.1"
+
+[settings]
+auto-install = true
+auto-clean = true

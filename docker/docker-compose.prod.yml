@@ -1,0 +1,56 @@
+services:
+  server:
+    image: ghcr.io/IA-Generative/keycloak-comu-server:latest
+    container_name: keycloak-comu_server
+    build:
+      context: ..
+      dockerfile: Dockerfile
+      target: dev
+    depends_on:
+      keycloak:
+        condition: service_started
+    restart: always
+    ports:
+    - 8080:8080
+    env_file:
+    - ../.env.docker
+    develop:
+      watch:
+      - action: sync
+        path: ..
+        target: /app
+        ignore:
+        - node_modules/
+      - action: rebuild
+        path: package.json
+    networks:
+    - keycloak-comu
+
+  keycloak:
+    restart: unless-stopped
+    image: docker.io/bitnamilegacy/keycloak:26.1.4
+    container_name: keycloak-comu_keycloak
+    ports:
+    - 8090:8081
+    volumes:
+    - ../keycloak/realms:/opt/bitnami/keycloak/data/import
+    - ../keycloak/data/dev:/opt/bitnami/keycloak/data/h2
+    user: root
+    environment:
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HEALTH_ENABLED: true
+    entrypoint: /opt/bitnami/keycloak/bin/kc.sh
+    command: start-dev --import-realm
+    healthcheck:
+      test: [CMD, curl, --head, fsS, "http://localhost:8080/health/ready"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+    - keycloak-comu
+    attach: false
+
+networks:
+  keycloak-comu:
+    driver: bridge
