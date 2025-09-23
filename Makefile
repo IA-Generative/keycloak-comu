@@ -39,12 +39,12 @@ generate: ## Generate all packages and apps
 .PHONY: dev
 
 dev: ## Start development environment (keycloak + dev + cleanup)
-	docker compose -f ./docker/docker-compose.dev.yml up keycloak -d; \
+	docker compose -f ./docker/docker-compose.dev.yml up keycloak database -d; \
   pnpm run dev; \
 	docker compose -f ./docker/docker-compose.dev.yml down
 
 prod: ## Start development environment (keycloak + dev + cleanup)
-	docker compose -f ./docker/docker-compose.prod.yml up keycloak -d; \
+	docker compose -f ./docker/docker-compose.prod.yml up keycloak database -d; \
   pnpm run preview; \
 	docker compose -f ./docker/docker-compose.dev.yml down
 
