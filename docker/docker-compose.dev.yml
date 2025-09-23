@@ -27,19 +27,23 @@ services:
 
   keycloak:
     restart: unless-stopped
-    image: docker.io/bitnamilegacy/keycloak:26.1.4
+    image: quay.io/keycloak/keycloak:26.1.4
     container_name: keycloak-comu_keycloak
     ports:
-    - 8090:8081
+    - 8090:8080
+    - 9000:9000
     volumes:
-    - ../keycloak/realms:/opt/bitnami/keycloak/data/import
-    - ../keycloak/data/dev:/opt/bitnami/keycloak/data/h2
+    - ../keycloak/realms:/opt/keycloak/data/import
     user: root
     environment:
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HEALTH_ENABLED: true
-    entrypoint: /opt/bitnami/keycloak/bin/kc.sh
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://database:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: password
+      KC_HOSTNAME: localhost
     command: start-dev --import-realm
     healthcheck:
       test: [CMD, curl, --head, fsS, "http://localhost:8080/health/ready"]
@@ -49,7 +53,26 @@ services:
     networks:
     - keycloak-comu
     attach: false
+    depends_on:
+    - database
+
+  database:
+    image: postgres:15
+    container_name: keycloak-comu_database
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: password
+    volumes:
+    - db-data:/var/lib/postgresql/data
+    networks:
+    - keycloak-comu
+    ports:
+    - 5432:5432
 
 networks:
   keycloak-comu:
     driver: bridge
+
+volumes:
+  db-data:
