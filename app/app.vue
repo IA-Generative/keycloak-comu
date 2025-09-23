@@ -1,17 +1,17 @@
 <script setup lang="ts">
 async function submit() {
-  const { body } = await $fetch('/api/v1/user', {
+  const { results } = await $fetch('/api/v1/groups/search', {
     method: 'post',
-    body: { name: capitalize('john') },
+    body: { search: 'a' },
   })
-  return body.status
+  return results
 }
 
-const status = await submit()
+const groups = await submit()
 </script>
 
 <template>
   <div>
-    {{ status }}
+    {{ groups }}
   </div>
 </template>
