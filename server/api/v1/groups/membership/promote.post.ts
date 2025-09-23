@@ -1,4 +1,6 @@
 import { z } from 'zod'
+import { guard, LEVEL } from '../../../../guards/group.js'
+import repo from '../../../../repository/index.js'
 
 export const PromoteGroupOwnerDtoSchema = z.object({
   groupId: z.string(),
@@ -6,6 +8,14 @@ export const PromoteGroupOwnerDtoSchema = z.object({
 })
 export type PromoteGroupOwnerDtoType = z.infer<typeof PromoteGroupOwnerDtoSchema>
 
-export default defineEventHandler((event) => {
-  return { message: `Hello ${event.context.clientAddress}` }
+export default defineEventHandler(async (event) => {
+  const requestorId = event.context.user.sub
+  const body = await readValidatedBody(event, body => PromoteGroupOwnerDtoSchema.parse(body))
+  const group = await repo.getGroupDetails(body.groupId)
+
+  if (!group) {
+    throw createError({ statusCode: 404, statusMessage: 'Group not found' })
+  }
+  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
+  await repo.addOwnerToGroup(body.userId, body.groupId)
 })

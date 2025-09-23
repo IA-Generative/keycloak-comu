@@ -1,11 +1,15 @@
 import type { AttributeRow } from './types.js'
 
 export interface Attributes {
-  // name of the attribute and its values
+  owner: string[]
+  invite: string[]
   [name: string]: string[]
 }
 export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
-  const attributes: Record<string, string[]> = {}
+  const attributes: Attributes = {
+    owner: [],
+    invite: [],
+  }
   rows.forEach((row) => {
     if (row.name && row.value) {
       if (!attributes[row.name]) {

@@ -27,13 +27,14 @@ services:
 
   keycloak:
     restart: unless-stopped
-    image: quay.io/keycloak/keycloak:26.1.4
+    image: docker.io/bitnamilegacy/keycloak:26.1.4
     container_name: keycloak-comu_keycloak
     ports:
     - 8090:8080
-    - 9000:9000
+    entrypoint: /opt/bitnami/keycloak/bin/kc.sh
     volumes:
     - ../keycloak/realms:/opt/keycloak/data/import
+    - ../keycloak/realms:/opt/bitnami/keycloak/data/import
     user: root
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin

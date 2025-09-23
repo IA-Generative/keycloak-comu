@@ -1,11 +1,26 @@
 import { z } from 'zod'
+import repo from '../../../../repository'
+import { guard, LEVEL } from '../../../../guards/group.js'
 
-export const GroupInviteDtoSchema = z.object({
+export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.string(),
   email: z.string(),
 })
-export type GroupInviteDtoType = z.infer<typeof GroupInviteDtoSchema>
+export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 
-export default defineEventHandler((event) => {
-  return { message: `Hello ${event.context.clientAddress}` }
+export default defineEventHandler(async (event) => {
+  const body = await readValidatedBody(event, body => GroupInviteCreateDtoSchema.parse(body))
+
+  const requestorId = event.context.user.sub
+  // Use requestorId to verify permissions to invite to group
+  const group = await repo.getGroupDetails(body.groupId)
+  const invitee = await repo.getUserByEmail(body.email)
+  if (!invitee) {
+    throw createError({ statusCode: 404, statusMessage: 'User not found' })
+  }
+  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
+  if (group!.members.some(member => member.id === invitee.id)) {
+    return
+  }
+  await repo.inviteMemberToGroup(invitee.id, body.groupId)
 })

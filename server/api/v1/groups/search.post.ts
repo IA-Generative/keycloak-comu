@@ -1,6 +1,5 @@
 import { z } from 'zod'
-import type { GroupDtoType } from '~~/server/dto/group.js'
-import type { PaginatedResponse } from '~~/server/dto/utils.js'
+
 import repo from '../../../repository'
 
 export const ListQueryDtoSchema = z.object({
@@ -19,7 +18,9 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Group
     results: groups.map(group => ({
       id: group.id,
       name: group.name,
-      description: group.description,
+      invites: [],
+      members: [],
+      owners: group.owners,
     })),
     page: searchParam.page,
     pageSize: searchParam.pageSize,

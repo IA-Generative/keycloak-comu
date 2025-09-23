@@ -1,20 +1,20 @@
 import { z } from 'zod'
 import repo from '../../../repository'
-import type { GroupDtoType } from '~~/server/dto/group.js'
 
 export const CreateGroupDtoSchema = z.object({
   name: z.string(),
-  description: z.string().optional().nullable().default(null),
 })
 export type CreateGroupDtoType = z.infer<typeof CreateGroupDtoSchema>
 
-export default defineEventHandler(async (event): Promise<GroupDtoType> => {
+export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id' | 'name'>> => {
+  const session = event.context
+
   const body = await readValidatedBody(event, body => CreateGroupDtoSchema.parse(body))
 
-  const uniqueName = `${body.name}-${Date.now().toString(36)}`
-  const group = await repo.createGroup(uniqueName, body.name, body.description)
+  const group = await repo.createGroup(body.name)
+  await repo.addMemberToGroup(session.user.sub, group.id)
+  await repo.addOwnerToGroup(session.user.sub, group.id)
+  const detailedGroup = await repo.getGroupDetails(group.id)
 
-  console.log(group)
-
-  return group
+  return detailedGroup!
 })

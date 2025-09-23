@@ -1,15 +1,16 @@
-import { createError } from 'nuxt/app'
+import type { GroupDetails } from '../repository/groups.js'
 
-interface Level {
-  GUEST: 0
-  MEMBER: 10
-  ADMIN: 20
-}
+export const LEVEL = {
+  GUEST: 0,
+  MEMBER: 10,
+  ADMIN: 20,
+} as const
 
+type Level = typeof LEVEL[keyof typeof LEVEL]
 export interface GuardParams {
-  level: Level
-  groupId: string
-  userId: string
+  group: GroupDetails | null
+  requestorId: string
+  requiredLevel: Level
 }
 
 export const UnknownGroupError = createError({
@@ -18,20 +19,29 @@ export const UnknownGroupError = createError({
 })
 
 // Pas encore implémenté
-export async function guard({
-  level,
-  groupId,
-  // userId,
+export function guard({
+  requiredLevel,
+  group,
+  requestorId,
 }: GuardParams) {
   // Récupére le groupe auprès de la base de données
-  // @ts-expect-error
-  const group = await getGroupById(groupId)
   if (!group) {
     throw UnknownGroupError
   }
 
+  let requestorLevel: Level = LEVEL.GUEST
+
+  if (group.members.some(member => member.id === requestorId)) {
+    requestorLevel = LEVEL.MEMBER
+  }
+  if (group.attributes.owner.includes(requestorId)) {
+    requestorLevel = LEVEL.ADMIN
+  }
+  if (requiredLevel >= LEVEL.ADMIN && (!group.attributes.owner.includes(requestorId))) {
+    throw UnknownGroupError
+  }
   // Vérifie si l'utilisateur a le niveau d'accès requis
-  if (level < group.requiredLevel) {
+  if (requestorLevel < requiredLevel) {
     throw UnknownGroupError
   }
 }
