@@ -1,5 +1,3 @@
-import type { h } from 'vue'
-
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -14,7 +12,6 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      authUrl: process.env.NUXT_PUBLIC_AUTH_URL,
       keycloakUrl: process.env.KEYCLOAK_URL,
       keycloakRealm: process.env.KEYCLOAK_REALM,
       keycloakClientId: process.env.KEYCLOAK_CLIENT_ID,
