@@ -78,7 +78,7 @@
   "javascript.suggest.completeJSDocs": true,
   "javascript.suggest.jsdoc.generateReturns": true,
   "[typescript]": {
-    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+    "editor.defaultFormatter": "vscode.typescript-language-features"
   },
   "typescript.preferences.quoteStyle": "single",
   "typescript.preferences.importModuleSpecifierEnding": "js",
