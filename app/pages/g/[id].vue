@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { DsfrButton, DsfrFieldset, DsfrInput, DsfrTable } from '@gouvminint/vue-dsfr'
+import { DsfrButton, DsfrCallout, DsfrInput, DsfrTable } from '@gouvminint/vue-dsfr'
 import type { DsfrTableRowProps } from '@gouvminint/vue-dsfr'
 import MemberAction from '../../components/MemberAction.vue'
 import fetcher from '~/composables/useApi.js'
 
 const id = useRoute().params.id
+const config = useRuntimeConfig()
 
 const group = ref<GroupDtoType | null>(null)
 async function fetchData() {
@@ -120,7 +121,13 @@ const rows = computed(() => {
 <template>
   <div v-if="group">
     <div class="flex justify-between items-center mb-4">
-      <h1>{{ group.name }}</h1>
+      <h2>
+        <span
+          class="path-prefix"
+          title="Groupe racine"
+        >{{ config.public.keycloakRootGroupPath }}/</span>
+        <span title="Nom du groupe">{{ group.name }}</span>
+      </h2>
       <DsfrButton
         tertiary
         @click="fetchData"
@@ -130,7 +137,7 @@ const rows = computed(() => {
     </div>
     <div class="flex xl:flex-row flex-col gap-x-16">
       <div>
-        <h2>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h2>
+        <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
         <DsfrTable
           no-caption
           title="Membres du groupe"
@@ -142,7 +149,7 @@ const rows = computed(() => {
         v-if="amIOwner && group.invites?.length"
         class="mb-16 xl:mb-0"
       >
-        <h2>Invitations en attente</h2>
+        <h3>Invitations en attente</h3>
         <DsfrAlert
           v-for="invite in group.invites"
           :key="invite.id"
@@ -164,10 +171,10 @@ const rows = computed(() => {
       </div>
     </div>
     <!-- Formulaire d'ajout de membre -->
-    <DsfrFieldset
+    <div
       v-if="amIOwner"
-      legend="Ajouter un membre"
     >
+      <h3>Ajouter un membre</h3>
       <form @submit.prevent="addMember">
         <DsfrInput
           v-model="newMemberEmail"
@@ -181,15 +188,26 @@ const rows = computed(() => {
           Ajouter
         </DsfrButton>
       </form>
-    </DsfrFieldset>
-    <div>
-      <DsfrButton
-        v-if="amIOwner"
-        secondary
-        @click="deleteGroup"
-      >
-        Supprimer le groupe
-      </DsfrButton>
     </div>
+    <DsfrCallout
+      v-if="amIOwner"
+      class="fr-mt-8w"
+      title="Danger Zone"
+      title-tag="h3"
+      :button="{
+        label: 'Supprimer le groupe',
+        secondary: true,
+        onClick: deleteGroup,
+        disabled: false,
+      }"
+    >
+    </DsfrCallout>
   </div>
 </template>
+
+<style scoped>
+.path-prefix {
+  opacity: 0.6;
+  font-size: 1rem;
+}
+</style>
