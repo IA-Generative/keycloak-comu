@@ -1,4 +1,5 @@
-import { getkcClient, getRootGroup } from './keycloak.js'
+import { getKcClient, getRootGroup } from './keycloak.js'
+import { LEVEL } from '../guards/group.js'
 import * as db from './pg.js'
 import type { AttributeRow, UserRow } from './types.js'
 import type { Attributes } from './utils.js'
@@ -6,6 +7,7 @@ import { mergeUniqueGroupAttributes } from './utils.js'
 
 const INVITE_ATTRIBUTE = 'invite'
 const OWNER_ATTRIBUTE = 'owner'
+const ADMIN_ATTRIBUTE = 'admin'
 export interface GroupSearchResult {
   id: string
   name: string
@@ -104,32 +106,32 @@ export async function getGroupByName(name: string): Promise<GroupSearchResult | 
 }
 
 export async function createGroup(name: string): Promise<GroupSearchResult> {
-  const kcClient = await getkcClient()
+  const kcClient = getKcClient()
   const rootGroup = getRootGroup()
-  const result = rootGroup.id
+  const result = rootGroup.id !== ' '
     ? await kcClient.groups.createChildGroup({ id: rootGroup.id }, { name })
     : await kcClient.groups.create({ name })
 
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [] },
+    attributes: { owner: [], invite: [], admin: [] },
   }
 }
 
 // not exported cause no check on root group hierarchy
-async function getAttribute(groupId: string, name: string): Promise<string[] | null> {
-  const kcClient = await getkcClient()
+async function getAttribute(groupId: string, name: string): Promise<string[]> {
+  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({ id: groupId })
   if (!group) {
     throw new Error('Group not found')
   }
-  return group.attributes?.[name] || null
+  return group.attributes?.[name] || []
 }
 
 // not exported cause no check on root group hierarchy
 async function setAttribute(groupId: string, name: string, values: string[]): Promise<void> {
-  const kcClient = await getkcClient()
+  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({ id: groupId })
   if (!group) {
     throw new Error('Group not found')
@@ -192,7 +194,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
 }
 
 export async function deleteGroup(id: string): Promise<void> {
-  const kcClient = await getkcClient()
+  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({ id })
   if (!group || !group.path?.startsWith(getRootGroup().path)) {
     throw new Error('Group not found')
@@ -202,7 +204,7 @@ export async function deleteGroup(id: string): Promise<void> {
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function addMemberToGroup(userId: string, groupId: string): Promise<void> {
-  const kcClient = await getkcClient()
+  const kcClient = getKcClient()
   await kcClient.users.addToGroup({
     id: userId,
     groupId,
@@ -211,30 +213,35 @@ export async function addMemberToGroup(userId: string, groupId: string): Promise
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function removeMemberFromGroup(userId: string, groupId: string): Promise<void> {
-  const kcClient = await getkcClient()
+  const kcClient = getKcClient()
   await kcClient.users.delFromGroup({
     id: userId,
     groupId,
   })
+  // remove from roles if any
+  await setUserLevelInGroup(userId, groupId, LEVEL.GUEST)
 }
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
-export async function addOwnerToGroup(userId: string, groupId: string): Promise<void> {
-  const admins = await getAttribute(groupId, OWNER_ATTRIBUTE) || []
-  if (!admins.includes(userId)) {
-    admins.push(userId)
-    await setAttribute(groupId, OWNER_ATTRIBUTE, admins)
-  }
-}
+export async function setUserLevelInGroup(userId: string, groupId: string, level: number): Promise<void> {
+  const [ownerValues, adminValues] = await Promise.all([
+    getAttribute(groupId, OWNER_ATTRIBUTE),
+    getAttribute(groupId, ADMIN_ATTRIBUTE),
+  ])
+  const isOwner = ownerValues?.includes(userId)
+  const isAdmin = adminValues?.includes(userId)
 
-// exported but no check on root group hierarchy, cause you're supposed to check it before
-export async function removeOwnerFromGroup(userId: string, groupId: string): Promise<void> {
-  const admins = await getAttribute(groupId, OWNER_ATTRIBUTE) || []
-  const index = admins.indexOf(userId)
-  if (index !== -1) {
-    admins.splice(index, 1)
-    await setAttribute(groupId, OWNER_ATTRIBUTE, admins)
-  }
+  // add to attributes if needed
+  await Promise.all([
+    level === LEVEL.OWNER && await setAttribute(groupId, OWNER_ATTRIBUTE, [...ownerValues, userId]),
+    level === LEVEL.ADMIN && await setAttribute(groupId, ADMIN_ATTRIBUTE, [...adminValues, userId]),
+  ])
+
+  // remove from attributes if needed
+  await Promise.all([
+    (isOwner && level !== LEVEL.OWNER) && setAttribute(groupId, OWNER_ATTRIBUTE, ownerValues.filter(id => id !== userId)),
+    (isAdmin && level !== LEVEL.ADMIN) && setAttribute(groupId, ADMIN_ATTRIBUTE, adminValues.filter(id => id !== userId)),
+  ])
 }
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before

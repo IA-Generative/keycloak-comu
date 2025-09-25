@@ -5,25 +5,19 @@ const runtimeConfig = useRuntimeConfig()
 
 let rootGroup: Required<GroupRepresentation> | null = null
 
-export async function getkcClient() {
-  const kcClient = new KcAdminClient({
-    baseUrl: `${runtimeConfig.public.keycloakUrl}`,
-  })
-  await kcClient.auth({
-    clientId: 'admin-cli',
-    grantType: 'password',
-    username: runtimeConfig.keycloakAdmin,
-    password: runtimeConfig.keycloakAdminPassword,
-  })
-  kcClient.setConfig({ realmName: runtimeConfig.public.keycloakRealm })
+const kcClient = new KcAdminClient({
+  baseUrl: `${runtimeConfig.public.keycloakUrl}`,
+})
+kcClient.setConfig({ realmName: runtimeConfig.public.keycloakRealm })
 
+export function getKcClient() {
+  if (!rootGroup) {
+    throw new Error('Root Group not search yet, please try again later')
+  }
   return kcClient
 }
 
-async function setupRootGroup({
-  kcClient,
-  rootGroupPath,
-}: { kcClient: KcAdminClient, rootGroupPath: string }) {
+async function setupRootGroup(rootGroupPath: string) {
   if (rootGroupPath !== '/') {
     const rootGroupName = rootGroupPath.split('/').pop() as string
     rootGroup = await kcClient.groups.find({ search: rootGroupName, exact: true }).then((groups) => {
@@ -35,7 +29,7 @@ async function setupRootGroup({
   } else {
     console.log('No root group path set, using "/" as root group')
     rootGroup = {
-      id: '',
+      id: ' ',
       name: '',
       path: '',
       subGroupCount: 0,
@@ -50,23 +44,40 @@ async function setupRootGroup({
   console.log('Root group set to:', rootGroup?.path || '<empty>')
 }
 
-async function start(retries = 5) {
+async function setupKeycloakClient(retries = 5) {
   try {
-    const kcClient = await getkcClient()
-
-    await setupRootGroup({ kcClient, rootGroupPath: runtimeConfig.public.keycloakRootGroupPath })
-    console.log('Keycloak client started')
-  } catch (_error: unknown) {
-    if (retries > 0) {
-      console.log(`Retrying to connect to keycloak... (${retries} retries left)`)
-      setTimeout(() => start(retries - 1), 5000)
-      return
+    await kcClient.auth({
+      clientId: 'admin-cli',
+      grantType: 'password',
+      username: runtimeConfig.keycloakAdmin,
+      password: runtimeConfig.keycloakAdminPassword,
+    })
+    console.log('Keycloak client connected')
+    if (!rootGroup) {
+      await setupRootGroup(runtimeConfig.public.keycloakRootGroupPath)
     }
-    console.log('Could not connect to keycloak, exiting.')
-    throw new Error('Failed to start keycloak client, EXITING !')
+  } catch (error) {
+    console.error(error)
+    if (!retries) {
+      console.error('Unable to Connect to Keycloak')
+      process.exit(1)
+    }
+    console.warn(`Unable to connect to Keycloak, retry in 5 seconds, retries left: ${retries}`)
+    setTimeout(() => {
+      setupKeycloakClient(retries - 1)
+    }, 5000)
+    throw error
   }
+  const token = JSON.parse(atob(kcClient.accessToken!.split('.')[1]))
+  const lifeSpan = Math.floor(token.exp * 1000 - Date.now())
+  const nextAuth = lifeSpan * 0.9
+  console.log(`next Keycloak auth in ${nextAuth} milliseconds`)
+  setTimeout(() => {
+    setupKeycloakClient()
+  }, nextAuth)
 }
-start()
+
+setupKeycloakClient()
 
 export function getRootGroup(): Required<GroupRepresentation> {
   if (!rootGroup) {

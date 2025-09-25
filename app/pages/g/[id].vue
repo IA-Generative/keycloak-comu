@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { DsfrButton, DsfrCallout, DsfrInput, DsfrTable } from '@gouvminint/vue-dsfr'
-import type { DsfrTableRowProps } from '@gouvminint/vue-dsfr'
-import MemberAction from '../../components/MemberAction.vue'
+import { DsfrButton, DsfrCallout, DsfrDataTable, DsfrInput } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
+import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
+import ActionMember from '~/components/ActionMember.vue'
 
 const id = useRoute().params.id
 const config = useRuntimeConfig()
@@ -28,10 +28,12 @@ async function addMember() {
   await fetchData()
 }
 
+const { $keycloak } = useNuxtApp()
+
+const mylevel = computed(() => group.value?.members.find(m => m.id === $keycloak?.tokenParsed?.sub)?.membershipLevel || 0)
+
 const amIOwner = computed(() => {
-  const { $keycloak } = useNuxtApp()
-  const userId = $keycloak?.tokenParsed?.sub
-  return group.value?.owners?.some(owner => owner.id === userId)
+  return mylevel.value === 30
 })
 
 async function deleteGroup() {
@@ -64,58 +66,40 @@ async function leaveGroup() {
 
 const canLeaveGroup = computed(() => {
   if (!amIOwner.value) return true
-  if (group.value && group.value.owners.length > 1) return true
+  if (group.value && group.value.members.filter(member => member.membershipLevel === 30).length > 1) return true
   return false
 })
 
-const rows = computed(() => {
-  const { $keycloak } = useNuxtApp()
-  const personalRow: DsfrTableRowProps = { rowData: [] }
-  const myId = $keycloak?.tokenParsed?.sub
-  const me = group.value?.members.find(member => member.id === myId)
-  if (me) {
-    personalRow.rowData = [
-      group.value?.owners.some(owner => owner.id === me.id) ? 'Propriétaire' : 'Membre',
-      `${me.first_name} ${me.last_name}`,
-      me.email,
-      {
-        component: DsfrButton,
-        disabled: !canLeaveGroup.value,
-        title: !canLeaveGroup.value ? 'Vous ne pouvez pas quitter le groupe car vous êtes le seul propriétaire.' : '',
-        onClick: leaveGroup,
-        default: () => 'Quitter le groupe',
-        secondary: true,
-        text: 'Quitter le groupe',
-      },
-    ]
-  }
-  const ownerRows: DsfrTableRowProps[] = []
-  for (const owner of group.value?.owners || []) {
-    if (owner.id === myId) continue
-    ownerRows.push({
-      rowData: [
-        'Propriétaire',
-        `${owner.first_name} ${owner.last_name}`,
-        owner.email,
-        { component: MemberAction, amIOwner: amIOwner.value, member: { ...owner, isOwner: true }, group: group.value!, onRefresh: () => fetchData() },
-      ],
-    })
-  }
-  const memberRows: DsfrTableRowProps[] = []
-  for (const member of group.value?.members || []) {
-    if (member.id === myId) continue
-    if (group.value?.owners.some(owner => owner.id === member.id)) continue
-    memberRows.push({
-      rowData: [
-        'Membre',
-        `${member.first_name} ${member.last_name}`,
-        member.email,
-        { component: MemberAction, amIOwner: amIOwner.value, member: { ...member, isOwner: false }, group: group.value!, onRefresh: () => fetchData() },
-      ],
-    })
-  }
-  return [personalRow, ...ownerRows, ...memberRows]
+const membersRows = computed(() => {
+  return group.value?.members
+    .toSorted((a, b) => (a.membershipLevel === b.membershipLevel ? 0 : a.membershipLevel > b.membershipLevel ? -1 : 1))
+    .map((member) => {
+      return {
+        identifier: member.id === $keycloak?.tokenParsed?.sub ? ' (Vous)' : '',
+        role: MembershipLevelNames[member.membershipLevel] || 'Inconnu',
+        name: {
+          text: `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email,
+          id: member.id,
+        },
+        email: member.email,
+        actions: (member.id === $keycloak?.tokenParsed?.sub || amIOwner.value || (mylevel.value >= 20 && mylevel.value > member.membershipLevel)
+          ? {
+              member: { ...member },
+              group: group.value!,
+              mylevel: mylevel.value,
+              onRefresh: () => fetchData(),
+            }
+          : null),
+      }
+    }) ?? []
 })
+const headers = [
+  { label: '', key: 'identifier' },
+  { label: 'Rôle', key: 'role' },
+  { label: 'Nom', key: 'name' },
+  { label: 'Email', key: 'email' },
+  { label: '', key: 'actions' },
+]
 </script>
 
 <template>
@@ -125,7 +109,7 @@ const rows = computed(() => {
         <span
           class="path-prefix"
           title="Groupe racine"
-        >{{ config.public.keycloakRootGroupPath }}/</span>
+        >{{ config.public.keycloakRootGroupPath }}{{ config.public.keycloakRootGroupPath.length > 1 ? '/' : '' }}</span>
         <span title="Nom du groupe">{{ group.name }}</span>
       </h2>
       <DsfrButton
@@ -138,36 +122,61 @@ const rows = computed(() => {
     <div class="flex xl:flex-row flex-col gap-x-16">
       <div>
         <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
-        <DsfrTable
+        <DsfrDataTable
           no-caption
           title="Membres du groupe"
-          :headers="['Rôle', 'Nom', 'Email', '']"
-          :rows="rows"
-        />
+          :headers-row="headers"
+          :rows="membersRows"
+        >
+          <template #cell="{ colKey, cell }">
+            <template v-if="colKey === 'actions'">
+              <ActionMember
+                v-if="cell"
+                v-bind="cell"
+              />
+            </template>
+            <template v-else-if="colKey === 'email'">
+              <a :href="`mailto:${cell as string}`">{{ cell }}</a>
+            </template>
+            <template v-else-if="colKey === 'name'">
+              {{ cell.text }}
+            </template>
+            <template v-else-if="colKey === 'identifier'">
+              <strong>{{ cell }}</strong>
+            </template>
+            <template v-else>
+              {{ cell }}
+            </template>
+          </template>
+        </DsfrDataTable>
       </div>
       <div
-        v-if="amIOwner && group.invites?.length"
+        v-if="mylevel >= 20 && group.invites?.length"
         class="mb-16 xl:mb-0"
       >
         <h3>Invitations en attente</h3>
-        <DsfrAlert
-          v-for="invite in group.invites"
-          :key="invite.id"
-          small
-          type="info"
-          class="fr-mb-2w"
+        <div
+          class="flex flex-col"
         >
-          {{ invite.email }}
-
-          <DsfrButton
-            size="small"
-            secondary
-            class="fr-ml-2w"
-            @click="uninviteMember(invite.id) "
+          <DsfrAlert
+            v-for="invite in group.invites"
+            :key="invite.id"
+            small
+            type="info"
+            class="fr-mb-2w"
           >
-            Annuler
-          </DsfrButton>
-        </DsfrAlert>
+            {{ invite.email }}
+
+            <DsfrButton
+              size="small"
+              secondary
+              class="fr-ml-2w"
+              @click="uninviteMember(invite.id) "
+            >
+              Annuler
+            </DsfrButton>
+          </DsfrAlert>
+        </div>
       </div>
     </div>
     <!-- Formulaire d'ajout de membre -->
@@ -190,17 +199,30 @@ const rows = computed(() => {
       </form>
     </div>
     <DsfrCallout
-      v-if="amIOwner"
+      v-if="mylevel > 0"
       class="fr-mt-8w"
       title="Danger Zone"
       title-tag="h3"
-      :button="{
-        label: 'Supprimer le groupe',
-        secondary: true,
-        onClick: deleteGroup,
-        disabled: false,
-      }"
     >
+      <div class="flex flex-col justify-between gap-4">
+        <DsfrButton
+          :disabled="!canLeaveGroup"
+          :title="!canLeaveGroup ? 'Vous ne pouvez pas quitter le groupe car vous êtes le seul propriétaire.' : ''"
+          secondary
+          label="Quitter le groupe"
+          @click="leaveGroup"
+        />
+        <template v-if="amIOwner">
+          <hr>
+          <p>Cette action est irréversible.</p>
+          <DsfrButton
+            label="Supprimer le groupe"
+            :disabled="!amIOwner"
+            secondary
+            @click="deleteGroup"
+          />
+        </template>
+      </div>
     </DsfrCallout>
   </div>
 </template>

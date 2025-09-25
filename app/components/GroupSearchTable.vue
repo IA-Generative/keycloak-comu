@@ -26,7 +26,10 @@ const searchResults = ref<PaginatedResponse<GroupDtoType>>({ results: [], total:
 const searchRows = computed(() => [
   ...searchResults.value.results.map(group => ({
     name: group.name,
-    owners: group.owners.map(owner => owner.email).join(', '),
+    owners: group.members
+      .filter(member => member.membershipLevel >= 20)
+      .map(owner => owner.email)
+      .join(', '),
     id: group.id,
   })),
 ])
@@ -63,7 +66,7 @@ watch(searchQuery, (newQuery) => {
 </script>
 
 <template>
-  <DsfrFieldset legend="Rechercher un groupe">
+  <DsfrFieldset legend="">
     <DsfrSearchBar
       id="group-search"
       :model-value="searchQuery"
@@ -71,6 +74,7 @@ watch(searchQuery, (newQuery) => {
       hint="Rechercher un groupe par son nom"
       type="text"
       name="group-search"
+      placeholder="Rechercher un groupe"
       @update:model-value="(value) => searchQuery = value"
     />
   </DsfrFieldset>

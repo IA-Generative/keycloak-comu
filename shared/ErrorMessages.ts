@@ -6,6 +6,22 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  CANNOT_KICK_USER_WITHOUT_RIGHTS: {
+    en: 'You do not have the rights to kick a user from this group',
+    fr: 'Vous n\'avez pas les droits pour expulser un utilisateur de ce groupe',
+  },
+  CANNOT_KICK_USER_SAME_LEVEL: {
+    en: 'Cannot kick a user with the same or higher access level than yours',
+    fr: 'Impossible d\'expulser un utilisateur avec le même niveau d\'accès ou un niveau supérieur au vôtre',
+  },
+  CANNOT_GRANT_AT_LEVEL_EQ_TO_YOURS: {
+    en: 'Cannot grant a user an access level equal to yours',
+    fr: 'Impossible d\'accorder à un utilisateur un niveau d\'accès égal au vôtre',
+  },
+  CANNOT_DEMOTE_USER_WITH_HIGER_LEVEL: {
+    en: 'Cannot demote a user with a higher access level than yours',
+    fr: 'Impossible de rétrograder un utilisateur avec un niveau d\'accès supérieur au vôtre',
+  },
   GROUP_ALREADY_EXISTS: {
     en: 'A group with this name already exists',
     fr: 'Un groupe avec ce nom existe déjà',

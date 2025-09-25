@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import repo from '../../../repository'
 import createResponseError from '~~/server/utils/error.js'
+import { LEVEL } from '~~/server/guards/group.js'
 
 export const CreateGroupDtoSchema = z.object({
   name: z.string(),
@@ -19,7 +20,7 @@ export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id'
 
   const group = await repo.createGroup(body.name)
   await repo.addMemberToGroup(session.user.sub, group.id)
-  await repo.addOwnerToGroup(session.user.sub, group.id)
+  await repo.setUserLevelInGroup(session.user.sub, group.id, LEVEL.OWNER)
   const detailedGroup = await repo.getGroupDetails(group.id)
 
   return detailedGroup!

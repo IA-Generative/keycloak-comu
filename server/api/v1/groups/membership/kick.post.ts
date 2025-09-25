@@ -17,11 +17,14 @@ export default defineEventHandler(async (event) => {
   if (!group) {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
-  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId: userId })
+  const targetLevel = guard({ requiredLevel: LEVEL.GUEST, group, requestorId: body.userId })
+  guard({ gtLevel: targetLevel, group, requestorId: userId }, { statusCode: 403, data: 'CANNOT_KICK_USER_SAME_LEVEL' })
+  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId: userId }, { statusCode: 403, data: 'CANNOT_KICK_USER_WITHOUT_RIGHTS' })
+
   if (body.userId === userId) {
     throw createResponseError({ statusCode: 400, data: 'CANNOT_KICK_SELF' })
   }
-  await repo.removeOwnerFromGroup(body.userId, body.groupId)
+  await repo.setUserLevelInGroup(body.userId, body.groupId, LEVEL.GUEST)
   await repo.removeMemberFromGroup(body.userId, body.groupId)
   return { message: `Hello ${event.context.clientAddress}` }
 })

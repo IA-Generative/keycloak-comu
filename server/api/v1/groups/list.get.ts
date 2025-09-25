@@ -6,19 +6,7 @@ export default defineEventHandler(async (event): Promise<ListGroupDtoType> => {
   const { invited, joined } = await repo.listGroupsForUser(userId)
 
   return {
-    joined: joined.map((group): GroupDtoType => ({
-      id: group.id,
-      name: group.name,
-      invites: [],
-      members: [],
-      owners: [],
-    })),
-    invited: invited.map((group): GroupDtoType => ({
-      id: group.id,
-      name: group.name,
-      invites: [],
-      members: [],
-      owners: [],
-    })),
+    joined,
+    invited,
   }
 })

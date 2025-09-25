@@ -16,7 +16,7 @@ export default defineEventHandler(async (event) => {
   if (!group) {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
-  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
+  guard({ requiredLevel: LEVEL.OWNER, group, requestorId })
   await repo.deleteGroup(body.groupId)
   return { message: `Group ${body.groupId} deleted successfully` }
 })
