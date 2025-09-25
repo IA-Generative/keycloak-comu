@@ -1,5 +1,6 @@
-import { createError, defineEventHandler, getHeader } from 'h3'
+import { defineEventHandler, getHeader } from 'h3'
 import { createRemoteJWKSet, jwtVerify } from 'jose'
+import createResponseError from '../utils/error.js'
 
 const runtimeConfig = useRuntimeConfig()
 const KEYCLOAK_ISSUER = `${runtimeConfig.public.keycloakUrl}/realms/${runtimeConfig.public.keycloakRealm}`
@@ -16,10 +17,10 @@ export default defineEventHandler(async (event) => {
   const auth = getHeader(event, 'authorization')
 
   if (!auth) {
-    throw createError({ statusCode: 401, statusMessage: 'Token manquant' })
+    throw createResponseError({ statusCode: 401, data: 'TOKEN_MISSING' })
   }
   if (!auth.startsWith('Bearer ')) {
-    throw createError({ statusCode: 401, statusMessage: 'Token malformé' })
+    throw createResponseError({ statusCode: 401, data: 'TOKEN_MALFORMED' })
   }
 
   const token = auth.split(' ')[1]
@@ -33,6 +34,6 @@ export default defineEventHandler(async (event) => {
     }
   } catch (err) {
     console.log(err)
-    throw createError({ statusCode: 401, statusMessage: 'Token invalide' })
+    throw createResponseError({ statusCode: 401, data: 'TOKEN_INVALID' })
   }
 })

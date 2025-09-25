@@ -1,42 +1,29 @@
 <script setup lang="ts">
-import { DsfrAlert, DsfrBadge, DsfrButton, DsfrFieldset, DsfrSearchBar, DsfrTable, DsfrTile } from '@gouvminint/vue-dsfr'
+import { DsfrAlert, DsfrButton, DsfrFieldset, DsfrSearchBar, DsfrTable, DsfrTile } from '@gouvminint/vue-dsfr'
+import fetch from '~/composables/01.useApi.js'
 
 const groups = ref<ListGroupDtoType>({ invited: [], joined: [] })
 
-onBeforeMount(async () => {
-  getGroups()
-})
-async function getGroups() {
-  const { $keycloak } = useNuxtApp()
+onBeforeMount(getGroups)
 
-  const { invited, joined } = await $fetch('/api/v1/groups/list', {
+async function getGroups() {
+  const data = await fetch('/api/v1/groups/list', {
     method: 'get',
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
-  groups.value = { invited, joined }
+  groups.value = data
 }
 
 async function acceptInvite(groupId: string) {
-  const { $keycloak } = useNuxtApp()
-  await $fetch('/api/v1/groups/invites/accept', {
+  await fetch('/api/v1/groups/invites/accept', {
     method: 'post',
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
     body: { groupId },
   })
   getGroups()
 }
 
 async function declineInvite(groupId: string) {
-  const { $keycloak } = useNuxtApp()
-  await $fetch('/api/v1/groups/invites/decline', {
+  await fetch('/api/v1/groups/invites/decline', {
     method: 'post',
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
     body: { groupId },
   })
   getGroups()
@@ -51,16 +38,12 @@ const searchRows = computed(() => [
   ])),
 ])
 const debouncedSearch = debounce((search: string) => {
-  const { $keycloak } = useNuxtApp()
   if (!search) {
     searchResults.value = { results: [], total: 0, page: 1, pageSize: 10 }
     return
   }
-  $fetch('/api/v1/groups/search', {
+  fetch('/api/v1/groups/search', {
     method: 'post',
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
     body: { search },
   }).then((results) => {
     searchResults.value = results
@@ -78,13 +61,23 @@ watch(searchQuery, (newQuery) => {
         v-for="group in groups.invited"
         :key="group.id"
         small
-        type="info" class="fr-mb-2w"
+        type="info"
+        class="fr-mb-2w"
       >
         Vous avez été invité à rejoindre le groupe <strong>{{ group.name }}</strong>.
-        <DsfrButton size="small" class="fr-ml-2w" @click="acceptInvite(group.id)">
+        <DsfrButton
+          size="small"
+          class="fr-ml-2w"
+          @click="acceptInvite(group.id)"
+        >
           Accepter
         </DsfrButton>
-        <DsfrButton size="small" secondary class="fr-ml-2w" @click="declineInvite(group.id) ">
+        <DsfrButton
+          size="small"
+          secondary
+          class="fr-ml-2w"
+          @click="declineInvite(group.id) "
+        >
           Refuser
         </DsfrButton>
       </DsfrAlert>
@@ -111,18 +104,39 @@ watch(searchQuery, (newQuery) => {
         :rows="searchRows"
       />
     </template>
+    <template v-else-if="searchQuery">
+      <DsfrAlert
+        type="info"
+        class="fr-mb-2w"
+      >
+        Aucun groupe trouvé pour la recherche "{{ searchQuery }}"
+        <DsfrButton
+          size="small"
+          class="fr-ml-2w"
+          @click="() => createGroup(searchQuery)"
+        >
+          Le créer
+        </DsfrButton>
+      </DsfrAlert>
+    </template>
 
     <div class="flex justify-between items-center mb-4 mt-8">
       <h2>Vos Groupes</h2>
       <div>
-        <DsfrButton @click="getGroups" tertiary>
+        <DsfrButton
+          tertiary
+          @click="getGroups"
+        >
           Actualiser
         </DsfrButton>
       </div>
     </div>
     <div class="gap-8 flex flex-wrap">
       <template v-if="groups.joined.length === 0">
-        <DsfrAlert type="info" class="fr-mb-2w">
+        <DsfrAlert
+          type="info"
+          class="fr-mb-2w"
+        >
           Vous ne faites partie d'aucun groupe pour le moment. Créez-en un ou rejoignez-en un !
         </DsfrAlert>
       </template>

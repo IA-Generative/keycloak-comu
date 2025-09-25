@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import repo from '../../../../repository/index.js'
 import { guard, LEVEL } from '../../../../guards/group.js'
+import createResponseError from '~~/server/utils/error.js'
 
 export const LeaveGroupDtoSchema = z.object({
   groupId: z.string(),
@@ -12,12 +13,12 @@ export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, body => LeaveGroupDtoSchema.parse(body))
   const group = await repo.getGroupDetails(body.groupId)
   if (!group) {
-    throw createError({ statusCode: 404, statusMessage: 'Group not found' })
+    throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
   guard({ requiredLevel: LEVEL.MEMBER, group, requestorId })
   // If the user is the last member, delete the group
   if (group.members.length > 1 && group.attributes.owner.length === 1 && group.attributes.owner[0] === requestorId) {
-    throw createError({ statusCode: 400, statusMessage: 'Cannot leave group as the only owner. Please assign another owner before leaving.' })
+    throw createResponseError({ statusCode: 400, data: 'CANNOT_LEAVE_ONLY_OWNER' })
   }
   if (group.members.length <= 1) {
     await repo.deleteGroup(group.id)

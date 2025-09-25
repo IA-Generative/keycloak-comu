@@ -20,14 +20,30 @@ export default withNuxt(
         'ts/ban-ts-comment': 'off',
         'unused-imports/no-unused-imports': 'error',
         'unused-imports/no-unused-vars': ['error', { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_', caughtErrors: 'all', caughtErrorsIgnorePattern: '^_', destructuredArrayIgnorePattern: '^_' }],
-        'vue/no-v-html': 'off',
-        'vue/no-irregular-whitespace': 'off',
-        'vue/script-indent': 'off',
       },
     },
     typescript: true,
     markdown: true,
-    vue: true,
+    vue: {
+      extensions: ['.vue'],
+      overrides: {
+        'vue/no-v-html': 'off',
+        'vue/no-irregular-whitespace': 'off',
+        'vue/script-indent': 'off',
+        'vue/first-attribute-linebreak': ['error', {
+          singleline: 'ignore',
+          multiline: 'below',
+        }],
+        'vue/max-attributes-per-line': ['error', {
+          singleline: {
+            max: 1,
+          },
+          multiline: {
+            max: 1,
+          },
+        }],
+      },
+    },
     yaml: {
       overrides: {
         'yaml/quotes': ['error', { prefer: 'double' }],

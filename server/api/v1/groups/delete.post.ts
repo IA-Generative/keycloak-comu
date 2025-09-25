@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import repo from '../../../repository'
 import { guard, LEVEL } from '../../../guards/group.js'
+import createResponseError from '~~/server/utils/error.js'
 
 export const DeleteGroupDtoSchema = z.object({
   groupId: z.string(),
@@ -13,7 +14,7 @@ export default defineEventHandler(async (event) => {
   // Use userId to verify permissions to delete group
   const group = await repo.getGroupDetails(body.groupId)
   if (!group) {
-    throw createError({ statusCode: 404, statusMessage: 'Group not found' })
+    throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
   await repo.deleteGroup(body.groupId)

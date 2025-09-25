@@ -4,6 +4,7 @@ import repo from '../../../repository'
 
 export const ListQueryDtoSchema = z.object({
   search: z.string(),
+  exact: z.boolean().optional().default(false),
   page: z.number().min(1).optional().default(1),
   pageSize: z.number().min(1).max(100).optional().default(20),
 })
@@ -13,7 +14,12 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Group
   const searchParam = await readValidatedBody(event, body => ListQueryDtoSchema.parse(body))
 
   // Search logic here
-  const { groups, total } = await repo.searchGroups(searchParam.search, (searchParam.page - 1) * searchParam.pageSize, searchParam.pageSize)
+  const { groups, total } = await repo.searchGroups({
+    query: searchParam.search,
+    exact: searchParam.exact,
+    skip: (searchParam.page - 1) * searchParam.pageSize,
+    limit: searchParam.pageSize,
+  })
   return {
     results: groups.map(group => ({
       id: group.id,

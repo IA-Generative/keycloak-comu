@@ -1,5 +1,6 @@
 import { z } from 'zod'
 import repo from '../../../../repository/index.js'
+import createResponseError from '~~/server/utils/error.js'
 
 export const AcceptGroupInviteDtoSchema = z.object({
   groupId: z.uuid(),
@@ -13,11 +14,11 @@ export default defineEventHandler(async (event) => {
   const group = await repo.getGroupDetails(result.groupId)
 
   if (!group) {
-    throw createError({ statusCode: 404, statusMessage: 'Group not found' })
+    throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
 
   if (!group.attributes.invite.includes(userId)) {
-    throw createError({ statusCode: 403, statusMessage: 'User not invited' })
+    throw createResponseError({ statusCode: 403, data: 'USER_NOT_INVITED' })
   }
   await repo.addMemberToGroup(userId, result.groupId)
   await repo.uninviteMemberFromGroup(userId, result.groupId)

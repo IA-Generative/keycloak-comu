@@ -1,4 +1,5 @@
 import type { GroupDetails } from '../repository/groups.js'
+import createResponseError from '../utils/error.js'
 
 export const LEVEL = {
   GUEST: 0,
@@ -13,10 +14,7 @@ export interface GuardParams {
   requiredLevel: Level
 }
 
-export const UnknownGroupError = createError({
-  statusCode: 400,
-  message: 'Group not found',
-})
+export const UnknownGroupError = createResponseError({ statusCode: 400, data: 'GROUP_NOT_FOUND' })
 
 // Pas encore implémenté
 export function guard({

@@ -61,5 +61,6 @@ watch(loggedIn, (newVal) => {
 
   <div class="fr-container fr-mt-4w">
     <NuxtPage v-if="loggedIn" />
+    <SnackBar />
   </div>
 </template>

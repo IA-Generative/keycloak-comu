@@ -1,32 +1,27 @@
 <script setup lang="ts">
 import { DsfrButton, DsfrFieldset, DsfrInput, DsfrTable } from '@gouvminint/vue-dsfr'
+import type { DsfrTableRowProps } from '@gouvminint/vue-dsfr'
 import MemberAction from '../../components/MemberAction.vue'
+import fetch from '~/composables/01.useApi.js'
 
 const id = useRoute().params.id
 
 const group = ref<GroupDtoType | null>(null)
 async function fetchData() {
-  const { $keycloak } = useNuxtApp()
-  const data = await $fetch(`/api/v1/groups/${id}`, {
+  const data = await fetch(`/api/v1/groups/:id` as '/api/v1/groups/:id', {
     method: 'get',
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
-  }) as GroupDtoType
+    params: { id },
+  })
   group.value = data
 }
 
 onBeforeMount(fetchData)
 const newMemberEmail = ref('')
 async function addMember() {
-  const { $keycloak } = useNuxtApp()
   if (!newMemberEmail.value || typeof id !== 'string') return
-  await $fetch('/api/v1/groups/invites/create', {
+  await fetch('/api/v1/groups/invites/create', {
     method: 'post',
     body: { groupId: id, email: newMemberEmail.value },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   newMemberEmail.value = ''
   await fetchData()
@@ -39,42 +34,31 @@ const amIOwner = computed(() => {
 })
 
 async function deleteGroup() {
-  const { $keycloak } = useNuxtApp()
-  const data = await $fetch(`/api/v1/groups/delete`, {
+  const data = await fetch(`/api/v1/groups/delete`, {
     method: 'post',
     body: { groupId: id },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   window.location.assign('/')
   return data
 }
 
 async function uninviteMember(userId: string) {
-  const { $keycloak } = useNuxtApp()
   if (typeof id !== 'string') return
-  await $fetch('/api/v1/groups/invites/cancel', {
+  await fetch('/api/v1/groups/invites/cancel', {
     method: 'post',
     body: { groupId: id, userId },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   await fetchData()
 }
 
 async function leaveGroup() {
-  const { $keycloak } = useNuxtApp()
+  const { $router } = useNuxtApp()
   if (typeof id !== 'string') return
-  await $fetch('/api/v1/groups/membership/leave', {
+  await fetch('/api/v1/groups/membership/leave', {
     method: 'post',
     body: { groupId: id },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
-  window.location.assign('/')
+  $router.push('/')
 }
 
 const canLeaveGroup = computed(() => {
@@ -83,27 +67,64 @@ const canLeaveGroup = computed(() => {
   return false
 })
 
-const rows = computed(() => [
-  ...(group.value?.members.map(member => ([
-    group.value?.owners.some(owner => owner.id === member.id) ? 'Propriétaire' : 'Membre',
-    `${member.first_name} ${member.last_name}`,
-    member.email,
-    {
-      component: MemberAction,
-      amIOwner: amIOwner.value,
-      member: { ...member, isOwner: group.value?.owners.some(owner => owner.id === member.id) },
-      group: group.value!,
-      onRefresh: () => fetchData(),
-    },
-  ])) || []),
-])
+const rows = computed(() => {
+  const { $keycloak } = useNuxtApp()
+  const personalRow: DsfrTableRowProps = { rowData: [] }
+  const myId = $keycloak?.tokenParsed?.sub
+  const me = group.value?.members.find(member => member.id === myId)
+  if (me) {
+    personalRow.rowData = [
+      group.value?.owners.some(owner => owner.id === me.id) ? 'Propriétaire' : 'Membre',
+      `${me.first_name} ${me.last_name}`,
+      me.email,
+      {
+        component: DsfrButton,
+        disabled: !canLeaveGroup.value,
+        title: !canLeaveGroup.value ? 'Vous ne pouvez pas quitter le groupe car vous êtes le seul propriétaire.' : '',
+        onClick: leaveGroup,
+        default: () => 'Quitter le groupe',
+        secondary: true,
+        text: 'Quitter le groupe',
+      },
+    ]
+  }
+  const ownerRows: DsfrTableRowProps[] = []
+  for (const owner of group.value?.owners || []) {
+    if (owner.id === myId) continue
+    ownerRows.push({
+      rowData: [
+        'Propriétaire',
+        `${owner.first_name} ${owner.last_name}`,
+        owner.email,
+        { component: MemberAction, amIOwner: amIOwner.value, member: { ...owner, isOwner: true }, group: group.value!, onRefresh: () => fetchData() },
+      ],
+    })
+  }
+  const memberRows: DsfrTableRowProps[] = []
+  for (const member of group.value?.members || []) {
+    if (member.id === myId) continue
+    if (group.value?.owners.some(owner => owner.id === member.id)) continue
+    memberRows.push({
+      rowData: [
+        'Membre',
+        `${member.first_name} ${member.last_name}`,
+        member.email,
+        { component: MemberAction, amIOwner: amIOwner.value, member: { ...member, isOwner: false }, group: group.value!, onRefresh: () => fetchData() },
+      ],
+    })
+  }
+  return [personalRow, ...ownerRows, ...memberRows]
+})
 </script>
 
 <template>
   <div v-if="group">
     <div class="flex justify-between items-center mb-4">
       <h1>{{ group.name }}</h1>
-      <DsfrButton tertiary @click="fetchData">
+      <DsfrButton
+        tertiary
+        @click="fetchData"
+      >
         Actualiser
       </DsfrButton>
     </div>
@@ -113,7 +134,7 @@ const rows = computed(() => [
         <DsfrTable
           no-caption
           title="Membres du groupe"
-          :headers="['Rôle', 'Nom', 'Email', 'Actions']"
+          :headers="['Rôle', 'Nom', 'Email', '']"
           :rows="rows"
         />
       </div>
@@ -123,34 +144,47 @@ const rows = computed(() => [
           v-for="invite in group.invites"
           :key="invite.id"
           small
-          type="info" class="fr-mb-2w"
+          type="info"
+          class="fr-mb-2w"
         >
           {{ invite.email }}
 
-          <DsfrButton size="small" secondary class="fr-ml-2w" @click="uninviteMember(invite.id) ">
+          <DsfrButton
+            size="small"
+            secondary
+            class="fr-ml-2w"
+            @click="uninviteMember(invite.id) "
+          >
             Annuler
           </DsfrButton>
         </DsfrAlert>
       </div>
     </div>
     <!-- Formulaire d'ajout de membre -->
-    <DsfrFieldset>
+    <DsfrFieldset
+      v-if="amIOwner"
+      legend="Ajouter un membre"
+    >
       <form @submit.prevent="addMember">
-        <DsfrInput v-model="newMemberEmail" placeholder="Email de la personne à inviter" />
-        <DsfrButton type="submit" :disabled="!newMemberEmail" class="fr-mt-2w">
+        <DsfrInput
+          v-model="newMemberEmail"
+          placeholder="Email de la personne à inviter"
+        />
+        <DsfrButton
+          type="submit"
+          :disabled="!newMemberEmail"
+          class="fr-mt-2w"
+        >
           Ajouter
         </DsfrButton>
       </form>
     </DsfrFieldset>
     <div>
       <DsfrButton
-        :disabled="!canLeaveGroup"
-        :title="!canLeaveGroup ? 'Vous ne pouvez pas quitter le groupe car vous êtes le seul propriétaire.' : ''"
-        @click="leaveGroup"
+        v-if="amIOwner"
+        secondary
+        @click="deleteGroup"
       >
-        Quitter le groupe
-      </DsfrButton>
-      <DsfrButton v-if="amIOwner" class="fr-ml-2w" secondary @click="deleteGroup">
         Supprimer le groupe
       </DsfrButton>
     </div>

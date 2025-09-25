@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { guard, LEVEL } from '../../../../guards/group.js'
 import repo from '../../../../repository/index.js'
+import createResponseError from '~~/server/utils/error.js'
 
 export const DemoteGroupOwnerDtoSchema = z.object({
   groupId: z.string(),
@@ -14,14 +15,14 @@ export default defineEventHandler(async (event) => {
   const group = await repo.getGroupDetails(body.groupId)
 
   if (!group) {
-    throw createError({ statusCode: 404, statusMessage: 'Group not found' })
+    throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId: userId })
   if (!group.attributes.owner?.includes(body.userId)) {
     return
   }
   if (!group.attributes.owner || group.attributes.owner.length <= 1) {
-    throw createError({ statusCode: 400, statusMessage: 'You cannot demote yourself as the only owner' })
+    throw createResponseError({ statusCode: 400, data: 'CANNOT_DEMOTE_ONLY_OWNER' })
   }
   await repo.removeOwnerFromGroup(body.userId, body.groupId)
 })

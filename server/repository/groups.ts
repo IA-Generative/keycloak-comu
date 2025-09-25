@@ -17,11 +17,22 @@ export interface GroupDetails extends GroupSearchResult {
   attributes: Attributes
 }
 
-export async function searchGroups(query: string, skip: number, limit: number): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number }> {
-  const groupsResult = await db.query(
-    'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
-    [`%${query}%`, await db.getRealmId(), limit, skip],
-  )
+interface SearchParams {
+  query: string
+  limit: number
+  skip: number
+  exact?: boolean
+}
+export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number }> {
+  const groupsResult = exact
+    ? await db.query(
+        'SELECT * FROM keycloak_group WHERE name = $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
+        [query, await db.getRealmId(), limit, skip],
+      )
+    : await db.query(
+        'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
+        [`%${query}%`, await db.getRealmId(), limit, skip],
+      )
 
   const owners = await db.query(
     `SELECT u.id, u.email, u.username, u.first_name, u.last_name, ga.group_id 
@@ -73,6 +84,19 @@ export async function searchGroupsByAttributes(name: string, value: string): Pro
     [name, value, await db.getRealmId()],
   )
   return groups.rows
+}
+
+export async function getGroupByName(name: string): Promise<GroupSearchResult | null> {
+  const groups = await db.query(
+    `SELECT g.id, g.name
+     FROM keycloak_group g
+     WHERE g.name = $1 AND g.realm_id = $2`,
+    [name, await db.getRealmId()],
+  )
+  if (groups.rows.length === 0) {
+    return null
+  }
+  return { ...groups.rows[0], attributes: {} }
 }
 
 export async function createGroup(name: string): Promise<GroupSearchResult> {

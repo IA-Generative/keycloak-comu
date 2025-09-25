@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { DsfrButton } from '@gouvminint/vue-dsfr'
+import fetch from '~/composables/01.useApi.js'
 
 const props = defineProps<{
   member: {
@@ -20,35 +21,25 @@ const emits = defineEmits<{
 const { $keycloak } = useNuxtApp()
 
 async function kickMember(userId: string) {
-  const { $keycloak } = useNuxtApp()
-  await $fetch('/api/v1/groups/membership/kick', {
+  await fetch('/api/v1/groups/membership/kick', {
     method: 'post',
     body: { groupId: props.group.id, userId },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   emits('refresh')
 }
 
 async function demoteUser(userId: string) {
-  await $fetch('/api/v1/groups/membership/demote', {
+  await fetch('/api/v1/groups/membership/demote', {
     method: 'post',
     body: { groupId: props.group.id, userId },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   emits('refresh')
 }
 
 async function promoteUser(userId: string) {
-  await $fetch('/api/v1/groups/membership/promote', {
+  await fetch('/api/v1/groups/membership/promote', {
     method: 'post',
     body: { groupId: props.group.id, userId },
-    headers: {
-      Authorization: `Bearer ${$keycloak?.token}`,
-    },
   })
   emits('refresh')
 }
@@ -56,13 +47,26 @@ async function promoteUser(userId: string) {
 
 <template>
   <div>
-    <DsfrButton v-if="amIOwner && !member.isOwner" @click="promoteUser(member.id)" secondary>
+    <DsfrButton
+      v-if="amIOwner && !member.isOwner"
+      secondary
+      @click="promoteUser(member.id)"
+    >
       Promouvoir
     </DsfrButton>
-    <DsfrButton v-if="amIOwner && group.owners.length > 1 && member.isOwner && $keycloak?.tokenParsed?.sub !== member.id" @click="demoteUser(member.id)" secondary>
+    <DsfrButton
+      v-if="amIOwner && group.owners.length > 1 && member.isOwner && $keycloak?.tokenParsed?.sub !== member.id"
+      secondary
+      @click="demoteUser(member.id)"
+    >
       Rétrograder
     </DsfrButton>
-    <DsfrButton v-if="amIOwner && $keycloak?.tokenParsed?.sub !== member.id" @click="kickMember(member.id)" class="fr-ml-2w" secondary>
+    <DsfrButton
+      v-if="amIOwner && $keycloak?.tokenParsed?.sub !== member.id"
+      class="fr-ml-2w"
+      secondary
+      @click="kickMember(member.id)"
+    >
       Expulser
     </DsfrButton>
   </div>

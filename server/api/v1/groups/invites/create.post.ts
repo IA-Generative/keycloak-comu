@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import repo from '../../../../repository'
 import { guard, LEVEL } from '../../../../guards/group.js'
+import createResponseError from '~~/server/utils/error.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.string(),
@@ -16,7 +17,7 @@ export default defineEventHandler(async (event) => {
   const group = await repo.getGroupDetails(body.groupId)
   const invitee = await repo.getUserByEmail(body.email)
   if (!invitee) {
-    throw createError({ statusCode: 404, statusMessage: 'User not found' })
+    throw createResponseError({ statusCode: 404, data: 'USER_NOT_FOUND' })
   }
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
   if (group!.members.some(member => member.id === invitee.id)) {

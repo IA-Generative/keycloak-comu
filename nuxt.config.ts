@@ -11,6 +11,7 @@ export default defineNuxtConfig({
     enabled: true,
   },
   runtimeConfig: {
+    isProd: !(process.env.NODE_ENV !== 'production'),
     public: {
       keycloakUrl: process.env.KEYCLOAK_URL,
       keycloakRealm: process.env.KEYCLOAK_REALM,
@@ -35,11 +36,6 @@ export default defineNuxtConfig({
   },
   eslint: {
     config: {
-      stylistic: {
-        braceStyle: 'stroustrup',
-      },
-      formatters: false,
-      typescript: true,
       standalone: false,
     },
   },
