@@ -1,4 +1,4 @@
-import { getkcClient } from './keycloak.js'
+import { getkcClient, getRootGroup } from './keycloak.js'
 import * as db from './pg.js'
 import type { AttributeRow, UserRow } from './types.js'
 import type { Attributes } from './utils.js'
@@ -26,12 +26,12 @@ interface SearchParams {
 export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact
     ? await db.query(
-        'SELECT * FROM keycloak_group WHERE name = $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
-        [query, await db.getRealmId(), limit, skip],
+        'SELECT * FROM keycloak_group WHERE name = $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
+        [query, await db.getRealmId(), limit, skip, getRootGroup().id],
       )
     : await db.query(
-        'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
-        [`%${query}%`, await db.getRealmId(), limit + 1, skip],
+        'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
+        [`%${query}%`, await db.getRealmId(), limit + 1, skip, getRootGroup().id],
       )
 
   const owners = await db.query(
@@ -51,13 +51,14 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
       owners: owners.rows.filter((owner: { group_id: string }) => owner.group_id === group.id),
     }))
   const total = await db.query(
-    'SELECT count(*) FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2',
-    [`%${query}%`, await db.getRealmId()],
+    'SELECT count(*) FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $3',
+    [`%${query}%`, await db.getRealmId(), getRootGroup().id],
   )
   return { groups, total: total.rows[0].count, next: groupsResult.rows.length > limit }
 }
 
-export async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[] }> {
+// not exported cause no check on root group hierarchy
+async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[] }> {
   const attributes = await db.query(
     `SELECT ga.name, ga.value, ga.group_id
      FROM group_attribute ga
@@ -77,7 +78,8 @@ export async function getGroupAttributesAndMembers(groupId: string): Promise<{ a
   return { attributes: attributes.rows, members: members.rows, invites }
 }
 
-export async function searchGroupsByAttributes(name: string, value: string): Promise<GroupSearchResult[]> {
+// not exported cause no check on root group hierarchy
+async function searchGroupsByAttributes(name: string, value: string): Promise<GroupSearchResult[]> {
   const groups = await db.query(
     `SELECT g.id, g.name, ga.name AS attribute_name, ga.value AS attribute_value
      FROM keycloak_group g
@@ -92,8 +94,8 @@ export async function getGroupByName(name: string): Promise<GroupSearchResult | 
   const groups = await db.query(
     `SELECT g.id, g.name
      FROM keycloak_group g
-     WHERE g.name = $1 AND g.realm_id = $2`,
-    [name, await db.getRealmId()],
+     WHERE g.name = $1 AND g.realm_id = $2 AND parent_group = $3`,
+    [name, await db.getRealmId(), getRootGroup().id],
   )
   if (groups.rows.length === 0) {
     return null
@@ -103,7 +105,10 @@ export async function getGroupByName(name: string): Promise<GroupSearchResult | 
 
 export async function createGroup(name: string): Promise<GroupSearchResult> {
   const kcClient = await getkcClient()
-  const result = await kcClient.groups.create({ name })
+  const rootGroup = getRootGroup()
+  const result = rootGroup.id
+    ? await kcClient.groups.createChildGroup({ id: rootGroup.id }, { name })
+    : await kcClient.groups.create({ name })
 
   return {
     id: result.id,
@@ -112,7 +117,8 @@ export async function createGroup(name: string): Promise<GroupSearchResult> {
   }
 }
 
-export async function getAttribute(groupId: string, name: string): Promise<string[] | null> {
+// not exported cause no check on root group hierarchy
+async function getAttribute(groupId: string, name: string): Promise<string[] | null> {
   const kcClient = await getkcClient()
   const group = await kcClient.groups.findOne({ id: groupId })
   if (!group) {
@@ -121,7 +127,8 @@ export async function getAttribute(groupId: string, name: string): Promise<strin
   return group.attributes?.[name] || null
 }
 
-export async function setAttribute(groupId: string, name: string, values: string[]): Promise<void> {
+// not exported cause no check on root group hierarchy
+async function setAttribute(groupId: string, name: string, values: string[]): Promise<void> {
   const kcClient = await getkcClient()
   const group = await kcClient.groups.findOne({ id: groupId })
   if (!group) {
@@ -137,7 +144,8 @@ export async function setAttribute(groupId: string, name: string, values: string
   })
 }
 
-export async function getPendingInvitesForGroup(groupId: string): Promise<UserRow[]> {
+// not exported cause no check on root group hierarchy
+async function getPendingInvitesForGroup(groupId: string): Promise<UserRow[]> {
   const users = await db.query(
     `SELECT u.id, u.email, u.username, u.first_name, u.last_name
      FROM user_entity u
@@ -147,14 +155,15 @@ export async function getPendingInvitesForGroup(groupId: string): Promise<UserRo
   )
   return users.rows
 }
+
 export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
     `SELECT g.id, g.name
      FROM keycloak_group g
      JOIN user_group_membership ugm ON g.id = ugm.group_id
-     WHERE ugm.user_id = $1 AND g.realm_id = $2`,
-    [userId, realmId],
+     WHERE ugm.user_id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
+    [userId, realmId, getRootGroup().id],
   )
   const invited = await searchGroupsByAttributes(INVITE_ATTRIBUTE, userId)
 
@@ -165,8 +174,8 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
   const groupRes = await db.query(
     `SELECT g.id, g.name
      FROM keycloak_group g
-     WHERE g.id = $1`,
-    [groupId],
+     WHERE g.id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
+    [groupId, await db.getRealmId(), getRootGroup().id],
   )
   if (groupRes.rowCount === 0) {
     return null
@@ -184,9 +193,14 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
 
 export async function deleteGroup(id: string): Promise<void> {
   const kcClient = await getkcClient()
+  const group = await kcClient.groups.findOne({ id })
+  if (!group || !group.path?.startsWith(getRootGroup().path)) {
+    throw new Error('Group not found')
+  }
   await kcClient.groups.del({ id })
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function addMemberToGroup(userId: string, groupId: string): Promise<void> {
   const kcClient = await getkcClient()
   await kcClient.users.addToGroup({
@@ -195,6 +209,7 @@ export async function addMemberToGroup(userId: string, groupId: string): Promise
   })
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function removeMemberFromGroup(userId: string, groupId: string): Promise<void> {
   const kcClient = await getkcClient()
   await kcClient.users.delFromGroup({
@@ -203,6 +218,7 @@ export async function removeMemberFromGroup(userId: string, groupId: string): Pr
   })
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function addOwnerToGroup(userId: string, groupId: string): Promise<void> {
   const admins = await getAttribute(groupId, OWNER_ATTRIBUTE) || []
   if (!admins.includes(userId)) {
@@ -211,6 +227,7 @@ export async function addOwnerToGroup(userId: string, groupId: string): Promise<
   }
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function removeOwnerFromGroup(userId: string, groupId: string): Promise<void> {
   const admins = await getAttribute(groupId, OWNER_ATTRIBUTE) || []
   const index = admins.indexOf(userId)
@@ -220,6 +237,7 @@ export async function removeOwnerFromGroup(userId: string, groupId: string): Pro
   }
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function inviteMemberToGroup(userId: string, groupId: string): Promise<void> {
   const invites = await getAttribute(groupId, INVITE_ATTRIBUTE) || []
 
@@ -229,6 +247,7 @@ export async function inviteMemberToGroup(userId: string, groupId: string): Prom
   }
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
 export async function uninviteMemberFromGroup(userId: string, groupId: string): Promise<void> {
   const invites = await getAttribute(groupId, INVITE_ATTRIBUTE) || []
   const index = invites.indexOf(userId)
@@ -242,8 +261,8 @@ export async function getUserByEmail(email: string): Promise<UserRow | null> {
   const users = await db.query(
     `SELECT u.username, u.email, u.id, u.first_name, u.last_name
      FROM user_entity u
-     WHERE u.email = $1`,
-    [email],
+     WHERE u.email = $1 AND u.realm_id = $2`,
+    [email, await db.getRealmId()],
   )
   return users.rows[0] || null
 }

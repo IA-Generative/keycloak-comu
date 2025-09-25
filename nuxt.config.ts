@@ -16,6 +16,7 @@ export default defineNuxtConfig({
       keycloakUrl: process.env.KEYCLOAK_URL,
       keycloakRealm: process.env.KEYCLOAK_REALM,
       keycloakClientId: process.env.KEYCLOAK_CLIENT_ID,
+      keycloakRootGroupPath: process.env.KEYCLOAK_ROOT_GROUP_PATH || '/',
     },
     keycloakAdmin: process.env.KEYCLOAK_ADMIN,
     keycloakAdminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD,
