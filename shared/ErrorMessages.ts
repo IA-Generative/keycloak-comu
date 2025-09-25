@@ -22,6 +22,10 @@ const ERROR_MESSAGES = {
     en: 'Cannot demote a user with a higher access level than yours',
     fr: 'Impossible de rétrograder un utilisateur avec un niveau d\'accès supérieur au vôtre',
   },
+  VALIDATION_ERROR: {
+    en: 'Validation error',
+    fr: 'Erreur de validation',
+  },
   GROUP_ALREADY_EXISTS: {
     en: 'A group with this name already exists',
     fr: 'Un groupe avec ce nom existe déjà',
