@@ -128,9 +128,9 @@ const rows = computed(() => {
         Actualiser
       </DsfrButton>
     </div>
-    <div class="flex xl:flex-row flex-col gap-16">
+    <div class="flex xl:flex-row flex-col gap-x-16">
       <div>
-        <h2>Gérer les membres</h2>
+        <h2>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h2>
         <DsfrTable
           no-caption
           title="Membres du groupe"
@@ -138,7 +138,10 @@ const rows = computed(() => {
           :rows="rows"
         />
       </div>
-      <div v-if="amIOwner && group.invites?.length">
+      <div
+        v-if="amIOwner && group.invites?.length"
+        class="mb-16 xl:mb-0"
+      >
         <h2>Invitations en attente</h2>
         <DsfrAlert
           v-for="invite in group.invites"
