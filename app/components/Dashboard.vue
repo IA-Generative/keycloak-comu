@@ -1,20 +1,20 @@
 <script setup lang="ts">
-import { DsfrAlert, DsfrButton, DsfrFieldset, DsfrSearchBar, DsfrTable, DsfrTile } from '@gouvminint/vue-dsfr'
-import fetch from '~/composables/01.useApi.js'
+import { DsfrAlert, DsfrButton, DsfrTile } from '@gouvminint/vue-dsfr'
+import fetcher from '~/composables/useApi.js'
 
 const groups = ref<ListGroupDtoType>({ invited: [], joined: [] })
 
 onBeforeMount(getGroups)
 
 async function getGroups() {
-  const data = await fetch('/api/v1/groups/list', {
+  const data = await fetcher('/api/v1/groups/list', {
     method: 'get',
   })
   groups.value = data
 }
 
 async function acceptInvite(groupId: string) {
-  await fetch('/api/v1/groups/invites/accept', {
+  await fetcher('/api/v1/groups/invites/accept', {
     method: 'post',
     body: { groupId },
   })
@@ -22,36 +22,12 @@ async function acceptInvite(groupId: string) {
 }
 
 async function declineInvite(groupId: string) {
-  await fetch('/api/v1/groups/invites/decline', {
+  await fetcher('/api/v1/groups/invites/decline', {
     method: 'post',
     body: { groupId },
   })
   getGroups()
 }
-
-const searchQuery = ref('')
-const searchResults = ref<PaginatedResponse<GroupDtoType>>({ results: [], total: 0, page: 1, pageSize: 10 })
-const searchRows = computed(() => [
-  ...searchResults.value.results.map(group => ([
-    group.name,
-    group.owners.map(owner => owner.email).join(', '),
-  ])),
-])
-const debouncedSearch = debounce((search: string) => {
-  if (!search) {
-    searchResults.value = { results: [], total: 0, page: 1, pageSize: 10 }
-    return
-  }
-  fetch('/api/v1/groups/search', {
-    method: 'post',
-    body: { search },
-  }).then((results) => {
-    searchResults.value = results
-  })
-}, 300)
-watch(searchQuery, (newQuery) => {
-  debouncedSearch(newQuery)
-})
 </script>
 
 <template>
@@ -82,43 +58,8 @@ watch(searchQuery, (newQuery) => {
         </DsfrButton>
       </DsfrAlert>
     </template>
-    <DsfrFieldset legend="Rechercher un groupe">
-      <DsfrSearchBar
-        id="group-search"
-        :model-value="searchQuery"
-        label="Nom du groupe"
-        hint="Rechercher un groupe par son nom"
-        type="text"
-        name="group-search"
-        @update:model-value="(value) => searchQuery = value"
-      />
-    </DsfrFieldset>
-    <template v-if="searchResults.results.length > 0">
-      <DsfrTable
-        class="w-full"
-        caption="Résultats de la recherche"
-        no-caption
-        title="Résultats de la recherche"
-        :search-rows
-        :headers="['Nom du groupe', 'Propriétaires']"
-        :rows="searchRows"
-      />
-    </template>
-    <template v-else-if="searchQuery">
-      <DsfrAlert
-        type="info"
-        class="fr-mb-2w"
-      >
-        Aucun groupe trouvé pour la recherche "{{ searchQuery }}"
-        <DsfrButton
-          size="small"
-          class="fr-ml-2w"
-          @click="() => createGroup(searchQuery)"
-        >
-          Le créer
-        </DsfrButton>
-      </DsfrAlert>
-    </template>
+
+    <GroupSearchTable />
 
     <div class="flex justify-between items-center mb-4 mt-8">
       <h2>Vos Groupes</h2>

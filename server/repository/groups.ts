@@ -23,7 +23,7 @@ interface SearchParams {
   skip: number
   exact?: boolean
 }
-export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number }> {
+export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact
     ? await db.query(
         'SELECT * FROM keycloak_group WHERE name = $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
@@ -31,7 +31,7 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
       )
     : await db.query(
         'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 LIMIT $3 OFFSET $4',
-        [`%${query}%`, await db.getRealmId(), limit, skip],
+        [`%${query}%`, await db.getRealmId(), limit + 1, skip],
       )
 
   const owners = await db.query(
@@ -42,17 +42,19 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
     [OWNER_ATTRIBUTE, groupsResult.rows.map((g: GroupSearchResult) => g.id)],
   )
 
-  const groups = groupsResult.rows.map((group: GroupSearchResult) => ({
-    id: group.id,
-    name: group.name,
-    attributes: {},
-    owners: owners.rows.filter((owner: { group_id: string }) => owner.group_id === group.id),
-  }))
+  const groups = groupsResult.rows
+    .slice(0, limit)
+    .map((group: GroupSearchResult) => ({
+      id: group.id,
+      name: group.name,
+      attributes: {},
+      owners: owners.rows.filter((owner: { group_id: string }) => owner.group_id === group.id),
+    }))
   const total = await db.query(
     'SELECT count(*) FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2',
     [`%${query}%`, await db.getRealmId()],
   )
-  return { groups, total: total.rows[0].count }
+  return { groups, total: total.rows[0].count, next: groupsResult.rows.length > limit }
 }
 
 export async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[] }> {

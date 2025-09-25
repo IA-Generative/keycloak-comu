@@ -1,5 +1,5 @@
 // A wrapper around $fetch that supports path parameters like :id
-
+import { addMessage } from '#imports'
 import ERROR_MESSAGES from '~~/shared/ErrorMessages.js'
 
 // Usage: await fetcher('/api/v1/groups/:id', { params: { id: '123' } })
@@ -44,6 +44,6 @@ function preparedFetch<F extends (...args: any[]) => any>(fn: F): F {
   }) as F
 }
 
-const fetch = preparedFetch($fetch)
+const fetcher = preparedFetch($fetch)
 
-export default fetch
+export default fetcher

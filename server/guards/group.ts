@@ -21,7 +21,7 @@ export function guard({
   requiredLevel,
   group,
   requestorId,
-}: GuardParams) {
+}: GuardParams): Level {
   // Récupére le groupe auprès de la base de données
   if (!group) {
     throw UnknownGroupError
@@ -42,4 +42,5 @@ export function guard({
   if (requestorLevel < requiredLevel) {
     throw UnknownGroupError
   }
+  return requestorLevel
 }

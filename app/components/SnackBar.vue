@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { DsfrAlert } from '@gouvminint/vue-dsfr'
+import { removeMessage, snackbarMessages } from '#imports'
 
 const messages = computed<Set<SnackBarMessage>>(() => snackbarMessages.value)
 </script>

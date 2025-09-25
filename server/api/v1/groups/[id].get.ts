@@ -7,10 +7,12 @@ export default defineEventHandler(async (event): Promise<GroupDtoType | null> =>
 
   const group = await repo.getGroupDetails(params.id as string)
 
-  guard({ requiredLevel: LEVEL.MEMBER, group, requestorId })
+  const requestorLevel = guard({ requiredLevel: LEVEL.GUEST, group, requestorId })
 
   return {
     ...group!,
+    invites: requestorLevel >= LEVEL.ADMIN ? group!.invites : [],
+    members: requestorLevel >= LEVEL.MEMBER ? group!.members : [],
     owners: group!.members.filter(member => group!.attributes.owner?.includes(member.id)),
   }
 })

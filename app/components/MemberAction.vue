@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { DsfrButton } from '@gouvminint/vue-dsfr'
-import fetch from '~/composables/01.useApi.js'
+import fetcher from '~/composables/useApi.js'
 
 const props = defineProps<{
   member: {
@@ -21,7 +21,7 @@ const emits = defineEmits<{
 const { $keycloak } = useNuxtApp()
 
 async function kickMember(userId: string) {
-  await fetch('/api/v1/groups/membership/kick', {
+  await fetcher('/api/v1/groups/membership/kick', {
     method: 'post',
     body: { groupId: props.group.id, userId },
   })
@@ -29,7 +29,7 @@ async function kickMember(userId: string) {
 }
 
 async function demoteUser(userId: string) {
-  await fetch('/api/v1/groups/membership/demote', {
+  await fetcher('/api/v1/groups/membership/demote', {
     method: 'post',
     body: { groupId: props.group.id, userId },
   })
@@ -37,7 +37,7 @@ async function demoteUser(userId: string) {
 }
 
 async function promoteUser(userId: string) {
-  await fetch('/api/v1/groups/membership/promote', {
+  await fetcher('/api/v1/groups/membership/promote', {
     method: 'post',
     body: { groupId: props.group.id, userId },
   })

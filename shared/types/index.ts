@@ -12,6 +12,7 @@ export interface PaginatedResponse<T> {
   total: number
   page: number
   pageSize: number
+  next?: boolean
 }
 
 export type ErrorMessageKeys = keyof typeof ERROR_MESSAGES

@@ -2,13 +2,13 @@
 import { DsfrButton, DsfrFieldset, DsfrInput, DsfrTable } from '@gouvminint/vue-dsfr'
 import type { DsfrTableRowProps } from '@gouvminint/vue-dsfr'
 import MemberAction from '../../components/MemberAction.vue'
-import fetch from '~/composables/01.useApi.js'
+import fetcher from '~/composables/useApi.js'
 
 const id = useRoute().params.id
 
 const group = ref<GroupDtoType | null>(null)
 async function fetchData() {
-  const data = await fetch(`/api/v1/groups/:id` as '/api/v1/groups/:id', {
+  const data = await fetcher(`/api/v1/groups/:id` as '/api/v1/groups/:id', {
     method: 'get',
     params: { id },
   })
@@ -19,7 +19,7 @@ onBeforeMount(fetchData)
 const newMemberEmail = ref('')
 async function addMember() {
   if (!newMemberEmail.value || typeof id !== 'string') return
-  await fetch('/api/v1/groups/invites/create', {
+  await fetcher('/api/v1/groups/invites/create', {
     method: 'post',
     body: { groupId: id, email: newMemberEmail.value },
   })
@@ -34,7 +34,7 @@ const amIOwner = computed(() => {
 })
 
 async function deleteGroup() {
-  const data = await fetch(`/api/v1/groups/delete`, {
+  const data = await fetcher(`/api/v1/groups/delete`, {
     method: 'post',
     body: { groupId: id },
   })
@@ -44,7 +44,7 @@ async function deleteGroup() {
 
 async function uninviteMember(userId: string) {
   if (typeof id !== 'string') return
-  await fetch('/api/v1/groups/invites/cancel', {
+  await fetcher('/api/v1/groups/invites/cancel', {
     method: 'post',
     body: { groupId: id, userId },
   })
@@ -54,7 +54,7 @@ async function uninviteMember(userId: string) {
 async function leaveGroup() {
   const { $router } = useNuxtApp()
   if (typeof id !== 'string') return
-  await fetch('/api/v1/groups/membership/leave', {
+  await fetcher('/api/v1/groups/membership/leave', {
     method: 'post',
     body: { groupId: id },
   })

@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { DsfrButton, DsfrFieldset, DsfrInputGroup } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
-import fetch from '~/composables/01.useApi.js'
+import fetcher from '~/composables/useApi.js'
+import createGroup from '~/composables/createGroup.js'
 
 const groupName = ref('')
 const nameAvailabilty = ref<'available' | 'unavailable' | 'checking' | 'waiting'>('waiting')
@@ -13,7 +14,7 @@ const availableMessages: Record<typeof nameAvailabilty.value, string> = {
   waiting: '',
 }
 const debouncedSearch = debounce(() => {
-  fetch('/api/v1/groups/search', {
+  fetcher('/api/v1/groups/search', {
     method: 'post',
     body: { search: groupName.value, exact: true },
   }).then((data) => {
