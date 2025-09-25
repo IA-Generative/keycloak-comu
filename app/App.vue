@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import '@gouvfr/dsfr/dist/dsfr.min.css' // Import des styles du DSFR //
 import '@gouvminint/vue-dsfr/styles'
-import { DsfrHeader } from '@gouvminint/vue-dsfr'
+import { DsfrFooter, DsfrHeader, useScheme } from '@gouvminint/vue-dsfr'
 import type { DsfrHeaderMenuLinkProps } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
 import type { KeycloakTokenParsed } from 'keycloak-js'
@@ -50,17 +50,56 @@ watch(loggedIn, (newVal) => {
     ]
   }
 }, { immediate: true })
+
+const themeLight = {
+  label: 'Clair',
+  next: 'dark',
+}
+const themeDark = {
+  label: 'Sombre',
+  next: 'system',
+}
+const themes = {
+  light: themeLight,
+  dark: themeDark,
+}
+
+// @ts-expect-error
+const { setScheme, theme } = useScheme()
+function changeTheme() {
+  setScheme(theme.value === 'light' ? 'dark' : 'light')
+}
+
+const afterMandatoryLinks = computed(() => {
+  return [
+    {
+      label: `Theme: ${themes[theme.value as keyof typeof themes].label}`,
+      button: true,
+      to: '#',
+      onclick: changeTheme,
+    },
+  ]
+})
 </script>
 
 <template>
-  <DsfrHeader
-    home-to="/"
-    :quick-links="quickLinks"
-    logo-text="Keycloak Comu"
-  />
+  <div class="flex flex-col min-h-screen">
+    <DsfrHeader
+      home-to="/"
+      :quick-links="quickLinks"
+      logo-text="Keycloak Comu"
+      class="grow-0"
+    />
 
-  <div class="fr-container fr-mt-4w">
-    <NuxtPage v-if="loggedIn" />
-    <SnackBar />
+    <div class="fr-container fr-mt-4w grow">
+      <NuxtPage v-if="loggedIn" />
+      <SnackBar />
+    </div>
+    <div class="grow-0 bottom-0">
+      <DsfrFooter
+        class="fr-mt-8w"
+        :after-mandatory-links="afterMandatoryLinks"
+      />
+    </div>
   </div>
 </template>

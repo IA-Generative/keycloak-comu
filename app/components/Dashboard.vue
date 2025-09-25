@@ -72,7 +72,7 @@ async function declineInvite(groupId: string) {
         </DsfrButton>
       </div>
     </div>
-    <div class="gap-8 flex flex-wrap">
+    <div class="gap-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
       <template v-if="groups.joined.length === 0">
         <DsfrAlert
           type="info"
@@ -85,7 +85,6 @@ async function declineInvite(groupId: string) {
         v-for="group in groups.joined"
         :key="group.id"
         :to="`/g/${group.id}`"
-        class="h-full"
         :title="group.name"
         horizontal
       />
