@@ -6,6 +6,10 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  VALIDATION_ERROR: {
+    en: 'Validation error',
+    fr: 'Erreur de validation',
+  },
   GROUP_ALREADY_EXISTS: {
     en: 'A group with this name already exists',
     fr: 'Un groupe avec ce nom existe déjà',
