@@ -14,17 +14,17 @@ export default defineNuxtConfig({
   runtimeConfig: {
     isProd: !(process.env.NODE_ENV !== 'production'),
     public: {
-      keycloakUrl: process.env.KEYCLOAK_URL,
-      keycloakRealm: process.env.KEYCLOAK_REALM,
-      keycloakClientId: process.env.KEYCLOAK_CLIENT_ID,
-      keycloakRootGroupPath: process.env.KEYCLOAK_ROOT_GROUP_PATH || '/',
+      keycloakUrl: process.env.NUXT_PUBLIC_KEYCLOAK_URL,
+      keycloakRealm: process.env.NUXT_PUBLIC_KEYCLOAK_REALM,
+      keycloakClientId: process.env.NUXT_PUBLIC_KEYCLOAK_CLIENT_ID,
+      keycloakRootGroupPath: process.env.NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH || '/',
     },
-    keycloakAdmin: process.env.KEYCLOAK_ADMIN,
-    keycloakAdminPassword: process.env.KEYCLOAK_ADMIN_PASSWORD,
+    keycloakAdmin: process.env.NUXT_KEYCLOAK_ADMIN,
+    keycloakAdminPassword: process.env.NUXT_KEYCLOAK_ADMIN_PASSWORD,
   },
   devServer: {
     host: '0.0.0.0',
-    port: import.meta.env.API_PORT ?? 8080,
+    port: import.meta.env.NUXT_PUBLIC_API_PORT ?? 8080,
   },
   compatibilityDate: '2025-07-15',
   serverHandlers: [
