@@ -1,17 +1,17 @@
-import { z } from 'zod'
 import repo from '../../../repository'
 import createResponseError from '~~/server/utils/error.js'
 import { LEVEL } from '~~/server/guards/group.js'
 
-export const CreateGroupDtoSchema = z.object({
-  name: z.string(),
-})
-export type CreateGroupDtoType = z.infer<typeof CreateGroupDtoSchema>
-
 export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id' | 'name'>> => {
   const session = event.context
 
-  const body = await readValidatedBody(event, body => CreateGroupDtoSchema.parse(body))
+  const payload = await readBody(event)
+  const parseResult = CreateGroupDtoSchema.safeParse(payload)
+  if (!parseResult.success) {
+    throw createResponseError({ statusCode: 400, data: 'VALIDATION_ERROR' })
+  }
+
+  const body = parseResult.data
 
   const existingGroup = await repo.getGroupByName(body.name)
   if (existingGroup) {
@@ -23,5 +23,10 @@ export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id'
   await repo.setUserLevelInGroup(session.user.sub, group.id, LEVEL.OWNER)
   const detailedGroup = await repo.getGroupDetails(group.id)
 
-  return detailedGroup!
+  if (!detailedGroup) {
+    return { id: group.id, name: group.name }
+  }
+  return { id: detailedGroup.id, name: detailedGroup.name }
+
+  // return detailedGroup!
 })
