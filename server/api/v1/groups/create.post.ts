@@ -1,19 +1,16 @@
-import { ZodError } from 'zod'
 import repo from '../../../repository'
 import createResponseError from '~~/server/utils/error.js'
 
 export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id' | 'name'>> => {
   const session = event.context
 
-  let body
-  try {
-    body = await readValidatedBody(event, b => CreateGroupDtoSchema.parse(b))
-  } catch (err: any) {
-    if (err instanceof ZodError) {
-      throw createResponseError({ statusCode: 400, data: 'VALIDATION_ERROR' })
-    }
-    throw err
+  const payload = await readBody(event)
+  const parseResult = CreateGroupDtoSchema.safeParse(payload)
+  if (!parseResult.success) {
+    throw createResponseError({ statusCode: 400, data: 'VALIDATION_ERROR' })
   }
+
+  const body = parseResult.data
 
   const existingGroup = await repo.getGroupByName(body.name)
   if (existingGroup) {
@@ -25,5 +22,10 @@ export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id'
   await repo.addOwnerToGroup(session.user.sub, group.id)
   const detailedGroup = await repo.getGroupDetails(group.id)
 
-  return detailedGroup!
+  if (!detailedGroup) {
+    return { id: group.id, name: group.name }
+  }
+  return { id: detailedGroup.id, name: detailedGroup.name }
+
+  // return detailedGroup!
 })
