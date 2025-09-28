@@ -12,51 +12,17 @@ async function getGroups() {
   })
   groups.value = data
 }
-
-async function acceptInvite(groupId: string) {
-  await fetcher('/api/v1/groups/invites/accept', {
-    method: 'post',
-    body: { groupId },
-  })
-  getGroups()
-}
-
-async function declineInvite(groupId: string) {
-  await fetcher('/api/v1/groups/invites/decline', {
-    method: 'post',
-    body: { groupId },
-  })
-  getGroups()
-}
 </script>
 
 <template>
   <div class="fr-container fr-mt-4w">
     <template v-if="groups.invited.length > 0">
-      <DsfrAlert
+      <InviteAlert
         v-for="group in groups.invited"
         :key="group.id"
-        small
-        type="info"
-        class="fr-mb-2w"
-      >
-        Vous avez été invité à rejoindre le groupe <strong>{{ group.name }}</strong>.
-        <DsfrButton
-          size="small"
-          class="fr-ml-2w"
-          @click="acceptInvite(group.id)"
-        >
-          Accepter
-        </DsfrButton>
-        <DsfrButton
-          size="small"
-          secondary
-          class="fr-ml-2w"
-          @click="declineInvite(group.id) "
-        >
-          Refuser
-        </DsfrButton>
-      </DsfrAlert>
+        :group="group"
+        @refresh="getGroups"
+      />
     </template>
 
     <GroupSearchTable />

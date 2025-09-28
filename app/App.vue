@@ -44,7 +44,6 @@ watch(loggedIn, (newVal) => {
   if (newVal) {
     quickLinks.value = [
       { text: 'Accueil', to: '/' },
-      { text: 'Créer un groupe', to: '/create-group' },
       { text: getUserName($keycloak.tokenParsed ?? {}), to: '/profile' },
       { text: 'Déconnexion', to: '#', onClick: logout },
     ]

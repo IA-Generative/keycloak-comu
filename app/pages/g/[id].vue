@@ -28,7 +28,7 @@ async function addMember() {
   await fetchData()
 }
 
-const { $keycloak } = useNuxtApp()
+const { $keycloak, $router } = useNuxtApp()
 
 const mylevel = computed(() => group.value?.members.find(m => m.id === $keycloak?.tokenParsed?.sub)?.membershipLevel || 0)
 
@@ -41,7 +41,7 @@ async function deleteGroup() {
     method: 'post',
     body: { groupId: id },
   })
-  window.location.assign('/')
+  $router.push('/')
   return data
 }
 
@@ -107,9 +107,10 @@ const headers = [
     <div class="flex justify-between items-center mb-4">
       <h2>
         <span
+          v-if="config.public.keycloakRootGroupPath !== '/'"
           class="path-prefix"
           title="Groupe racine"
-        >{{ config.public.keycloakRootGroupPath }}{{ config.public.keycloakRootGroupPath.length > 1 ? '/' : '' }}</span>
+        >{{ config.public.keycloakRootGroupPath }}</span>
         <span title="Nom du groupe">{{ group.name }}</span>
       </h2>
       <DsfrButton
@@ -178,10 +179,16 @@ const headers = [
           </DsfrAlert>
         </div>
       </div>
+      <div v-else-if="group.invites.find(invite => invite.id === $keycloak?.tokenParsed?.sub)">
+        <InviteAlert
+          :group="group"
+          @refresh="fetchData"
+        />
+      </div>
     </div>
     <!-- Formulaire d'ajout de membre -->
     <div
-      v-if="amIOwner"
+      v-if="mylevel >= 20"
     >
       <h3>Ajouter un membre</h3>
       <form @submit.prevent="addMember">
@@ -230,6 +237,5 @@ const headers = [
 <style scoped>
 .path-prefix {
   opacity: 0.6;
-  font-size: 1rem;
 }
 </style>

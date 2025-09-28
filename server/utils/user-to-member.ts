@@ -18,7 +18,11 @@ function findMembershipLevel(
   return LEVEL.GUEST
 }
 
-export function groupDetailToDto(group: GroupDetails, requestorLevel: Level): GroupDtoType {
+interface Requestor {
+  userId: string
+  membershipLevel: Level
+}
+export function groupDetailToDto(group: GroupDetails, requestor: Requestor): GroupDtoType {
   const { id, name, members, invites } = group
 
   let membersWithLevel = members.map(member => ({
@@ -26,7 +30,7 @@ export function groupDetailToDto(group: GroupDetails, requestorLevel: Level): Gr
     membershipLevel: findMembershipLevel(group, member.id),
   }))
 
-  if (requestorLevel < LEVEL.GUEST) {
+  if (requestor.membershipLevel <= LEVEL.GUEST) {
     membersWithLevel = membersWithLevel.filter(member => member.membershipLevel >= LEVEL.ADMIN)
   }
 
@@ -34,6 +38,6 @@ export function groupDetailToDto(group: GroupDetails, requestorLevel: Level): Gr
     id,
     name,
     members: membersWithLevel,
-    invites,
+    invites: requestor.membershipLevel >= LEVEL.MEMBER ? invites : invites.filter(invite => invite.id === requestor.userId),
   }
 }

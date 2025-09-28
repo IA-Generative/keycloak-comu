@@ -3,7 +3,7 @@ import repo from '../../../../repository/index.js'
 import createResponseError from '~~/server/utils/error.js'
 
 export const AcceptGroupInviteDtoSchema = z.object({
-  groupId: z.uuid(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
 })
 export type AcceptGroupInviteDtoType = z.infer<typeof AcceptGroupInviteDtoSchema>
 

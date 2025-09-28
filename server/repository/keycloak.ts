@@ -52,7 +52,9 @@ async function setupKeycloakClient(retries = 5) {
       username: runtimeConfig.keycloakAdmin,
       password: runtimeConfig.keycloakAdminPassword,
     })
-    console.log('Keycloak client connected')
+    if (retries !== 5) {
+      console.log('Keycloak client reconnected')
+    }
     if (!rootGroup) {
       await setupRootGroup(runtimeConfig.public.keycloakRootGroupPath)
     }
@@ -71,7 +73,6 @@ async function setupKeycloakClient(retries = 5) {
   const token = JSON.parse(atob(kcClient.accessToken!.split('.')[1]))
   const lifeSpan = Math.floor(token.exp * 1000 - Date.now())
   const nextAuth = lifeSpan * 0.9
-  console.log(`next Keycloak auth in ${nextAuth} milliseconds`)
   setTimeout(() => {
     setupKeycloakClient()
   }, nextAuth)

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import repo from '../../../repository'
+import type { UserRow } from '~~/server/repository/types.js'
 
 export const ListQueryDtoSchema = z.object({
   search: z.string(),
@@ -10,11 +11,11 @@ export const ListQueryDtoSchema = z.object({
 })
 export type ListQueryDtoType = z.infer<typeof ListQueryDtoSchema>
 
-export default defineEventHandler(async (event): Promise<PaginatedResponse<GroupDtoType>> => {
+export default defineEventHandler(async (event): Promise<PaginatedResponse<{ id: string, name: string, owners: UserRow[] }>> => {
   const searchParam = await readValidatedBody(event, body => ListQueryDtoSchema.parse(body))
 
   // Search logic here
-  const { groups, total } = await repo.searchGroups({
+  const { groups, total, next } = await repo.searchGroups({
     query: searchParam.search,
     exact: searchParam.exact,
     skip: searchParam.page * searchParam.pageSize,
@@ -31,5 +32,6 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<Group
     page: searchParam.page,
     pageSize: searchParam.pageSize,
     total,
+    next,
   }
 })

@@ -3,8 +3,8 @@ import repo from '../../../../repository/index.js'
 import { guard, LEVEL } from '../../../../guards/group.js'
 
 export const GroupInviteCancelDtoSchema = z.object({
-  groupId: z.string(),
-  userId: z.string(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
+  userId: z.uuid({ error: 'INVALID_USER_ID' }),
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCancelDtoSchema>
 
