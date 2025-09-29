@@ -2,12 +2,16 @@ import { z } from 'zod'
 import repo from '../../../../repository'
 import { guard, LEVEL } from '../../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
+import { sendMail } from '~~/server/composables/mailer/client.js'
+import { generateGroupInviteEmail } from '~~/server/composables/mailer/body-builder.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
   email: z.string(),
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
+
+const runtimeConfig = useRuntimeConfig()
 
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, body => GroupInviteCreateDtoSchema.parse(body))
@@ -24,4 +28,11 @@ export default defineEventHandler(async (event) => {
     return
   }
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
+  if (runtimeConfig.enableEmailInvite) {
+    await sendMail({
+      to: body.email,
+      subject: `Vous avez été invité à rejoindre le groupe ${group!.name}`,
+      html: generateGroupInviteEmail(group!),
+    })
+  }
 })
