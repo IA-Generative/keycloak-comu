@@ -22,6 +22,5 @@ export default defineEventHandler(async (event) => {
   }
   await repo.addMemberToGroup(userId, result.groupId)
   await repo.uninviteMemberFromGroup(userId, result.groupId)
-
-  return { message: `Group ${result.groupId}` }
+  await repo.cancelRequestJoinToGroup(userId, result.groupId)
 })

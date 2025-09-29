@@ -7,7 +7,10 @@ const smtpClient = nodemailer.createTransport({
   port: Number(runtimeConfig.smtpPort),
 })
 
-export async function sendMail({ to, subject, text, html }: { to: string, subject: string, text?: string, html: string }) {
+export async function sendMail({ to, subject, text, html }: { to: string | string[], subject: string, text?: string, html: string }) {
+  if (!runtimeConfig.enableEmailInvite) {
+    return
+  }
   await smtpClient.sendMail({
     from: runtimeConfig.smtpFrom,
     to,

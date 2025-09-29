@@ -6,6 +6,18 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  USER_ALREADY_MEMBER: {
+    en: 'User is already a member of the group',
+    fr: 'L\'utilisateur est déjà membre du groupe',
+  },
+  USER_NOT_REQUESTING: {
+    en: 'User is not requesting to join the group',
+    fr: 'L\'utilisateur ne demande pas à rejoindre le groupe',
+  },
+  USER_ALREADY_REQUESTING: {
+    en: 'User is already requesting to join the group',
+    fr: 'L\'utilisateur demande déjà à rejoindre le groupe',
+  },
   UNKNOWN_ERROR: {
     en: 'An unknown error occurred',
     fr: 'Une erreur inconnue est survenue',
