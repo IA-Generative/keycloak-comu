@@ -61,9 +61,6 @@ RUN pnpm postinstall
 ENV NODE_ENV=production
 RUN pnpm build
 
-# Clean up development dependencies to reduce size
-RUN pnpm prune --prod
-
 
 # Stage 5: Production stage with security hardening
 # -----------------------------------------------------------------------------
@@ -81,7 +78,6 @@ RUN chown nuxt:nodejs /app
 
 # Copy built application and dependencies
 COPY --from=builder --chown=nuxt:nodejs /app/.output /app/.output
-COPY --from=builder --chown=nuxt:nodejs /app/node_modules /app/node_modules
 
 # Security: Remove unnecessary packages and create non-writable filesystem
 RUN rm -rf /tmp/* /var/cache/apk/* && \
@@ -98,8 +94,6 @@ EXPOSE 8080
 ENV NODE_ENV=production
 ENV NITRO_HOST=0.0.0.0
 ENV NITRO_PORT=8080
-ENV NUXT_HOST=0.0.0.0
-ENV NUXT_PORT=8080
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \

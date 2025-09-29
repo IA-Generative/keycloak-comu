@@ -2,12 +2,14 @@
 import { Pool } from 'pg'
 import { getRootGroup } from './keycloak.js'
 
+const runtimeConfig = useRuntimeConfig()
+
 const pool = new Pool({
-  user: 'keycloak',
-  host: 'localhost',
-  database: 'keycloak',
-  password: 'password',
-  port: 5432,
+  user: runtimeConfig.database.user,
+  host: runtimeConfig.database.host,
+  database: runtimeConfig.database.name,
+  password: runtimeConfig.database.password,
+  port: runtimeConfig.database.port ? Number.parseInt(runtimeConfig.database.port, 10) : 5432,
 })
 
 export function query(text: string, params: any[]) {
@@ -17,7 +19,7 @@ export function query(text: string, params: any[]) {
 let realmId = ''
 export async function getRealmId(): Promise<string> {
   if (realmId) return realmId
-  const realmName = process.env.NUXT_PUBLIC_KEYCLOAK_REALM
+  const realmName = runtimeConfig.public.keycloakRealm
   if (!realmName) throw new Error('NUXT_PUBLIC_KEYCLOAK_REALM env var is not set')
   const res = await query('SELECT id FROM realm WHERE name = $1', [realmName])
   if (res.rows.length === 0) throw new Error(`Realm "${realmName}" not found`)

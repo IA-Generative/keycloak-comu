@@ -3,8 +3,8 @@ import nodemailer from 'nodemailer'
 const runtimeConfig = useRuntimeConfig()
 
 const smtpClient = nodemailer.createTransport({
-  host: runtimeConfig.smtpHost,
-  port: Number(runtimeConfig.smtpPort),
+  host: runtimeConfig.smtp.host,
+  port: Number(runtimeConfig.smtp.port),
 })
 
 export async function sendMail({ to, subject, text, html }: { to: string | string[], subject: string, text?: string, html: string }) {
@@ -12,7 +12,7 @@ export async function sendMail({ to, subject, text, html }: { to: string | strin
     return
   }
   await smtpClient.sendMail({
-    from: runtimeConfig.smtpFrom,
+    from: runtimeConfig.smtp.from,
     to,
     subject,
     text,

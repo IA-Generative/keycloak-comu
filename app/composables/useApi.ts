@@ -36,9 +36,10 @@ function preparedFetch<F extends (...args: any[]) => any>(fn: F): F {
           }
         } catch (_e) {
           // Not JSON, ignore
-          errorCodes = ['UNKNOWN_ERROR']
           if (err?.data?.data) {
             errorCodes.push(err.data.data as string)
+          } else {
+            errorCodes = ['UNKNOWN_ERROR']
           }
         }
         for (const errorCode of errorCodes) {

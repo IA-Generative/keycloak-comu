@@ -4,7 +4,8 @@ import createResponseError from '../utils/error.js'
 
 const runtimeConfig = useRuntimeConfig()
 const KEYCLOAK_ISSUER = `${runtimeConfig.public.keycloakUrl}/realms/${runtimeConfig.public.keycloakRealm}`
-const JWKS_URI = `${KEYCLOAK_ISSUER}/protocol/openid-connect/certs`
+const KEYCLOAK_INTERNAL_ISSUER = `${runtimeConfig.keycloakInternalUrl}/realms/${runtimeConfig.public.keycloakRealm}`
+const JWKS_URI = `${KEYCLOAK_INTERNAL_ISSUER}/protocol/openid-connect/certs`
 const JWKS = createRemoteJWKSet(new URL(JWKS_URI))
 
 export default defineEventHandler(async (event) => {
