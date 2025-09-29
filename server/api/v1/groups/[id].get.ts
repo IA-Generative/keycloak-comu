@@ -14,5 +14,5 @@ export default defineEventHandler(async (event): Promise<GroupDtoType | null> =>
   const userId = event.context.user.sub
   const requestorLevel = guard({ requiredLevel: LEVEL.GUEST, group, requestorId: userId })
 
-  return groupDetailToDto(group, requestorLevel)
+  return groupDetailToDto(group, { userId, membershipLevel: requestorLevel })
 })

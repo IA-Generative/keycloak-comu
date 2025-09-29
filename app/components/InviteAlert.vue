@@ -1,0 +1,48 @@
+<script setup lang="ts">
+import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
+
+const props = defineProps<{
+  group: ListGroupDtoType['invited'][0]
+}>()
+
+const emits = defineEmits<{
+  (e: 'refresh'): void
+}>()
+
+function triggerAction(fn: (groupId: string) => Promise<void>) {
+  fn(props.group.id).then(() => {
+    emits('refresh')
+  })
+}
+</script>
+
+<template>
+  <DsfrAlert
+    small
+    type="info"
+    class="fr-mb-2w flex flex-wrap"
+  >
+    <div>
+      Vous avez été invité à rejoindre le groupe <NuxtLink :to="`/g/${group.id}`">
+        {{ group.name }}
+      </NuxtLink>.
+    </div>
+    <div>
+      <DsfrButton
+        size="small"
+        class="fr-ml-2w"
+        @click="triggerAction(acceptInvite)"
+      >
+        Accepter
+      </DsfrButton>
+      <DsfrButton
+        size="small"
+        secondary
+        class="fr-ml-2w"
+        @click="triggerAction(declineInvite)"
+      >
+        Refuser
+      </DsfrButton>
+    </div>
+  </DsfrAlert>
+</template>

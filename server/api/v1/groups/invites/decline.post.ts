@@ -2,7 +2,7 @@ import { z } from 'zod'
 import repo from '../../../../repository/index.js'
 
 export const DeclineGroupInviteDtoSchema = z.object({
-  groupId: z.string(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
 })
 export type DeclineGroupInviteDtoType = z.infer<typeof DeclineGroupInviteDtoSchema>
 

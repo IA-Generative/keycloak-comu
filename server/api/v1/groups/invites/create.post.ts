@@ -4,7 +4,7 @@ import { guard, LEVEL } from '../../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
-  groupId: z.string(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
   email: z.string(),
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>

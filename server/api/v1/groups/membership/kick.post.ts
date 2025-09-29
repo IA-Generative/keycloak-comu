@@ -4,8 +4,8 @@ import repo from '../../../../repository/index.js'
 import createResponseError from '~~/server/utils/error.js'
 
 export const KickGroupMemberDtoSchema = z.object({
-  groupId: z.string(),
-  userId: z.string(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
+  userId: z.uuid({ error: 'INVALID_USER_ID' }),
 })
 export type KickGroupMemberDtoType = z.infer<typeof KickGroupMemberDtoSchema>
 

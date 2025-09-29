@@ -4,9 +4,9 @@ import repo from '../../../../repository/index.js'
 import createResponseError from '~~/server/utils/error.js'
 
 export const ChangeMemberLevelDtoSchema = z.object({
-  groupId: z.string(),
-  userId: z.string(),
-  level: z.enum([10, 20, 30].map(String)).transform(Number),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
+  userId: z.uuid({ error: 'INVALID_USER_ID' }),
+  level: z.enum([10, 20, 30].map(String), { error: 'INVALID_LEVEL' }).transform(Number),
 })
 export type ChangeMemberLevelDtoType = z.infer<typeof ChangeMemberLevelDtoSchema>
 

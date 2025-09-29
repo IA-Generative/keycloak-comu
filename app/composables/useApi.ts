@@ -28,18 +28,30 @@ function preparedFetch<F extends (...args: any[]) => any>(fn: F): F {
     }
     return fn(...args)
       .catch((err: any) => {
-        if (err?.data?.data) {
-          const errorCode = err.data.data as string
+        let errorCodes: string[] = []
+        try {
+          const parsed = JSON.parse(err.data.message)
+          if (Array.isArray(parsed)) {
+            errorCodes = parsed.map((p: { message: string }) => p.message)
+          }
+        } catch (_e) {
+          // Not JSON, ignore
+          errorCodes = ['UNKNOWN_ERROR']
+          if (err?.data?.data) {
+            errorCodes.push(err.data.data as string)
+          }
+        }
+        for (const errorCode of errorCodes) {
           if (errorCode in ERROR_MESSAGES) {
             const messageLocal = ERROR_MESSAGES[errorCode as keyof typeof ERROR_MESSAGES]
             addMessage({ text: messageLocal.fr, type: 'error' })
-            throw new Error(messageLocal.en) // Throw in English for developers
+            console.error(messageLocal.en)
+            continue
           }
           addMessage({ text: err.data.data, type: 'error' })
-          throw new Error(err.data.data)
+          console.error(err.data.data)
         }
-        addMessage({ text: err.message || 'Unknown error', type: 'error' })
-        throw err
+        return Promise.reject(err)
       })
   }) as F
 }

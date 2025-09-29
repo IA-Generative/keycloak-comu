@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { DsfrAlert, DsfrButton, DsfrDataTable, DsfrFieldset, DsfrSearchBar } from '@gouvminint/vue-dsfr'
+import { DsfrButton, DsfrDataTable, DsfrFieldset, DsfrSearchBar } from '@gouvminint/vue-dsfr'
 import type { DsfrDataTableProps } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 import createGroup from '~/composables/createGroup.js'
 
-const pageSize = ref(5)
+const pageSize = ref(8)
 const headers: DsfrDataTableProps['headersRow'] = [
   {
     label: 'Nom du groupe',
@@ -21,15 +21,12 @@ const headers: DsfrDataTableProps['headersRow'] = [
 ]
 const { $router } = useNuxtApp()
 const searchQuery = ref($router.currentRoute.value.query.q as string || '')
-const searchResults = ref<PaginatedResponse<GroupDtoType>>({ results: [], total: 0, page: 0, pageSize: pageSize.value })
+const searchResults = ref<PaginatedResponse<{ id: string, name: string, owners: { email: string }[] }>>({ results: [], total: 0, page: 0, pageSize: pageSize.value, next: false })
 
 const searchRows = computed(() => [
   ...searchResults.value.results.map(group => ({
     name: group.name,
-    owners: group.members
-      .filter(member => member.membershipLevel >= 20)
-      .map(owner => owner.email)
-      .join(', '),
+    owners: group.owners.map(o => o.email).join(', '),
     id: group.id,
   })),
 ])
@@ -53,6 +50,7 @@ const debouncedSearch = debounce(async (search: string) => {
   })
   searchResults.value.results = response.results
   searchResults.value.total = Number(response.total)
+  searchResults.value.next = response.next
 }, 300)
 
 watch(searchQuery, (newQuery) => {
@@ -63,24 +61,54 @@ watch(searchQuery, (newQuery) => {
     $router.push({ query: { q: undefined } })
   }
 }, { immediate: true })
+
+const validation = computed(() => {
+  return CreateGroupDtoSchema.safeParse({ name: searchQuery.value })
+})
 </script>
 
 <template>
   <DsfrFieldset legend="">
-    <DsfrSearchBar
-      id="group-search"
-      :model-value="searchQuery"
-      label="Nom du groupe"
-      hint="Rechercher un groupe par son nom"
-      type="text"
-      name="group-search"
-      placeholder="Rechercher un groupe"
-      @update:model-value="(value) => searchQuery = value"
-    />
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div
+        class="grow"
+      >
+        <DsfrSearchBar
+          id="group-search"
+          :model-value="searchQuery"
+          label="Nom du groupe"
+          hint="Rechercher un groupe par son nom, minimum 3 lettres"
+          type="text"
+          name="group-search"
+          placeholder="Rechercher un groupe, minimum 3 caractères"
+          @update:model-value="(value) => searchQuery = value"
+        />
+      </div>
+
+      <div
+        v-if="searchQuery.length >= 3"
+        class="min-w-10"
+      >
+        <DsfrButton
+          :disabled="searchResults.results.find(g => g.name === searchQuery) !== undefined || !validation.success"
+          :title="validation.error ? (validation.error.issues[0]?.message || '') : ''"
+          @click="() => createGroup(searchQuery)"
+        >
+          Créer le groupe
+        </DsfrButton>
+        <span
+          v-if="validation.error"
+          class="text-red-600 text-sm alert-name"
+        >
+          {{ validation.error.issues[0]?.message }}
+        </span>
+      </div>
+    </div>
   </DsfrFieldset>
   <template v-if="searchResults.results.length > 0">
     <DsfrDataTable
       title="Résultats de la recherche"
+      class="fr-mb-0"
       :headers-row="headers"
       :rows="searchRows"
       row-key="key"
@@ -101,20 +129,28 @@ watch(searchQuery, (newQuery) => {
         </template>
       </template>
     </DsfrDataTable>
-  </template>
-  <template v-else-if="searchQuery">
-    <DsfrAlert
-      type="info"
-      class="fr-mb-2w"
+    <p
+      v-if="searchResults.next"
+      class="mt-4 text-center"
     >
-      Aucun groupe trouvé pour la recherche "{{ searchQuery }}"
-      <DsfrButton
-        size="small"
-        class="fr-ml-2w"
-        @click="() => createGroup(searchQuery)"
-      >
-        Le créer
-      </DsfrButton>
-    </DsfrAlert>
+      D'autres résultats existent. Affinez votre recherche.
+    </p>
+  </template>
+  <template v-else-if="searchQuery.length >= 3">
+    <p
+      type="info"
+      small
+      class="fr-mt-2w text-center"
+    >
+      Aucun groupe trouvé.
+    </p>
   </template>
 </template>
+
+<style lang="css" scoped>
+.alert-name {
+  position: absolute;
+  right: 1rem;
+  bottom: -0.25rem;
+}
+</style>

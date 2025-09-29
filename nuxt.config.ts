@@ -41,4 +41,9 @@ export default defineNuxtConfig({
       standalone: false,
     },
   },
+  nitro: {
+    experimental: {
+      openAPI: true,
+    },
+  },
 })

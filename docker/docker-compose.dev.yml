@@ -27,7 +27,7 @@ services:
 
   keycloak:
     restart: unless-stopped
-    image: docker.io/bitnamilegacy/keycloak:26.1.4
+    image: docker.io/bitnamilegacy/keycloak:26.3.0
     container_name: keycloak-comu_keycloak
     ports:
     - 8090:8080

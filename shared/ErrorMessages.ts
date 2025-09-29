@@ -6,6 +6,22 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  UNKNOWN_ERROR: {
+    en: 'An unknown error occurred',
+    fr: 'Une erreur inconnue est survenue',
+  },
+  INVALID_GROUP_ID: {
+    en: 'Invalid group ID',
+    fr: 'ID de groupe invalide',
+  },
+  INVALID_LEVEL: {
+    en: 'Invalid level',
+    fr: 'Niveau invalide',
+  },
+  INVALID_USER_ID: {
+    en: 'Invalid user ID',
+    fr: 'ID d\'utilisateur invalide',
+  },
   CANNOT_KICK_USER_WITHOUT_RIGHTS: {
     en: 'You do not have the rights to kick a user from this group',
     fr: 'Vous n\'avez pas les droits pour expulser un utilisateur de ce groupe',
@@ -77,10 +93,6 @@ const ERROR_MESSAGES = {
   INVALID_GROUP_NAME: {
     en: 'Invalid group name',
     fr: 'Nom de groupe invalide',
-  },
-  INVALID_USER_ID: {
-    en: 'Invalid user ID',
-    fr: 'ID d\'utilisateur invalide',
   },
   KEYCLOAK_CONNECTION_ERROR: {
     en: 'Keycloak connection error',

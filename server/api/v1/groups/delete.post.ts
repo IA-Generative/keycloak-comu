@@ -4,7 +4,7 @@ import { guard, LEVEL } from '../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 
 export const DeleteGroupDtoSchema = z.object({
-  groupId: z.string(),
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
 })
 export type DeleteGroupDtoType = z.infer<typeof DeleteGroupDtoSchema>
 
