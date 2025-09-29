@@ -71,6 +71,15 @@ services:
     ports:
     - 5432:5432
 
+  mailhog:
+    image: mailhog/mailhog
+    container_name: keycloak-comu_mailhog
+    ports:
+    - 8025:8025
+    - 1025:1025
+    networks:
+    - keycloak-comu
+
 networks:
   keycloak-comu:
     driver: bridge

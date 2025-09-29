@@ -21,6 +21,11 @@ export default defineNuxtConfig({
     },
     keycloakAdmin: process.env.NUXT_KEYCLOAK_ADMIN,
     keycloakAdminPassword: process.env.NUXT_KEYCLOAK_ADMIN_PASSWORD,
+    enableEmailInvite: process.env.NUXT_ENABLE_EMAIL_INVITE === 'true' || false,
+    baseUrl: process.env.NUXT_BASE_URL || 'http://localhost:8080',
+    smtpHost: process.env.NUXT_SMTP_HOST || 'mailhog',
+    smtpPort: process.env.NUXT_SMTP_PORT || '1025',
+    smtpFrom: process.env.NUXT_SMTP_FROM || '<noreply@example.com>',
   },
   devServer: {
     host: '0.0.0.0',
