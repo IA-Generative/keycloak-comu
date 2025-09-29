@@ -7,6 +7,7 @@ const GroupDtoSchema = z.object({
   name: z.string(),
   members: z.array(UserDtoSchema.extend({ membershipLevel: MembershipLevel })),
   invites: z.array(UserDtoSchema),
+  requests: z.array(UserDtoSchema),
 })
 
 export default GroupDtoSchema

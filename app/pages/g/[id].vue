@@ -17,6 +17,7 @@ async function fetchData() {
 }
 
 onBeforeMount(fetchData)
+
 const newMemberEmail = ref('')
 async function addMember() {
   if (!newMemberEmail.value || typeof id !== 'string') return
@@ -30,7 +31,9 @@ async function addMember() {
 
 const { $keycloak, $router } = useNuxtApp()
 
-const mylevel = computed(() => group.value?.members.find(m => m.id === $keycloak?.tokenParsed?.sub)?.membershipLevel || 0)
+const userId = computed(() => $keycloak?.tokenParsed?.sub as string)
+
+const mylevel = computed(() => group.value?.members.find(m => m.id === userId.value)?.membershipLevel || 0)
 
 const amIOwner = computed(() => {
   return mylevel.value === 30
@@ -46,12 +49,10 @@ async function deleteGroup() {
 }
 
 async function uninviteMember(userId: string) {
-  if (typeof id !== 'string') return
   await fetcher('/api/v1/groups/invites/cancel', {
     method: 'post',
     body: { groupId: id, userId },
   })
-  await fetchData()
 }
 
 async function leaveGroup() {
@@ -100,6 +101,10 @@ const headers = [
   { label: 'Email', key: 'email' },
   { label: '', key: 'actions' },
 ]
+
+function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F, ...args: Parameters<F>) {
+  fn(...args).finally(() => fetchData())
+}
 </script>
 
 <template>
@@ -152,32 +157,74 @@ const headers = [
         </DsfrDataTable>
       </div>
       <div
-        v-if="mylevel >= 20 && group.invites?.length"
+        v-if="mylevel >= 20"
         class="mb-16 xl:mb-0"
       >
-        <h3>Invitations en attente</h3>
-        <div
-          class="flex flex-col"
-        >
-          <DsfrAlert
-            v-for="invite in group.invites"
-            :key="invite.id"
-            small
-            type="info"
-            class="fr-mb-2w"
+        <template v-if="group.invites.length > 0">
+          <h3>Invitations en attente</h3>
+          <div
+            class="flex flex-col"
           >
-            {{ invite.email }}
-
-            <DsfrButton
-              size="small"
-              secondary
-              class="fr-ml-2w"
-              @click="uninviteMember(invite.id) "
+            <DsfrAlert
+              v-for="invite in group.invites"
+              :key="invite.id"
+              small
+              type="info"
+              class="fr-mb-2w"
             >
-              Annuler
-            </DsfrButton>
-          </DsfrAlert>
-        </div>
+              <div>
+                {{ invite.email }}
+              </div>
+              <div>
+                <DsfrButton
+                  size="small"
+                  secondary
+                  class="fr-ml-2w"
+                  @click="triggerAction(uninviteMember, invite.id)"
+                >
+                  Annuler
+                </DsfrButton>
+              </div>
+            </DsfrAlert>
+          </div>
+        </template>
+        <template v-if="group.requests.length > 0">
+          <h3 class="fr-mt-8w">
+            Demandes en attente
+          </h3>
+          <div
+            class="flex flex-col"
+          >
+            <DsfrAlert
+              v-for="request in group.requests"
+              :key="request.id"
+              small
+              type="info"
+              class="fr-mb-2w flex flex-row flex-wrap"
+            >
+              <div>
+                {{ request.first_name }} {{ request.last_name }} ({{ request.email }})
+              </div>
+              <div>
+                <DsfrButton
+                  size="small"
+                  class="fr-ml-2w"
+                  @click="triggerAction(acceptRequest, group.id, request.id)"
+                >
+                  Accepter
+                </DsfrButton>
+                <DsfrButton
+                  size="small"
+                  secondary
+                  class="fr-ml-2w"
+                  @click="triggerAction(declineRequest, group.id, request.id)"
+                >
+                  Refuser
+                </DsfrButton>
+              </div>
+            </DsfrAlert>
+          </div>
+        </template>
       </div>
       <div v-else-if="group.invites.find(invite => invite.id === $keycloak?.tokenParsed?.sub)">
         <InviteAlert
@@ -185,6 +232,25 @@ const headers = [
           @refresh="fetchData"
         />
       </div>
+      <template
+        v-else-if="mylevel === 0"
+      >
+        <div v-if="group.requests.find(invite => invite.id === $keycloak?.tokenParsed?.sub)">
+          <p>Vous êtes en attente d'approbation.</p>
+          <DsfrButton
+            label="Annuler la demande d'adhésion au groupe"
+            secondary
+            @click="triggerAction(cancelRequest, group.id, userId)"
+          />
+        </div>
+        <div v-else>
+          <p>Vous ne faites pas partie de ce groupe pour le moment.</p>
+          <DsfrButton
+            label="Demander à rejoindre le groupe"
+            @click="triggerAction(createRequest, group.id)"
+          />
+        </div>
+      </template>
     </div>
     <!-- Formulaire d'ajout de membre -->
     <div

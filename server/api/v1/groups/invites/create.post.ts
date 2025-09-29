@@ -24,15 +24,24 @@ export default defineEventHandler(async (event) => {
     throw createResponseError({ statusCode: 404, data: 'USER_NOT_FOUND' })
   }
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
-  if (group!.members.some(member => member.id === invitee.id)) {
+  if (!group) {
+    throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
+  }
+  if (group.members.some(member => member.id === invitee.id)) {
+    return
+  }
+
+  if (group.requests.find(req => req.id === invitee.id)) {
+    await repo.cancelRequestJoinToGroup(invitee.id, body.groupId)
+    await repo.addMemberToGroup(invitee.id, body.groupId)
     return
   }
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
   if (runtimeConfig.enableEmailInvite) {
     await sendMail({
       to: body.email,
-      subject: `Vous avez été invité à rejoindre le groupe ${group!.name}`,
-      html: generateGroupInviteEmail(group!),
+      subject: `Vous avez été invité à rejoindre le groupe ${group.name}`,
+      html: generateGroupInviteEmail(group),
     })
   }
 })

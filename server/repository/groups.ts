@@ -6,6 +6,7 @@ import type { Attributes } from './utils.js'
 import { mergeUniqueGroupAttributes } from './utils.js'
 
 const INVITE_ATTRIBUTE = 'invite'
+const REQUEST_ATTRIBUTE = 'request'
 const OWNER_ATTRIBUTE = 'owner'
 const ADMIN_ATTRIBUTE = 'admin'
 export interface GroupSearchResult {
@@ -16,6 +17,7 @@ export interface GroupSearchResult {
 export interface GroupDetails extends GroupSearchResult {
   members: UserRow[]
   invites: UserRow[]
+  requests: UserRow[]
   attributes: Attributes
 }
 
@@ -57,7 +59,7 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
 }
 
 // not exported cause no check on root group hierarchy
-async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[] }> {
+async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[], requests: UserRow[] }> {
   const attributes = await db.query(
     `SELECT ga.name, ga.value, ga.group_id
      FROM group_attribute ga
@@ -74,7 +76,8 @@ async function getGroupAttributesAndMembers(groupId: string): Promise<{ attribut
   )
 
   const invites = await getPendingInvitesForGroup(groupId)
-  return { attributes: attributes.rows, members: members.rows, invites }
+  const requests = await getPendingRequestsForGroup(groupId)
+  return { attributes: attributes.rows, members: members.rows, invites, requests }
 }
 
 // not exported cause no check on root group hierarchy
@@ -155,6 +158,18 @@ async function getPendingInvitesForGroup(groupId: string): Promise<UserRow[]> {
   return users.rows
 }
 
+// not exported cause no check on root group hierarchy
+async function getPendingRequestsForGroup(groupId: string): Promise<UserRow[]> {
+  const users = await db.query(
+    `SELECT u.id, u.email, u.username, u.first_name, u.last_name
+     FROM user_entity u
+     JOIN group_attribute ga ON ga.value = u.id
+     WHERE ga.group_id = $1 AND ga.name = $2`,
+    [groupId, REQUEST_ATTRIBUTE],
+  )
+  return users.rows
+}
+
 export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
@@ -180,13 +195,14 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
     return null
   }
   const group = groupRes.rows[0]
-  const { attributes, members, invites } = await getGroupAttributesAndMembers(groupId)
+  const { attributes, members, invites, requests } = await getGroupAttributesAndMembers(groupId)
   return {
     id: group.id,
     name: group.name,
     attributes: mergeUniqueGroupAttributes(attributes),
     members,
     invites,
+    requests,
   }
 }
 
@@ -261,12 +277,42 @@ export async function uninviteMemberFromGroup(userId: string, groupId: string): 
   }
 }
 
+// exported but no check on root group hierarchy, cause you're supposed to check it before
+export async function requestJoinToGroup(userId: string, groupId: string): Promise<void> {
+  const requests = await getAttribute(groupId, REQUEST_ATTRIBUTE) || []
+
+  if (!requests.includes(userId)) {
+    requests.push(userId)
+    await setAttribute(groupId, REQUEST_ATTRIBUTE, requests)
+  }
+}
+
+// exported but no check on root group hierarchy, cause you're supposed to check it before
+export async function cancelRequestJoinToGroup(userId: string, groupId: string): Promise<void> {
+  const requests = await getAttribute(groupId, REQUEST_ATTRIBUTE) || []
+  const index = requests.indexOf(userId)
+  if (index !== -1) {
+    requests.splice(index, 1)
+    await setAttribute(groupId, REQUEST_ATTRIBUTE, requests)
+  }
+}
+
 export async function getUserByEmail(email: string): Promise<UserRow | null> {
   const users = await db.query(
     `SELECT u.username, u.email, u.id, u.first_name, u.last_name
      FROM user_entity u
      WHERE u.email = $1 AND u.realm_id = $2`,
     [email, await db.getRealmId()],
+  )
+  return users.rows[0] || null
+}
+
+export async function getUserById(id: string): Promise<UserRow | null> {
+  const users = await db.query(
+    `SELECT u.username, u.email, u.id, u.first_name, u.last_name
+     FROM user_entity u
+     WHERE u.id = $1 AND u.realm_id = $2`,
+    [id, await db.getRealmId()],
   )
   return users.rows[0] || null
 }
