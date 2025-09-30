@@ -6,7 +6,7 @@ const runtimeConfig = useRuntimeConfig()
 let rootGroup: Required<GroupRepresentation> | null = null
 
 const kcClient = new KcAdminClient({
-  baseUrl: `${runtimeConfig.public.keycloakUrl}`,
+  baseUrl: runtimeConfig.keycloakInternalUrl,
 })
 kcClient.setConfig({ realmName: runtimeConfig.public.keycloakRealm })
 
@@ -41,7 +41,6 @@ async function setupRootGroup(rootGroupPath: string) {
       description: '',
     }
   }
-  console.log('Root group set to:', rootGroup?.path || '<empty>')
 }
 
 async function setupKeycloakClient(retries = 5) {

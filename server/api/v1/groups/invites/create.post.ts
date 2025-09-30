@@ -11,8 +11,6 @@ export const GroupInviteCreateDtoSchema = z.object({
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 
-const runtimeConfig = useRuntimeConfig()
-
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, body => GroupInviteCreateDtoSchema.parse(body))
 
@@ -37,11 +35,9 @@ export default defineEventHandler(async (event) => {
     return
   }
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
-  if (runtimeConfig.enableEmailInvite) {
-    await sendMail({
-      to: body.email,
-      subject: `Vous avez été invité à rejoindre le groupe ${group.name}`,
-      html: generateGroupInviteEmail(group),
-    })
-  }
+  await sendMail({
+    to: body.email,
+    subject: `Vous avez été invité à rejoindre le groupe ${group.name}`,
+    html: generateGroupInviteEmail(group),
+  })
 })
