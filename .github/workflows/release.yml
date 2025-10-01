@@ -1,0 +1,35 @@
+name: Release
+
+on:
+  push:
+    branches:
+    - main
+
+jobs:
+  release:
+    name: Create new release
+    runs-on: ubuntu-latest
+    outputs:
+      release-created: ${{ steps.release.outputs.release_created }}
+      major-tag: ${{ steps.release.outputs.major }}
+      minor-tag: ${{ steps.release.outputs.minor }}
+      patch-tag: ${{ steps.release.outputs.patch }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 22
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Pre release new version
+      id: release
+      uses: googleapis/release-please-action@v4
+      with:
+        target-branch: ${{ github.ref_name }}
+        token: ${{ secrets.SECRET_GITHUB_TOKEN }}
