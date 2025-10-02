@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.2.0...v0.2.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* update release workflow to include all branches and streamline steps ([bee2c9f](https://github.com/IA-Generative/keycloak-comu/commit/bee2c9f30e5f51cfc93d1f8c8fffe663d24ffb89))
+
 ## [0.2.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.1.0...v0.2.0) (2025-10-01)
 
 
