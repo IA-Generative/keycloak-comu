@@ -6,9 +6,9 @@ const runtimeConfig = useRuntimeConfig()
 let rootGroup: Required<GroupRepresentation> | null = null
 
 const kcClient = new KcAdminClient({
-  baseUrl: runtimeConfig.keycloakInternalUrl,
+  baseUrl: runtimeConfig.keycloak.internalUrl,
 })
-kcClient.setConfig({ realmName: runtimeConfig.public.keycloakRealm })
+kcClient.setConfig({ realmName: runtimeConfig.keycloak.admin.realm })
 
 export function getKcClient() {
   if (!rootGroup) {
@@ -48,14 +48,14 @@ async function setupKeycloakClient(retries = 5) {
     await kcClient.auth({
       clientId: 'admin-cli',
       grantType: 'password',
-      username: runtimeConfig.keycloakAdmin,
-      password: runtimeConfig.keycloakAdminPassword,
+      username: runtimeConfig.keycloak.admin.username,
+      password: runtimeConfig.keycloak.admin.password,
     })
     if (retries !== 5) {
       console.log('Keycloak client reconnected')
     }
     if (!rootGroup) {
-      await setupRootGroup(runtimeConfig.public.keycloakRootGroupPath)
+      await setupRootGroup(runtimeConfig.public.keycloak.rootGroupPath)
     }
   } catch (error) {
     console.error(error)

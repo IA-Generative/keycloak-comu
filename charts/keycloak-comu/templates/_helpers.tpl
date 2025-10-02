@@ -97,16 +97,20 @@ Create BASE_URL var
 - name: NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH
   {{- include "keycloak-comu.valueHandler" .Values.keycloak.rootGroupPath }}
 {{- end }}
-- name: NUXT_KEYCLOAK_ADMIN
+- name: NUXT_KEYCLOAK_ADMIN_USERNAME
   {{- include "keycloak-comu.valueHandler" .Values.keycloak.adminUser }}
 - name: NUXT_KEYCLOAK_ADMIN_PASSWORD
   {{- include "keycloak-comu.valueHandler" .Values.keycloak.adminPassword }}
+{{- if .Values.keycloak.adminRealm }}
+- name: NUXT_KEYCLOAK_ADMIN_REALM
+  {{- include "keycloak-comu.valueHandler" .Values.keycloak.adminRealm }}
+{{- end -}}
 {{- end -}}
 
 {{/* SMTP Settings */}}
 {{- define "keycloak-comu.smtpSettings" -}}
 {{- if .Values.smtp.enable }}
-- name: NUXT_ENABLE_EMAIL_INVITE
+- name: NUXT_SMTP_ENABLE
   value: "true"
 - name: NUXT_SMTP_HOST
   {{- include "keycloak-comu.valueHandler" .Values.smtp.host }}

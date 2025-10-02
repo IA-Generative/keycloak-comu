@@ -1,18 +1,18 @@
 import nodemailer from 'nodemailer'
 
-const runtimeConfig = useRuntimeConfig()
+const { smtp } = useRuntimeConfig()
 
 const smtpClient = nodemailer.createTransport({
-  host: runtimeConfig.smtp.host,
-  port: Number(runtimeConfig.smtp.port),
+  host: smtp.host,
+  port: Number(smtp.port),
 })
 
 export async function sendMail({ to, subject, text, html }: { to: string | string[], subject: string, text?: string, html: string }) {
-  if (!runtimeConfig.enableEmailInvite) {
+  if (!smtp.enable) {
     return
   }
   await smtpClient.sendMail({
-    from: runtimeConfig.smtp.from,
+    from: smtp.from,
     to,
     subject,
     text,

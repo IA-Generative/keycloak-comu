@@ -3,8 +3,8 @@ import { createRemoteJWKSet, jwtVerify } from 'jose'
 import createResponseError from '../utils/error.js'
 
 const runtimeConfig = useRuntimeConfig()
-const KEYCLOAK_ISSUER = `${runtimeConfig.public.keycloakUrl}/realms/${runtimeConfig.public.keycloakRealm}`
-const KEYCLOAK_INTERNAL_ISSUER = `${runtimeConfig.keycloakInternalUrl}/realms/${runtimeConfig.public.keycloakRealm}`
+const KEYCLOAK_ISSUER = `${runtimeConfig.public.keycloak.url}/realms/${runtimeConfig.public.keycloak.realm}`
+const KEYCLOAK_INTERNAL_ISSUER = `${runtimeConfig.keycloak.internalUrl}/realms/${runtimeConfig.public.keycloak.realm}`
 const JWKS_URI = `${KEYCLOAK_INTERNAL_ISSUER}/protocol/openid-connect/certs`
 const JWKS = createRemoteJWKSet(new URL(JWKS_URI))
 
