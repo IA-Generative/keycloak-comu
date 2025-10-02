@@ -87,6 +87,9 @@
   "[html]": {
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
+  "[vue]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
   "[markdown]": {
     "editor.quickSuggestions": {
       "other": true,
@@ -95,7 +98,7 @@
     },
     "editor.formatOnSave": true,
     "editor.formatOnPaste": true,
-    "editor.defaultFormatter": "yzhang.markdown-all-in-one"
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
   },
   // conventional commits
   "conventionalCommits.showNewVersionNotes": false,
