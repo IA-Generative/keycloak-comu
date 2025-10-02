@@ -112,10 +112,10 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F, ...ar
     <div class="flex justify-between items-center mb-4">
       <h2>
         <span
-          v-if="config.public.keycloakRootGroupPath !== '/'"
+          v-if="config.public.keycloak.rootGroupPath !== '/'"
           class="path-prefix"
           title="Groupe racine"
-        >{{ config.public.keycloakRootGroupPath }}</span>
+        >{{ config.public.keycloak.rootGroupPath }}</span>
         <span title="Nom du groupe">{{ group.name }}</span>
       </h2>
       <DsfrButton

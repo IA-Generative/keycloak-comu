@@ -19,7 +19,7 @@ export function query(text: string, params: any[]) {
 let realmId = ''
 export async function getRealmId(): Promise<string> {
   if (realmId) return realmId
-  const realmName = runtimeConfig.public.keycloakRealm
+  const realmName = runtimeConfig.public.keycloak.realm
   if (!realmName) throw new Error('NUXT_PUBLIC_KEYCLOAK_REALM env var is not set')
   const res = await query('SELECT id FROM realm WHERE name = $1', [realmName])
   if (res.rows.length === 0) throw new Error(`Realm "${realmName}" not found`)
