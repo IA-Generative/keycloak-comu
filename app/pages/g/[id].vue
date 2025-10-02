@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DsfrButton, DsfrCallout, DsfrDataTable, DsfrInput } from '@gouvminint/vue-dsfr'
+import { DsfrAlert, DsfrButton, DsfrCallout, DsfrDataTable } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
 import ActionMember from '~/components/ActionMember.vue'
@@ -17,17 +17,6 @@ async function fetchData() {
 }
 
 onBeforeMount(fetchData)
-
-const newMemberEmail = ref('')
-async function addMember() {
-  if (!newMemberEmail.value || typeof id !== 'string') return
-  await fetcher('/api/v1/groups/invites/create', {
-    method: 'post',
-    body: { groupId: id, email: newMemberEmail.value },
-  })
-  newMemberEmail.value = ''
-  await fetchData()
-}
 
 const { $keycloak, $router } = useNuxtApp()
 
@@ -165,12 +154,12 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F, ...ar
           <div
             class="flex flex-col"
           >
-            <DsfrAlert
+            <div
               v-for="invite in group.invites"
               :key="invite.id"
               small
               type="info"
-              class="fr-mb-2w"
+              class="flex flex-row flex-wrap items-center fr-mb-2w"
             >
               <div>
                 {{ invite.email }}
@@ -185,7 +174,7 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F, ...ar
                   Annuler
                 </DsfrButton>
               </div>
-            </DsfrAlert>
+            </div>
           </div>
         </template>
         <template v-if="group.requests.length > 0">
@@ -256,20 +245,10 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F, ...ar
     <div
       v-if="mylevel >= 20"
     >
-      <h3>Ajouter un membre</h3>
-      <form @submit.prevent="addMember">
-        <DsfrInput
-          v-model="newMemberEmail"
-          placeholder="Email de la personne à inviter"
-        />
-        <DsfrButton
-          type="submit"
-          :disabled="!newMemberEmail"
-          class="fr-mt-2w"
-        >
-          Ajouter
-        </DsfrButton>
-      </form>
+      <InviteMember
+        :group-id="group.id"
+        @refresh="fetchData"
+      />
     </div>
     <DsfrCallout
       v-if="mylevel > 0"

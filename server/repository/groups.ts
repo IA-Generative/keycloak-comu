@@ -335,3 +335,15 @@ export async function getUserById(id: string): Promise<UserRow | null> {
   )
   return users.rows[0] || null
 }
+
+// USERS SECTION
+export async function searchUsers(options: { query: string, excludeGroupId?: string }): Promise<UserRow[]> {
+  const excludedMembers: string[] = []
+  if (options.excludeGroupId) {
+    const groupDetails = await getGroupDetails(options.excludeGroupId)
+    if (groupDetails) {
+      excludedMembers.push(...groupDetails.members.map(m => m.id), ...groupDetails.invites.map(i => i.id))
+    }
+  }
+  return (await db.searchUsersFn(options.query, 10, 0, excludedMembers)).rows
+}
