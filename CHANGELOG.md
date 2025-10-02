@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.3.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.3.0...v0.3.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* realm name ([348e2b0](https://github.com/IA-Generative/keycloak-comu/commit/348e2b0ce188558e1ce2e77f6f1cfec523a09118))
+* realm name ([ab3c447](https://github.com/IA-Generative/keycloak-comu/commit/ab3c447e481ef82ef58af118c2d49190816c140e))
+
 ## [0.3.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.2.0...v0.3.0) (2025-10-02)
 
 
