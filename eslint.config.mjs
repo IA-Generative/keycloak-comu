@@ -51,6 +51,7 @@ export default withNuxt(
       },
     },
     ignores: [
+      '.github/**',
       '**/node_modules',
       '**/pnpm-lock.yaml',
       '**/.turbo',

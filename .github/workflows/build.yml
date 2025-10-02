@@ -3,14 +3,14 @@ name: Build
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used"
+      tags:
+        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used, one per line for multiple tags"
         required: false
         default: ""
   workflow_call:
     inputs:
-      tag:
-        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used"
+      tags:
+        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used, one per line for multiple tags"
         required: false
         type: string
         default: ""
@@ -23,7 +23,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ steps.get_version.outputs.tags }}
+      tags: ${{ steps.get_version.outputs.tags }}
     permissions:
       packages: write
     steps:
@@ -38,18 +38,28 @@ jobs:
     - name: Extract version
       id: get_version
       run: |
-        VERSION=$(jq -r .version < package.json)
-        MAJOR=$(echo $VERSION | cut -d. -f1)
-        MINOR=$(echo $VERSION | cut -d. -f1,2)
-        echo "MAJOR=ghcr.io/ia-generative/keycloak-comu:$MAJOR" >> $GITHUB_OUTPUT
-        echo "MINOR=ghcr.io/ia-generative/keycloak-comu:$MINOR" >> $GITHUB_OUTPUT
-        echo "PATCH=ghcr.io/ia-generative/keycloak-comu:$VERSION" >> $GITHUB_OUTPUT
+        if [ -n "${{ github.event.inputs.tags }}" ]; then
+        {
+          echo "TAGS<<EOF"
+          echo "${{ github.event.inputs.tags }}"
+          echo "EOF"
+        } >> "$GITHUB_OUTPUT"
+        else
+          VERSION=$(jq -r .version < package.json)
+          MAJOR=$(echo "$VERSION" | cut -d. -f1)
+          MINOR=$(echo "$VERSION" | cut -d. -f1,2)
+          {
+            echo "TAGS<<EOF"
+            echo "ghcr.io/ia-generative/keycloak-comu:$MAJOR"
+            echo "ghcr.io/ia-generative/keycloak-comu:$MINOR"
+            echo "ghcr.io/ia-generative/keycloak-comu:$VERSION"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+        fi
     - name: Build and push
       uses: docker/build-push-action@v6
       with:
         push: true
         pull: true
         tags: |
-          ${{ steps.get_version.outputs.MAJOR }}
-          ${{ steps.get_version.outputs.MINOR }}
-          ${{ steps.get_version.outputs.PATCH }}
+          ${{ steps.get_version.outputs.TAGS }}
