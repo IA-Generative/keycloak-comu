@@ -1,6 +1,19 @@
 name: Build
 
 on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used"
+        required: false
+        default: ""
+  workflow_call:
+    inputs:
+      tag:
+        description: "Tag to build, e.g. v1.2.3, if empty, latest version from package.json will be used"
+        required: false
+        type: string
+        default: ""
   push:
     tags:
     - "v*.*.*"
