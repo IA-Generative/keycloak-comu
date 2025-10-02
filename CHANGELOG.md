@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.3.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.2.0...v0.3.0) (2025-10-02)
+
+
+### Features
+
+* add chart ([bdc8835](https://github.com/IA-Generative/keycloak-comu/commit/bdc8835088bf97d86fb0a2db9deb62d9e9a70ca9))
+
+
+### Bug Fixes
+
+* rename env var, split realm, users/admin, login ([518c95e](https://github.com/IA-Generative/keycloak-comu/commit/518c95e16827b52ae792049a47a3d62f562f6cf8))
+* update release workflow to include all branches and streamline steps ([294ee5a](https://github.com/IA-Generative/keycloak-comu/commit/294ee5a47cd1be1f34ba1b6c7546736dfde16703))
+
 ## [0.2.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.1.0...v0.2.0) (2025-10-01)
 
 
