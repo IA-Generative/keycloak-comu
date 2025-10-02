@@ -3,7 +3,8 @@ name: Release
 on:
   push:
     branches:
-    - main
+      - main
+      - "**"
 
 jobs:
   release:
@@ -14,22 +15,33 @@ jobs:
       major-tag: ${{ steps.release.outputs.major }}
       minor-tag: ${{ steps.release.outputs.minor }}
       patch-tag: ${{ steps.release.outputs.patch }}
+      pr-name: ${{ steps.release.outputs.pr }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install dependencies
+        run: npm install
 
-    - name: Pre release new version
-      id: release
-      uses: googleapis/release-please-action@v4
-      with:
-        target-branch: ${{ github.ref_name }}
-        token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+      - name: Pre release new version
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          target-branch: ${{ github.ref_name }}
+          token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+          skip-github-release: true
+
+      - name: Output new version
+        run: |
+          echo "Release created: ${{ steps.release.outputs.release_created }}"
+          echo "Major tag: ${{ steps.release.outputs.major }}"
+          echo "Minor tag: ${{ steps.release.outputs.minor }}"
+          echo "Patch tag: ${{ steps.release.outputs.patch }}"
+          echo "PR name: ${{ steps.release.outputs.pr }}"
+        if: ${{ steps.release.outputs.release_created == 'false' }}
