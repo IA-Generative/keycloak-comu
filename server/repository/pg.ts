@@ -1,6 +1,7 @@
 // @ts-expect-error
 import { Pool } from 'pg'
 import { getRootGroup } from './keycloak.js'
+import type { UserRow } from './types.js'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -34,29 +35,64 @@ export interface GroupRow {
   realm_id: string
   type: number
 }
-async function defaultSearch(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
+async function defaultGroupSearch(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
   return query(
     'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
     [`%${test}%`, await getRealmId(), limit + 1, skip, getRootGroup().id],
   ) as Promise<{ rows: GroupRow[] }>
 }
 
-async function pgTrgm(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
+async function defaultUserSearch(test: string, limit: number, skip: number, excludedUsers: string[]): Promise<{ rows: UserRow[] }> {
+  return query(
+    `SELECT first_name, last_name, email, id, username FROM user_entity WHERE (
+      email ILIKE $1 OR
+      first_name ILIKE $1 OR
+      last_name ILIKE $1
+    ) AND realm_id = $2 AND id != ALL($5)
+    LIMIT $3
+    OFFSET $4`,
+    [`%${test}%`, await getRealmId(), limit + 1, skip, excludedUsers],
+  ) as Promise<{ rows: UserRow[] }>
+}
+
+async function searchGroupTrgm(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
   return query(
     `SELECT *, (name ILIKE '%$1%')::int AS like_match,
        word_similarity($1, name) AS sim
-     FROM keycloak_group
-     WHERE (name ILIKE '%$1%' OR word_similarity($1, name) > 0.2) AND realm_id = $2 AND parent_group = $5
-     ORDER BY like_match DESC, sim DESC
-     LIMIT $3 OFFSET $4`,
+    FROM keycloak_group
+    WHERE (
+      name ILIKE '%$1%' OR word_similarity($1, name) > 0.2
+    ) AND realm_id = $2 AND parent_group = $5
+    ORDER BY like_match DESC, sim DESC
+    LIMIT $3 OFFSET $4`,
     [test, await getRealmId(), limit + 1, skip, getRootGroup().id],
   ) as Promise<{ rows: GroupRow[] }>
 }
 
-// eslint-disable-next-line import/no-mutable-exports
-export let searchFn: (test: string, limit: number, skip: number) => Promise<{ rows: GroupRow[] }> = defaultSearch
+async function searchUserTrgm(test: string, limit: number, skip: number, excludedUsers: string[]): Promise<{ rows: UserRow[] }> {
+  const result = await query(
+    `SELECT first_name, last_name, email, id, username, (CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%')::int AS like_match,
+       word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name)) AS sim
+     FROM user_entity
+     WHERE (
+        (CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%' OR
+        word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name)) > 0.2) AND
+        realm_id = $2 AND id != ALL($5)
+     ORDER BY like_match DESC, sim DESC
+     LIMIT $3 OFFSET $4`,
+    [test, await getRealmId(), limit + 1, skip, excludedUsers],
+  ) as Promise<{ rows: UserRow[] }>
+  console.log(result)
 
-export async function setSearchFunction() {
+  return result
+}
+
+// eslint-disable-next-line import/no-mutable-exports
+export let searchFn: (test: string, limit: number, skip: number) => Promise<{ rows: GroupRow[] }> = defaultGroupSearch
+// eslint-disable-next-line import/no-mutable-exports
+export let searchUsersFn: (test: string, limit: number, skip: number, excludedUsers: string[]) => Promise<{ rows: UserRow[] }> = defaultUserSearch
+
+export async function setSearchFunctions() {
   const res = await query(`SELECT EXISTS(
     SELECT 1
     FROM pg_extension
@@ -64,8 +100,9 @@ export async function setSearchFunction() {
   );`, [])
   const pgTrgmInstalled = res.rows[0].exists
   if (pgTrgmInstalled) {
-    searchFn = pgTrgm
+    searchFn = searchGroupTrgm
+    searchUsersFn = searchUserTrgm
   }
 }
 
-setSearchFunction()
+setSearchFunctions()

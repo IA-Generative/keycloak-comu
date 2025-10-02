@@ -8,7 +8,8 @@ let rootGroup: Required<GroupRepresentation> | null = null
 const kcClient = new KcAdminClient({
   baseUrl: runtimeConfig.keycloak.internalUrl,
 })
-kcClient.setConfig({ realmName: runtimeConfig.keycloak.admin.realm })
+const keycloakAdminRealm = runtimeConfig.keycloak.admin.realm || runtimeConfig.public.keycloak.realm
+kcClient.setConfig({ realmName: keycloakAdminRealm })
 
 export function getKcClient() {
   if (!rootGroup) {
