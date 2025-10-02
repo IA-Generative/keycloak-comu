@@ -35,7 +35,7 @@ export default defineEventHandler(async (event) => {
     return
   }
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
-  await sendMail({
+  return sendMail({
     to: body.email,
     subject: `Vous avez été invité à rejoindre le groupe ${group.name}`,
     html: generateGroupInviteEmail(group),

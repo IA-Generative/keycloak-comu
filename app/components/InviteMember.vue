@@ -12,13 +12,24 @@ const emits = defineEmits<{
 
 const newMemberEmail = ref('')
 
+function manageMailStatus(status: 'sent' | 'disabled' | 'sendFailed' | undefined) {
+  if (status === 'sent') {
+    addMessage({ type: 'success', text: 'Invitation envoyée avec succès' })
+    return
+  }
+  if (status === 'sendFailed') {
+    addMessage({ type: 'warning', text: 'Invitation créée, mais échec de l\'envoi du mail' })
+  }
+}
 async function addMember() {
   if (!newMemberEmail.value) return
   try {
-    await fetcher('/api/v1/groups/invites/create', {
+    const mailStatus = await fetcher('/api/v1/groups/invites/create', {
       method: 'post',
       body: { groupId: props.groupId, email: newMemberEmail.value },
     })
+
+    manageMailStatus(mailStatus)
     newMemberEmail.value = ''
   } catch (error) {
     addMessage({ type: 'error', text: 'Erreur lors de l\'ajout du membre' })

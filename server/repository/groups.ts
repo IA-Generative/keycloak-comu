@@ -184,7 +184,7 @@ async function getPendingRequestsForGroup(groupId: string): Promise<UserRow[]> {
   return users.rows
 }
 
-export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[] }> {
+export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[], requested: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
     `SELECT g.id, g.name
@@ -194,8 +194,9 @@ export async function listGroupsForUser(userId: string): Promise<{ invited: Grou
     [userId, realmId, getRootGroup().id],
   )
   const invited = await searchGroupsByAttributes(INVITE_ATTRIBUTE, userId)
+  const requested = await searchGroupsByAttributes(REQUEST_ATTRIBUTE, userId)
 
-  return { invited, joined: groups.rows }
+  return { invited, joined: groups.rows, requested }
 }
 
 export async function getGroupDetails(groupId: string): Promise<GroupDetails | null> {

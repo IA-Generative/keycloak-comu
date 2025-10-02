@@ -133,6 +133,17 @@ smtp:
   host: ""
   port: 25
   from: no-reply@keycloak.comu
+  secure: true
+  pass:
+    valueFrom:
+      secretKeyRef:
+        name: ""
+        key: password
+  user:
+    valueFrom:
+      secretKeyRef:
+        name: ""
+        key: username
 
 keycloak:
   adminUser:

@@ -32,7 +32,7 @@ export default defineEventHandler(async (event) => {
   const tos = group.members
     .filter(member => group.attributes.owner.includes(member.id) || group.attributes.admin.includes(member.id))
     .map(member => member.email)
-  await sendMail({
+  return sendMail({
     to: tos,
     subject: `Nouvelle demande pour rejoindre le groupe ${group.name}`,
     html: emailBody,

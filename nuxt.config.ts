@@ -35,6 +35,11 @@ export default defineNuxtConfig({
       host: process.env.NUXT_SMTP_HOST || 'mailhog',
       port: process.env.NUXT_SMTP_PORT || '1025',
       from: process.env.NUXT_SMTP_FROM || '<noreply@example.com>',
+      authType: process.env.NUXT_SMTP_AUTH_TYPE || 'LOGIN',
+      user: process.env.NUXT_SMTP_USER || '',
+      pass: process.env.NUXT_SMTP_PASS || '',
+      secure: process.env.NUXT_SMTP_SECURE === 'true',
+      ignoreTLS: process.env.NUXT_SMTP_IGNORE_TLS === 'true',
     },
     database: {
       host: process.env.NUXT_DATABASE_HOST || 'localhost',

@@ -2,7 +2,7 @@
 import { DsfrAlert, DsfrButton, DsfrTile } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 
-const groups = ref<ListGroupDtoType>({ invited: [], joined: [] })
+const groups = ref<ListGroupDtoType>({ invited: [], joined: [], requested: [] })
 
 onBeforeMount(getGroups)
 
@@ -39,7 +39,7 @@ async function getGroups() {
       </div>
     </div>
     <div class="gap-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-      <template v-if="groups.joined.length === 0">
+      <template v-if="(groups.joined.length + groups.requested.length) === 0">
         <DsfrAlert
           type="info"
           class="fr-mb-2w"
@@ -52,6 +52,14 @@ async function getGroups() {
         :key="group.id"
         :to="`/g/${group.id}`"
         :title="group.name"
+        horizontal
+      />
+      <DsfrTile
+        v-for="group in groups.requested"
+        :key="group.id"
+        :to="`/g/${group.id}`"
+        :title="group.name"
+        description="Demande en attente"
         horizontal
       />
     </div>

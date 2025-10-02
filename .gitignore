@@ -281,3 +281,4 @@ $RECYCLE.BIN/
 /keycloak/data
 
 # End of https://www.toptal.com/developers/gitignore/api/windows,macos,linux,node,vuejs,sonarqube,turbo
+charts/keycloak-comu/custom-values.yml
