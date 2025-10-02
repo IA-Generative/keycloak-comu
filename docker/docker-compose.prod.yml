@@ -1,6 +1,6 @@
 services:
   server:
-    image: ghcr.io/ia-generative/keycloak-comu-server:latest
+    image: ghcr.io/ia-generative/keycloak-comu:latest
     container_name: keycloak-comu_server
     build:
       context: ..

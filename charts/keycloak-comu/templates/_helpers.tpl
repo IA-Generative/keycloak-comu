@@ -118,6 +118,18 @@ Create BASE_URL var
   {{- include "keycloak-comu.valueHandler" .Values.smtp.port }}
 - name: NUXT_SMTP_FROM
   {{- include "keycloak-comu.valueHandler" .Values.smtp.from }}
+{{- if .Values.smtp.user }}
+- name: NUXT_SMTP_USER
+  {{- include "keycloak-comu.valueHandler" .Values.smtp.user }}
+{{- end -}}
+{{- if .Values.smtp.pass }}
+- name: NUXT_SMTP_PASS
+  {{- include "keycloak-comu.valueHandler" .Values.smtp.pass }}
+{{- end -}}
+{{- if .Values.smtp.secure }}
+- name: NUXT_SMTP_SECURE
+  {{- include "keycloak-comu.valueHandler" .Values.smtp.secure }}
+{{- end -}}
 {{- end -}}
 {{- end -}}
 
@@ -138,6 +150,10 @@ Create BASE_URL var
 {{/* Values handler */}}
 {{- define "keycloak-comu.valueHandler" -}}
 {{- if kindIs "string" . }}
+  value: {{ . | quote }}
+{{- else if kindIs "bool" . }}
+  value: {{ . | quote }}
+{{- else if kindIs "float64" . }}
   value: {{ . | quote }}
 {{- else }}
   {{- toYaml . | nindent 2 }}

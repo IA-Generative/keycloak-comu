@@ -31,7 +31,7 @@ export default defineEventHandler(async (event) => {
   const emailBody = generateJoinValidationEmail(group)
   const acceptedUser = await repo.getUserById(result.userId)
 
-  await sendMail({
+  return sendMail({
     to: acceptedUser!.email,
     subject: `Votre demande pour rejoindre le groupe ${group.name} a été acceptée`,
     html: emailBody,

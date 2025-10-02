@@ -16,7 +16,7 @@ const messages = computed<Set<SnackBarMessage>>(() => snackbarMessages.value)
       class="fr-mb-2w"
       style="background-color: var(--background-default-grey);"
       :description="message.text"
-      type="error"
+      :type="message.type"
       closeable
       @close="removeMessage(message.id)"
     />
