@@ -14,17 +14,24 @@ export default defineNuxtConfig({
   runtimeConfig: {
     isProd: !(process.env.NODE_ENV !== 'production'),
     public: {
-      keycloakUrl: process.env.NUXT_PUBLIC_KEYCLOAK_URL,
-      keycloakRealm: process.env.NUXT_PUBLIC_KEYCLOAK_REALM,
-      keycloakClientId: process.env.NUXT_PUBLIC_KEYCLOAK_CLIENT_ID,
-      keycloakRootGroupPath: process.env.NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH || '/',
+      keycloak: {
+        url: process.env.NUXT_PUBLIC_KEYCLOAK_URL,
+        realm: process.env.NUXT_PUBLIC_KEYCLOAK_REALM,
+        clientId: process.env.NUXT_PUBLIC_KEYCLOAK_CLIENT_ID,
+        rootGroupPath: process.env.NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH || '/',
+      },
     },
-    keycloakAdmin: process.env.NUXT_KEYCLOAK_ADMIN,
-    keycloakAdminPassword: process.env.NUXT_KEYCLOAK_ADMIN_PASSWORD,
-    keycloakInternalUrl: process.env.NUXT_KEYCLOAK_INTERNAL_URL || process.env.NUXT_PUBLIC_KEYCLOAK_URL,
-    enableEmailInvite: process.env.NUXT_ENABLE_EMAIL_INVITE === 'true' || false,
+    keycloak: {
+      admin: {
+        password: process.env.NUXT_KEYCLOAK_ADMIN_PASSWORD,
+        realm: process.env.NUXT_KEYCLOAK_ADMIN_REALM || process.env.NUXT_PUBLIC_KEYCLOAK_REALM,
+        username: process.env.NUXT_KEYCLOAK_ADMIN_USERNAME,
+      },
+      internalUrl: process.env.NUXT_KEYCLOAK_INTERNAL_URL || process.env.NUXT_PUBLIC_KEYCLOAK_URL,
+    },
     baseUrl: process.env.NUXT_BASE_URL || 'http://localhost:8080',
     smtp: {
+      enable: process.env.NUXT_SMTP_ENABLE === 'true',
       host: process.env.NUXT_SMTP_HOST || 'mailhog',
       port: process.env.NUXT_SMTP_PORT || '1025',
       from: process.env.NUXT_SMTP_FROM || '<noreply@example.com>',

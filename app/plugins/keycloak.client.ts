@@ -5,9 +5,9 @@ export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
 
   const keycloak = new Keycloak({
-    url: config.public.keycloakUrl,
-    realm: config.public.keycloakRealm,
-    clientId: config.public.keycloakClientId,
+    url: config.public.keycloak.url,
+    realm: config.public.keycloak.realm,
+    clientId: config.public.keycloak.clientId,
   })
   return {
     provide: {
