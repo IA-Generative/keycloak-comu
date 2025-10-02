@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.3.1...v0.4.0) (2025-10-02)
+
+
+### Features
+
+* implement user search feature ([f6e485e](https://github.com/IA-Generative/keycloak-comu/commit/f6e485eedfe9845e4f21611d75f4e4d1928852f5))
+
 ## [0.3.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.3.0...v0.3.1) (2025-10-02)
 
 
