@@ -3,10 +3,14 @@ name: Release
 on:
   push:
     branches:
-    - main
+      - main
 
 jobs:
   release:
+    permissions:
+      contents: write
+      pull-requests: write
+
     name: Create new release
     runs-on: ubuntu-latest
     outputs:
@@ -14,22 +18,51 @@ jobs:
       major-tag: ${{ steps.release.outputs.major }}
       minor-tag: ${{ steps.release.outputs.minor }}
       patch-tag: ${{ steps.release.outputs.patch }}
+      pr_branch_name: ${{ steps.export-pr.outputs.pr_branch_name }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Pre release new version
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          target-branch: main
+          # token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+      - name: Export PR branch name
+        id: export-pr
+        run: |
+          echo '${{ steps.release.outputs.pr }}' > pr.json
+          cat pr.json
+          export PR=$(jq -r .headBranchName < pr.json)
+          echo "$PR"
+          echo "pr_branch_name=$PR" >> $GITHUB_OUTPUT
 
-    - name: Install dependencies
-      run: npm install
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+          
+      - name: Checkout to PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.export-pr.outputs.pr_branch_name }}
+          fetch-depth: 0
+        if: ${{ steps.release.outputs.prs_created }}
 
-    - name: Pre release new version
-      id: release
-      uses: googleapis/release-please-action@v4
-      with:
-        target-branch: ${{ github.ref_name }}
-        token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+      - name: Update Chart.yaml with new version and document it
+        if: ${{ steps.release.outputs.prs_created }}
+        run: |
+          export VERSION=$(jq -r .version < package.json)
+          yq e -i '.appVersion = env(VERSION)' charts/keycloak-comu/Chart.yaml
+
+          export CHART_VERSION=$(yq .version charts/keycloak-comu/Chart.yaml)
+          export NEW_CHART_VERSION=$(pnpx semver -i patch $CHART_VERSION)
+          echo $NEW_CHART_VERSION
+          yq e -i '.version = env(NEW_CHART_VERSION)' charts/keycloak-comu/Chart.yaml
+
+          docker run --rm --volume "$(pwd)/charts/keycloak-comu:/helm-docs" -u $(id -u) docker.io/jnorwood/helm-docs:latest
+          git config --global user.name "Arnaud Tardif"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit --amend --no-edit
+          git push origin -f
