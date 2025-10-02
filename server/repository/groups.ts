@@ -27,6 +27,8 @@ interface SearchParams {
   skip: number
   exact?: boolean
 }
+
+const realmName = useRuntimeConfig().public.keycloak.realm
 export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact
     ? await db.query(
@@ -109,8 +111,14 @@ export async function createGroup(name: string): Promise<GroupSearchResult> {
   const kcClient = getKcClient()
   const rootGroup = getRootGroup()
   const result = rootGroup.id !== ' '
-    ? await kcClient.groups.createChildGroup({ id: rootGroup.id }, { name })
-    : await kcClient.groups.create({ name })
+    ? await kcClient.groups.createChildGroup({
+        id: rootGroup.id,
+        realm: realmName,
+      }, { name })
+    : await kcClient.groups.create({
+        name,
+        realm: realmName,
+      })
 
   return {
     id: result.id,
@@ -122,7 +130,10 @@ export async function createGroup(name: string): Promise<GroupSearchResult> {
 // not exported cause no check on root group hierarchy
 async function getAttribute(groupId: string, name: string): Promise<string[]> {
   const kcClient = getKcClient()
-  const group = await kcClient.groups.findOne({ id: groupId })
+  const group = await kcClient.groups.findOne({
+    id: groupId,
+    realm: realmName,
+  })
   if (!group) {
     throw new Error('Group not found')
   }
@@ -132,7 +143,10 @@ async function getAttribute(groupId: string, name: string): Promise<string[]> {
 // not exported cause no check on root group hierarchy
 async function setAttribute(groupId: string, name: string, values: string[]): Promise<void> {
   const kcClient = getKcClient()
-  const group = await kcClient.groups.findOne({ id: groupId })
+  const group = await kcClient.groups.findOne({
+    id: groupId,
+    realm: realmName,
+  })
   if (!group) {
     throw new Error('Group not found')
   }
@@ -212,7 +226,10 @@ export async function deleteGroup(id: string): Promise<void> {
   if (!group || !group.path?.startsWith(getRootGroup().path)) {
     throw new Error('Group not found')
   }
-  await kcClient.groups.del({ id })
+  await kcClient.groups.del({
+    id,
+    realm: realmName,
+  })
 }
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
@@ -221,6 +238,7 @@ export async function addMemberToGroup(userId: string, groupId: string): Promise
   await kcClient.users.addToGroup({
     id: userId,
     groupId,
+    realm: realmName,
   })
 }
 
@@ -230,6 +248,7 @@ export async function removeMemberFromGroup(userId: string, groupId: string): Pr
   await kcClient.users.delFromGroup({
     id: userId,
     groupId,
+    realm: realmName,
   })
   // remove from roles if any
   await setUserLevelInGroup(userId, groupId, LEVEL.GUEST)
