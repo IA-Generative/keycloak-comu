@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.4.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.4.0...v0.4.1) (2025-10-02)
+
+
+### Bug Fixes
+
+* add missing env vars in example ([656deac](https://github.com/IA-Generative/keycloak-comu/commit/656deacd4ab3038fc27b967968d6a0673020594e))
+* add missing mail options ([1efce63](https://github.com/IA-Generative/keycloak-comu/commit/1efce63109b88c4811dc08da898444759245402d))
+* add missing mail options ([ffe9bb7](https://github.com/IA-Generative/keycloak-comu/commit/ffe9bb7c239e43f6623b46c930cc072929fe77ac))
+
 ## [0.4.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.3.1...v0.4.0) (2025-10-02)
 
 
