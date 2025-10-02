@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-    - main
+      - main
 
 jobs:
   release:
@@ -14,22 +14,35 @@ jobs:
       major-tag: ${{ steps.release.outputs.major }}
       minor-tag: ${{ steps.release.outputs.minor }}
       patch-tag: ${{ steps.release.outputs.patch }}
+      pr: ${{ steps.release.outputs.pr }}
 
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: 22
+      - name: Pre release new version
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          target-branch: ${{ github.ref_name }}
+          token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+          skip-github-release: true
 
-    - name: Install dependencies
-      run: npm install
+      - name: Checkout to PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.release.outputs.pr.headBranchName }}
+        if: ${{ steps.release.outputs.prs_created }}
 
-    - name: Pre release new version
-      id: release
-      uses: googleapis/release-please-action@v4
-      with:
-        target-branch: ${{ github.ref_name }}
-        token: ${{ secrets.SECRET_GITHUB_TOKEN }}
+      - name: Update Chart.yaml with new version and document it
+        if: ${{ steps.release.outputs.prs_created }}
+        run: |
+          git pull
+          export VERSION=$(jq -r .version < package.json)
+          yq e -i '.appVersion = env(VERSION)' charts/keycloak-comu/Chart.yaml
+          docker run --rm --volume "$(pwd)/charts/keycloak-comu:/helm-docs" -u $(id -u) docker.io/jnorwood/helm-docs:latest
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add charts/keycloak-comu/Chart.yaml README.md
+          git commit -m "chore(chart): bump chart version to ${VERSION}"
+          git push origin HEAD:${{ steps.release.outputs.pr.headBranchName }}
