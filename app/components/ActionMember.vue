@@ -41,7 +41,7 @@ async function changeMemberLevel(userId: string, newLevel: number) {
 
   try {
     isLoading.value = true
-    await fetcher('/api/v1/groups/membership/change-level', {
+    await fetcher('/api/v1/groups/membership/edit', {
       method: 'post',
       body: { groupId: props.group.id, userId, level: String(newLevel) },
     })

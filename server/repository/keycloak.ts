@@ -5,18 +5,11 @@ const runtimeConfig = useRuntimeConfig()
 
 let rootGroup: Required<GroupRepresentation> | null = null
 
-const kcClient = new KcAdminClient({
+export const kcClient = new KcAdminClient({
   baseUrl: runtimeConfig.keycloak.internalUrl,
 })
 const keycloakAdminRealm = runtimeConfig.keycloak.admin.realm || runtimeConfig.public.keycloak.realm
 kcClient.setConfig({ realmName: keycloakAdminRealm })
-
-export function getKcClient() {
-  if (!rootGroup) {
-    throw new Error('Root Group not search yet, please try again later')
-  }
-  return kcClient
-}
 
 async function setupRootGroup(rootGroupPath: string) {
   if (rootGroupPath !== '/') {
@@ -44,7 +37,7 @@ async function setupRootGroup(rootGroupPath: string) {
   }
 }
 
-async function setupKeycloakClient(retries = 5) {
+export async function setupKeycloakClient(retries = 5) {
   try {
     await kcClient.auth({
       clientId: 'admin-cli',

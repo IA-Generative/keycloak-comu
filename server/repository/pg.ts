@@ -71,18 +71,24 @@ async function searchGroupTrgm(test: string, limit: number, skip: number): Promi
 
 async function searchUserTrgm(test: string, limit: number, skip: number, excludedUsers: string[]): Promise<{ rows: UserRow[] }> {
   const result = await query(
-    `SELECT first_name, last_name, email, id, username, (CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%')::int AS like_match,
-       word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name)) AS sim
+    `SELECT 
+        id,
+        first_name,
+        last_name,
+        email,
+        username,
+        (CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%')::int AS like_match,
+        word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name))) AS sim
      FROM user_entity
      WHERE (
-        (CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%' OR
-        word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name)) > 0.2) AND
+        CONCAT(email, ' ', first_name, ' ', last_name) ILIKE '%$1%' OR
+        word_similarity($1, (CONCAT(email, ' ', first_name, ' ', last_name))) > 0.2
+     ) AND
         realm_id = $2 AND id != ALL($5)
      ORDER BY like_match DESC, sim DESC
      LIMIT $3 OFFSET $4`,
     [test, await getRealmId(), limit + 1, skip, excludedUsers],
   ) as Promise<{ rows: UserRow[] }>
-  console.log(result)
 
   return result
 }

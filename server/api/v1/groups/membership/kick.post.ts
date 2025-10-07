@@ -25,6 +25,5 @@ export default defineEventHandler(async (event) => {
     throw createResponseError({ statusCode: 400, data: 'CANNOT_KICK_SELF' })
   }
   await repo.setUserLevelInGroup(body.userId, body.groupId, LEVEL.GUEST)
-  await repo.removeMemberFromGroup(body.userId, body.groupId)
-  return { message: `Hello ${event.context.clientAddress}` }
+  await repo.kickMemberFromGroup(body.userId, group)
 })
