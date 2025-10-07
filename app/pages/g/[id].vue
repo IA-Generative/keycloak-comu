@@ -5,6 +5,9 @@ import MembersTable from '~/components/MembersTable.vue'
 
 const id = useRoute().params.id
 const config = useRuntimeConfig()
+const rootGroupPrefix = config.public.keycloak.rootGroupPath.endsWith('/')
+  ? config.public.keycloak.rootGroupPath
+  : `${config.public.keycloak.rootGroupPath}/`
 
 const group = ref<GroupDtoType | null>(null)
 async function fetchData() {
@@ -36,10 +39,9 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F) {
     <div class="flex justify-between items-center">
       <h2>
         <span
-          v-if="config.public.keycloak.rootGroupPath !== '/'"
           class="path-prefix"
           title="Groupe racine"
-        >{{ config.public.keycloak.rootGroupPath }}</span>
+        >{{ rootGroupPrefix }}</span>
         <span title="Nom du groupe">{{ group.name }}</span>
       </h2>
       <DsfrButton

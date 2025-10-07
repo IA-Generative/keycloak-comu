@@ -16,6 +16,9 @@ const emits = defineEmits<{
 }>()
 
 const config = useRuntimeConfig()
+const rootGroupPrefix = config.public.keycloak.rootGroupPath.endsWith('/')
+  ? config.public.keycloak.rootGroupPath
+  : `${config.public.keycloak.rootGroupPath}/`
 
 function sortFunction<T extends Record<string, any>>(array: T[], key: keyof T, fallbackKey: keyof T): T[] {
   return array.toSorted((a, b) => (a[key] ?? a[fallbackKey]).localeCompare(b[key] ?? b[fallbackKey]))
@@ -113,18 +116,9 @@ function onDragLeave(groupName: string) {
 }
 
 async function removeUserFromTeam(userId: string, teamName: string) {
-  console.log(wanted.value[teamName], userId)
+  if (!props.canManage) return
 
   wanted.value[teamName] = (wanted.value[teamName] ?? []).filter(id => id !== userId)
-  console.log(wanted.value[teamName], userId)
-  // fetcher('/api/v1/groups/edit-team', {
-  //   method: 'post',
-  //   body: {
-  //     parentId: props.group.id,
-  //     name: teamName,
-  //     userIds: (wanted.value[teamName] ?? []).filter(id => id !== userId),
-  //   },
-  // }).finally(() => emits('refresh'))
 }
 
 function onDrop(event: DragEvent, groupName: string) {
@@ -209,7 +203,9 @@ function selectTag(userId: string) {
     :default-opened="false"
   >
     <template #title>
-      <h4 class="fr-m-0">{{ canManage ? 'Gérer' : 'Voir' }} les équipes ({{ Object.keys(group.teams).length }})</h4>
+      <h4 class="fr-m-0">
+        {{ canManage ? 'Gérer' : 'Voir' }} les équipes ({{ Object.keys(group.teams).length }})
+      </h4>
     </template>
     <div
       class="fr-container"
@@ -334,7 +330,7 @@ function selectTag(userId: string) {
                     :selectable="canManage"
                     :label="`${user.first_name} ${user.last_name}`"
                     :class="usersClass[user.id]?.[team.name]"
-                    @click="canManage ? () => removeUserFromTeam(user.id, team.name) : undefined"
+                    @click="() => removeUserFromTeam(user.id, team.name)"
                   />
                 </div>
               </div>
@@ -343,7 +339,7 @@ function selectTag(userId: string) {
               <label
                 class="fr-label text-sm italic align-end opacity-75"
               >
-                {{ config.public.keycloak.rootGroupPath }}{{ group.name }}/{{ team.name }}
+                {{ rootGroupPrefix }}{{ group.name }}/{{ team.name }}
               </label>
 
               <div
