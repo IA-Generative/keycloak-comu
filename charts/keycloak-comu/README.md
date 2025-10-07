@@ -1,6 +1,6 @@
 # keycloak-comu
 
-![Version: 0.1.3](https://img.shields.io/badge/Version-0.1.3-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.4.0](https://img.shields.io/badge/AppVersion-0.4.0-informational?style=flat-square)
+![Version: 0.1.4](https://img.shields.io/badge/Version-0.1.4-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.5.0](https://img.shields.io/badge/AppVersion-0.5.0-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
@@ -70,7 +70,12 @@ A Helm chart for Kubernetes
 | smtp.enable | bool | `false` |  |
 | smtp.from | string | `"no-reply@keycloak.comu"` |  |
 | smtp.host | string | `""` |  |
+| smtp.pass.valueFrom.secretKeyRef.key | string | `"password"` |  |
+| smtp.pass.valueFrom.secretKeyRef.name | string | `""` |  |
 | smtp.port | int | `25` |  |
+| smtp.secure | bool | `true` |  |
+| smtp.user.valueFrom.secretKeyRef.key | string | `"username"` |  |
+| smtp.user.valueFrom.secretKeyRef.name | string | `""` |  |
 | tolerations | list | `[]` |  |
 | volumeMounts | list | `[]` |  |
 | volumes | list | `[]` |  |
