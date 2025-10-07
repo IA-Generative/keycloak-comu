@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.4.0...v0.5.0) (2025-10-07)
+
+
+### Features
+
+* add team management ([82053d7](https://github.com/IA-Generative/keycloak-comu/commit/82053d7b5a8b80a0ebf8b4182a77e7044765b8c9))
+* add team management ([4e1855b](https://github.com/IA-Generative/keycloak-comu/commit/4e1855bc4414f372f55c29d71995c6d5352e1bd8))
+
+
+### Bug Fixes
+
+* add missing env vars in example ([656deac](https://github.com/IA-Generative/keycloak-comu/commit/656deacd4ab3038fc27b967968d6a0673020594e))
+* add missing mail options ([1efce63](https://github.com/IA-Generative/keycloak-comu/commit/1efce63109b88c4811dc08da898444759245402d))
+* add missing mail options ([ffe9bb7](https://github.com/IA-Generative/keycloak-comu/commit/ffe9bb7c239e43f6623b46c930cc072929fe77ac))
+* update Node.js version to 22.20.0 in Dockerfile and .prototools ([a5a5053](https://github.com/IA-Generative/keycloak-comu/commit/a5a5053df20ed33717823cce334327b5ff60c7be))
+
 ## [0.4.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.3.1...v0.4.0) (2025-10-02)
 
 
