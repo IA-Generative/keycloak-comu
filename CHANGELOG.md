@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.5.0...v0.5.1) (2025-10-07)
+
+
+### Bug Fixes
+
+* ensure consistent root group path handling in TeamManager and group pages ([f4d9fe1](https://github.com/IA-Generative/keycloak-comu/commit/f4d9fe129d02ca3d554c7682d0c3ed41d473da65))
+
 ## [0.5.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.4.0...v0.5.0) (2025-10-07)
 
 
