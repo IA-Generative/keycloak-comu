@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { DsfrTable } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
 
 const userProfile = ref<any>(null)
@@ -12,12 +13,27 @@ onBeforeMount(async () => {
 
 <template>
   <div>
-    <h1>Profile</h1>
     <div v-if="userProfile">
-      <p><strong>Username:</strong> {{ userProfile.username }}</p>
-      <p><strong>Email:</strong> {{ userProfile.email }}</p>
-      <p><strong>First Name:</strong> {{ userProfile.firstName }}</p>
-      <p><strong>Last Name:</strong> {{ userProfile.lastName }}</p>
+      <DsfrTable
+        title="Informations utilisateur"
+      >
+        <tr>
+          <th>Nom d'utilisateur</th>
+          <td>{{ userProfile.username }}</td>
+        </tr>
+        <tr>
+          <th>Email</th>
+          <td>{{ userProfile.email }}</td>
+        </tr>
+        <tr>
+          <th>Prénom</th>
+          <td>{{ userProfile.firstName }}</td>
+        </tr>
+        <tr>
+          <th>Nom</th>
+          <td>{{ userProfile.lastName }}</td>
+        </tr>
+      </DsfrTable>
     </div>
   </div>
 </template>
