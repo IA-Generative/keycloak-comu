@@ -7,7 +7,7 @@
 
 # Stage 1: Base image with Node.js and pnpm
 # -----------------------------------------------------------------------------
-FROM node:20.19.5-alpine AS base
+FROM node:22.20.0-alpine AS base
 RUN apk add --no-cache libc6-compat
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
@@ -64,7 +64,7 @@ RUN pnpm build
 
 # Stage 5: Production stage with security hardening
 # -----------------------------------------------------------------------------
-FROM node:20.19.5-alpine AS prod
+FROM node:22.20.0-alpine AS prod
 
 # Install security updates and create non-root user
 RUN apk --no-cache upgrade && \
