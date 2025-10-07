@@ -1,3 +1,5 @@
+import pkg from './package.json'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 export default defineNuxtConfig({
   modules: [
@@ -14,6 +16,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     isProd: !(process.env.NODE_ENV !== 'production'),
     public: {
+      version: pkg.version,
       keycloak: {
         url: process.env.NUXT_PUBLIC_KEYCLOAK_URL,
         realm: process.env.NUXT_PUBLIC_KEYCLOAK_REALM,

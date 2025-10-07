@@ -9,9 +9,8 @@ import type { KeycloakTokenParsed } from 'keycloak-js'
 const username = ref('')
 const loggedIn = ref(false)
 
+const { $keycloak } = useNuxtApp()
 onMounted(async () => {
-  const { $keycloak } = useNuxtApp()
-
   await $keycloak.init({ onLoad: 'login-required', checkLoginIframe: true })
   username.value = $keycloak.tokenParsed?.preferred_username
   loggedIn.value = true
@@ -26,7 +25,6 @@ onMounted(async () => {
 })
 
 function logout() {
-  const { $keycloak } = useNuxtApp()
   $keycloak.logout()
 }
 
@@ -40,7 +38,6 @@ function getUserName(payload: KeycloakTokenParsed): string {
 
 const quickLinks = ref<(DsfrHeaderMenuLinkProps & { text: string })[]>([])
 watch(loggedIn, (newVal) => {
-  const { $keycloak } = useNuxtApp()
   if (newVal) {
     quickLinks.value = [
       { text: 'Accueil', to: '/' },
@@ -69,6 +66,8 @@ function changeTheme() {
   setScheme(theme.value === 'light' ? 'dark' : 'light')
 }
 
+const config = useRuntimeConfig()
+
 const afterMandatoryLinks = computed(() => {
   return [
     {
@@ -76,6 +75,11 @@ const afterMandatoryLinks = computed(() => {
       button: true,
       to: '#',
       onclick: changeTheme,
+    },
+    {
+      label: `Version: ${config.public.version}`,
+      external: true,
+      href: `https://github.com/IA-Generative/keycloak-comu/releases/tag/v${config.public.version}`,
     },
   ]
 })
