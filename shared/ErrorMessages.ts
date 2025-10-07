@@ -6,6 +6,18 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  TEAM_NAME_TOO_SHORT: {
+    en: 'The name must be at least 2 characters long',
+    fr: 'Le nom doit faire au moins 2 caractères',
+  },
+  TEAM_NAME_TOO_LONG: {
+    en: 'The name must be at most 15 characters long',
+    fr: 'Le nom doit faire au maximum 15 caractères',
+  },
+  TEAM_NAME_INVALID_CHARACTERS: {
+    en: 'The name contains invalid characters',
+    fr: 'Le nom contient des caractères invalides',
+  },
   USER_ALREADY_MEMBER: {
     en: 'User is already a member of the group',
     fr: 'L\'utilisateur est déjà membre du groupe',
@@ -112,4 +124,5 @@ const ERROR_MESSAGES = {
   },
 } as const satisfies ErrorMessages
 
+export type ErrorMessageKey = keyof typeof ERROR_MESSAGES
 export default ERROR_MESSAGES

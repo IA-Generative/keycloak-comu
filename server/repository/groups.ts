@@ -1,14 +1,16 @@
-import { getKcClient, getRootGroup } from './keycloak.js'
+import { getRootGroup, kcClient } from './keycloak.js'
 import { LEVEL } from '../guards/group.js'
 import * as db from './pg.js'
 import type { AttributeRow, UserRow } from './types.js'
 import type { Attributes } from './utils.js'
 import { mergeUniqueGroupAttributes } from './utils.js'
+import type { TeamsDtoType } from '~~/shared/types/team.js'
 
 const INVITE_ATTRIBUTE = 'invite'
 const REQUEST_ATTRIBUTE = 'request'
 const OWNER_ATTRIBUTE = 'owner'
 const ADMIN_ATTRIBUTE = 'admin'
+
 export interface GroupSearchResult {
   id: string
   name: string
@@ -19,6 +21,7 @@ export interface GroupDetails extends GroupSearchResult {
   invites: UserRow[]
   requests: UserRow[]
   attributes: Attributes
+  teams: TeamsDtoType
 }
 
 interface SearchParams {
@@ -28,7 +31,9 @@ interface SearchParams {
   exact?: boolean
 }
 
-const realmName = useRuntimeConfig().public.keycloak.realm
+const runtimeConfig = useRuntimeConfig()
+const realmName = runtimeConfig.public.keycloak.realm
+
 export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact
     ? await db.query(
@@ -107,12 +112,12 @@ export async function getGroupByName(name: string): Promise<GroupSearchResult | 
   return { ...groups.rows[0], attributes: {} }
 }
 
-export async function createGroup(name: string): Promise<GroupSearchResult> {
-  const kcClient = getKcClient()
-  const rootGroup = getRootGroup()
-  const result = rootGroup.id !== ' '
+// You can specify a parent id to create a team inside a group
+export async function createGroup(name: string, parentId?: string): Promise<GroupSearchResult> {
+  const parentGroupId = parentId ?? getRootGroup().id
+  const result = parentGroupId !== ' '
     ? await kcClient.groups.createChildGroup({
-        id: rootGroup.id,
+        id: parentGroupId,
         realm: realmName,
       }, { name })
     : await kcClient.groups.create({
@@ -129,7 +134,6 @@ export async function createGroup(name: string): Promise<GroupSearchResult> {
 
 // not exported cause no check on root group hierarchy
 async function getAttribute(groupId: string, name: string): Promise<string[]> {
-  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({
     id: groupId,
     realm: realmName,
@@ -142,7 +146,6 @@ async function getAttribute(groupId: string, name: string): Promise<string[]> {
 
 // not exported cause no check on root group hierarchy
 async function setAttribute(groupId: string, name: string, values: string[]): Promise<void> {
-  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({
     id: groupId,
     realm: realmName,
@@ -199,6 +202,26 @@ export async function listGroupsForUser(userId: string): Promise<{ invited: Grou
   return { invited, joined: groups.rows, requested }
 }
 
+async function getTeams(id: string): Promise<TeamsDtoType> {
+  const teamsRes = await db.query(
+    `SELECT g.name, g.id, ugm.user_id
+     FROM keycloak_group g
+     LEFT JOIN user_group_membership ugm ON g.id = ugm.group_id
+     WHERE g.parent_group = $1 AND g.realm_id = $2`,
+    [id, await db.getRealmId()],
+  ) as { rows: { id: string, name: string, user_id: string }[] }
+
+  return teamsRes.rows.reduce<TeamsDtoType>((acc, row) => {
+    if (!acc.find(sg => sg.name === row.name)) {
+      acc.push({ id: row.id, name: row.name, members: [] })
+    }
+    const team = acc.find(sg => sg.name === row.name)
+    if (team && row.user_id && !team.members.includes(row.user_id)) {
+      team.members.push(row.user_id)
+    }
+    return acc
+  }, [] as TeamsDtoType)
+}
 export async function getGroupDetails(groupId: string): Promise<GroupDetails | null> {
   const groupRes = await db.query(
     `SELECT g.id, g.name
@@ -209,8 +232,11 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
   if (groupRes.rowCount === 0) {
     return null
   }
+
   const group = groupRes.rows[0]
   const { attributes, members, invites, requests } = await getGroupAttributesAndMembers(groupId)
+  const teams = await getTeams(groupId)
+
   return {
     id: group.id,
     name: group.name,
@@ -218,11 +244,11 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
     members,
     invites,
     requests,
+    teams,
   }
 }
 
 export async function deleteGroup(id: string): Promise<void> {
-  const kcClient = getKcClient()
   const group = await kcClient.groups.findOne({ id })
   if (!group || !group.path?.startsWith(getRootGroup().path)) {
     throw new Error('Group not found')
@@ -233,10 +259,31 @@ export async function deleteGroup(id: string): Promise<void> {
   })
 }
 
+export async function deleteTeam(parentId: string, name: string): Promise<void> {
+  const team = await db.query(
+    `SELECT * FROM keycloak_group WHERE parent_group = $1 AND name = $2`,
+    [parentId, name],
+  )
+  if (!team.rows.length) {
+    return
+  }
+  await kcClient.groups.del({
+    id: team.rows[0].id,
+    realm: realmName,
+  })
+}
+
 // exported but no check on root group hierarchy, cause you're supposed to check it before
-export async function addMemberToGroup(userId: string, groupId: string): Promise<void> {
-  const kcClient = getKcClient()
-  await kcClient.users.addToGroup({
+export async function addMemberToGroup(userId: string, groupId: string): Promise<string> {
+  return kcClient.users.addToGroup({
+    id: userId,
+    groupId,
+    realm: realmName,
+  })
+}
+
+export async function removeMemberFromGroup(userId: string, groupId: string): Promise<string> {
+  return kcClient.users.delFromGroup({
     id: userId,
     groupId,
     realm: realmName,
@@ -244,15 +291,28 @@ export async function addMemberToGroup(userId: string, groupId: string): Promise
 }
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
-export async function removeMemberFromGroup(userId: string, groupId: string): Promise<void> {
-  const kcClient = getKcClient()
+export async function kickMemberFromGroup(userId: string, group: GroupDetails): Promise<void> {
+  const involvedTeams = await db.query(`
+    SELECT g.id
+    FROM keycloak_group g
+    LEFT JOIN user_group_membership ugm ON g.id = ugm.group_id
+    WHERE ugm.user_id = $1 AND g.parent_group = $2
+    `, [userId, group.id])
+  await Promise.all([involvedTeams.rows.map((row: { id: string }) => {
+    return kcClient.users.delFromGroup({
+      id: userId,
+      groupId: row.id,
+      realm: realmName,
+    })
+  })])
+
+  // remove from roles if any
+  await setUserLevelInGroup(userId, group.id, LEVEL.GUEST)
   await kcClient.users.delFromGroup({
     id: userId,
-    groupId,
+    groupId: group.id,
     realm: realmName,
   })
-  // remove from roles if any
-  await setUserLevelInGroup(userId, groupId, LEVEL.GUEST)
 }
 
 // exported but no check on root group hierarchy, cause you're supposed to check it before
@@ -317,6 +377,24 @@ export async function cancelRequestJoinToGroup(userId: string, groupId: string):
   }
 }
 
+export async function ensureMembersForChildGroup(groupId: string, userIds: string[]): Promise<void> {
+  const incomingUsers = new Set(userIds)
+  const actualUsers = await db.query(`
+    SELECT ugm.user_id AS id
+    FROM user_group_membership ugm
+    WHERE ugm.group_id = $1
+  `, [groupId])
+  const actualUserIds = new Set<string>(actualUsers.rows.map((row: { id: string }) => row.id))
+  const exceedIds = actualUserIds.difference(incomingUsers)
+  const missingIds = incomingUsers.difference(actualUserIds)
+
+  await Promise.all([
+    ...missingIds.values().map(id => addMemberToGroup(id, groupId)),
+    ...exceedIds.values().map(id => removeMemberFromGroup(id, groupId)),
+  ])
+}
+
+// USERS SECTION
 export async function getUserByEmail(email: string): Promise<UserRow | null> {
   const users = await db.query(
     `SELECT u.username, u.email, u.id, u.first_name, u.last_name
@@ -337,7 +415,6 @@ export async function getUserById(id: string): Promise<UserRow | null> {
   return users.rows[0] || null
 }
 
-// USERS SECTION
 export async function searchUsers(options: { query: string, excludeGroupId?: string }): Promise<UserRow[]> {
   const excludedMembers: string[] = []
   if (options.excludeGroupId) {

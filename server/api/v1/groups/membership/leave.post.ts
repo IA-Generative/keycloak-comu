@@ -24,6 +24,6 @@ export default defineEventHandler(async (event) => {
     await repo.deleteGroup(group.id)
     return
   }
-  await repo.removeMemberFromGroup(requestorId, body.groupId)
+  await repo.kickMemberFromGroup(requestorId, group)
   await repo.setUserLevelInGroup(requestorId, body.groupId, LEVEL.GUEST)
 })
