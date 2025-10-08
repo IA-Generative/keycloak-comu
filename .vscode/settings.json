@@ -124,5 +124,8 @@
       "strings": true
     },
     "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "yaml.schemas": {
+    "https://www.schemastore.org/helmfile.json": "./charts/keycloak-comu/templates/**.yaml"
   }
 }

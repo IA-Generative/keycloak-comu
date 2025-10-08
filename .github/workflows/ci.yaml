@@ -30,3 +30,12 @@ jobs:
     with:
       node-version: ${{ needs.setup.outputs.node-version }}
       pnpm-version: ${{ needs.setup.outputs.pnpm-version }}
+
+  build:
+    permissions:
+      packages: write
+    needs: setup
+    uses: ./.github/workflows/build.yml
+    with:
+      tags: |
+        ghcr.io/ia-generative/keycloak-comu:pr-${{ github.event.pull_request.number }}

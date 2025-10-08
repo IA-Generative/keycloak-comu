@@ -1,9 +1,17 @@
 import prom from 'prom-client'
 import * as repo from '../repository/metrics.js'
 
+const instanceId = process.env.HOSTNAME || crypto.randomUUID().slice(0, 6)
+const config = useRuntimeConfig()
+prom.register.setDefaultLabels({
+  instance_id: instanceId,
+  version: config.public.version,
+})
+
 const groupCountGauge = new prom.Gauge({
   name: 'group_count',
   help: 'Total number of groups',
+  labelNames: ['type'] as const,
 })
 
 // quantile of members per group
@@ -22,31 +30,25 @@ const pendingsPerGroupHisto = new prom.Histogram({
 })
 
 export const emailSentGauge = new prom.Counter({
-  name: 'email_sent_total',
+  name: 'emails_sent_total',
   help: 'Total number of emails sent',
   labelNames: ['status'] as const,
 })
+emailSentGauge.inc({ status: 'sent' }, 0) // initialize metric
+emailSentGauge.inc({ status: 'failed' }, 0) // initialize metric
 
-function assignGaugePrometheusMetrics<T extends string>(metric: prom.Gauge<T>, values: Promise<number>, labelNames?: Record<T, string>): void {
+function assignGaugePrometheusMetrics(metric: prom.Gauge<string>, values: Promise<number>, labelNames?: Record<string, string>): void {
   values.then((resolvedValues) => {
     const values = resolvedValues
-    if (labelNames) {
-      metric.set(labelNames, values)
-      return
-    }
-    metric.set(values)
+    metric.set(labelNames ?? {}, values)
   })
 }
 
-function assignHistoPrometheusMetrics<T extends string>(metric: prom.Histogram<T>, values: Promise<number[]>, labelNames?: Record<T, string>): void {
+function assignHistoPrometheusMetrics(metric: prom.Histogram<string>, values: Promise<number[]>, labels?: Record<string, string>): void {
   values.then((resolvedValues) => {
     const values = resolvedValues
     for (const value of values) {
-      if (labelNames) {
-        metric.observe(labelNames, value)
-        continue
-      }
-      metric.observe(value)
+      metric.observe(labels ?? {}, value)
     }
   })
 }
