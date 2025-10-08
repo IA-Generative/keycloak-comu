@@ -22,6 +22,7 @@ export interface GroupDetails extends GroupSearchResult {
   requests: UserRow[]
   attributes: Attributes
   teams: TeamsDtoType
+  description: string | null
 }
 
 interface SearchParams {
@@ -90,7 +91,7 @@ async function getGroupAttributesAndMembers(groupId: string): Promise<{ attribut
 // not exported cause no check on root group hierarchy
 async function searchGroupsByAttributes(name: string, value: string): Promise<GroupSearchResult[]> {
   const groups = await db.query(
-    `SELECT g.id, g.name, ga.name AS attribute_name, ga.value AS attribute_value
+    `SELECT g.id, g.name, g.description, ga.name AS attribute_name, ga.value AS attribute_value
      FROM keycloak_group g
      LEFT JOIN group_attribute ga ON g.id = ga.group_id
      WHERE (ga.name = $1 AND ga.value = $2) AND g.realm_id = $3`,
@@ -101,7 +102,7 @@ async function searchGroupsByAttributes(name: string, value: string): Promise<Gr
 
 export async function getGroupByName(name: string): Promise<GroupSearchResult | null> {
   const groups = await db.query(
-    `SELECT g.id, g.name
+    `SELECT g.id, g.name, g.description
      FROM keycloak_group g
      WHERE g.name ILIKE $1 AND g.realm_id = $2 AND parent_group = $3`,
     [name, await db.getRealmId(), getRootGroup().id],
@@ -130,6 +131,14 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
     name,
     attributes: { owner: [], invite: [], admin: [] },
   }
+}
+
+// You can specify a parent id to create a team inside a group
+export async function editGroup(groupId: string, description: string, name: string): Promise<void> {
+  return kcClient.groups.update({
+    id: groupId,
+    realm: realmName,
+  }, { description, name })
 }
 
 // not exported cause no check on root group hierarchy
@@ -190,7 +199,7 @@ async function getPendingRequestsForGroup(groupId: string): Promise<UserRow[]> {
 export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[], requested: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
-    `SELECT g.id, g.name
+    `SELECT g.id, g.name, g.description
      FROM keycloak_group g
      JOIN user_group_membership ugm ON g.id = ugm.group_id
      WHERE ugm.user_id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
@@ -224,7 +233,7 @@ async function getTeams(id: string): Promise<TeamsDtoType> {
 }
 export async function getGroupDetails(groupId: string): Promise<GroupDetails | null> {
   const groupRes = await db.query(
-    `SELECT g.id, g.name
+    `SELECT g.id, g.name, g.description
      FROM keycloak_group g
      WHERE g.id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
     [groupId, await db.getRealmId(), getRootGroup().id],
@@ -238,6 +247,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
   const teams = await getTeams(groupId)
 
   return {
+    description: group.description,
     id: group.id,
     name: group.name,
     attributes: mergeUniqueGroupAttributes(attributes),

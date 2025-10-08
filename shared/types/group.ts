@@ -7,8 +7,20 @@ export const GroupNameSchema = z.string()
   .regex(/^[\p{L}\p{N}\p{P}\p{S}\p{Zs}]+$/u, { message: 'Caractères invalides' })
   .describe('Le nom du groupe')
 
+  export const GroupDescriptionSchema = z.string()
+  .max(255, { message: 'La description doit faire au maximum 255 caractères' })
+  .optional()
+  .describe('La description du groupe')
+
 export const CreateGroupDtoSchema = z.object({
   name: GroupNameSchema,
+  description: GroupDescriptionSchema,
+})
+
+export const EditGroupDtoSchema = z.object({
+  groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
+  description: GroupDescriptionSchema,
 })
 
 export type CreateGroupDtoType = z.infer<typeof CreateGroupDtoSchema>
+export type EditGroupDtoType = z.infer<typeof EditGroupDtoSchema>
