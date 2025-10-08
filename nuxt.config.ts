@@ -8,6 +8,7 @@ export default defineNuxtConfig({
     '@nuxt/test-utils',
     '@nuxtjs/tailwindcss',
     '@nuxt/test-utils/module',
+    '@artmizu/nuxt-prometheus',
   ],
   ssr: false,
   devtools: {
@@ -75,5 +76,9 @@ export default defineNuxtConfig({
     experimental: {
       openAPI: true,
     },
+  },
+  prometheus: {
+    verbose: false,
+    healthCheck: false,
   },
 })
