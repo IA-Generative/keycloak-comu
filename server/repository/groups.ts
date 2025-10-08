@@ -6,10 +6,10 @@ import type { Attributes } from './utils.js'
 import { mergeUniqueGroupAttributes } from './utils.js'
 import type { TeamsDtoType } from '~~/shared/types/team.js'
 
-const INVITE_ATTRIBUTE = 'invite'
-const REQUEST_ATTRIBUTE = 'request'
-const OWNER_ATTRIBUTE = 'owner'
-const ADMIN_ATTRIBUTE = 'admin'
+export const INVITE_ATTRIBUTE = 'invite'
+export const REQUEST_ATTRIBUTE = 'request'
+export const OWNER_ATTRIBUTE = 'owner'
+export const ADMIN_ATTRIBUTE = 'admin'
 
 export interface GroupSearchResult {
   id: string

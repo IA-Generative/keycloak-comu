@@ -1,4 +1,5 @@
 import nodemailer from 'nodemailer'
+import { emailSentGauge } from '~~/server/plugins/metrics.js'
 
 const { smtp } = useRuntimeConfig()
 
@@ -28,9 +29,11 @@ export async function sendMail({ to, subject, text, html }: { to: string | strin
       text,
       html,
     })
+    emailSentGauge.inc({ status: 'sent' })
     return 'sent'
   } catch (error) {
     console.error('Error sending email:', error)
+    emailSentGauge.inc({ status: 'failed' })
     return 'sendFailed'
   }
 }
