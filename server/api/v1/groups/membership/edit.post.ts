@@ -47,7 +47,7 @@ function manageLevel({ requestor, target, newLevel, group }: { requestor: UserRo
   if (target.id === group.attributes.owner[0] && group.attributes.owner.length <= 1 && newLevel !== LEVEL.OWNER) {
     throw createResponseError({ statusCode: 400, data: 'CANNOT_DEMOTE_ONLY_OWNER' })
   }
-  if (targetLevel < LEVEL.OWNER) {
+  if (requestorLevel < LEVEL.OWNER) {
     if (target.id !== requestor.id) {
       if (requestorLevel <= targetLevel) {
         throw createResponseError({ statusCode: 403, data: 'CANNOT_DEMOTE_USER_WITH_HIGER_LEVEL' })
