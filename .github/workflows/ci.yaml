@@ -1,0 +1,32 @@
+name: CI
+
+on:
+  pull_request:
+    types:
+    - opened
+    - reopened
+    - synchronize
+    - ready_for_review
+    branches:
+    - "**"
+  workflow_dispatch:
+
+jobs:
+  setup:
+    outputs:
+      pnpm-version: ${{ steps.pnpm-install.outputs.pnpm-version }}
+      node-version: ${{ steps.node-install.outputs.node-version }}
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: |
+        echo "PNPM_VERSION=$(jq -r .packageManager package.json | cut -d'@' -f2)" >> $GITHUB_ENV
+        echo "NODE_VERSION=$(cat .prototools | grep node | cut -d '"' -f 2)" >> $GITHUB_ENV
+
+  lint:
+    needs: setup
+    uses: ./.github/workflows/lint.yml
+    with:
+      node-version: ${{ needs.setup.outputs.node-version }}
+      pnpm-version: ${{ needs.setup.outputs.pnpm-version }}

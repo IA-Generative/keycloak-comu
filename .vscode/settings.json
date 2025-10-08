@@ -67,7 +67,9 @@
   "less.validate": true,
   "scss.validate": true,
   "files.associations": {
-    "*.css": "postcss"
+    "*.css": "postcss",
+    "*.yaml": "yaml",
+    "*.yml": "yaml"
   },
   // languages
   "[javascript]": {
@@ -111,5 +113,16 @@
   "vscode-kubernetes.log-viewer.since": -1,
   "vscode-kubernetes.log-viewer.tail": -1,
   "vscode-kubernetes.log-viewer.destination": "Webview",
-  "vscode-kubernetes.log-viewer.wrap": true
+  "vscode-kubernetes.log-viewer.wrap": true,
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  },
+  "[dockercompose]": {
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.defaultFormatter": "dbaeumer.vscode-eslint"
+  }
 }
