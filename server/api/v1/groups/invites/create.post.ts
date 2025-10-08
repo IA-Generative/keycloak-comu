@@ -7,7 +7,7 @@ import { generateGroupInviteEmail } from '~~/server/composables/mailer/body-buil
 
 export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
-  email: z.string(),
+  email: z.string().trim(),
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 

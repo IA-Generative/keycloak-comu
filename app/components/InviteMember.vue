@@ -22,11 +22,11 @@ function manageMailStatus(status: 'sent' | 'disabled' | 'sendFailed' | undefined
   }
 }
 async function addMember() {
-  if (!newMemberEmail.value) return
+  if (!newMemberEmail.value.trim()) return
   try {
     const mailStatus = await fetcher('/api/v1/groups/invites/create', {
       method: 'post',
-      body: { groupId: props.groupId, email: newMemberEmail.value },
+      body: { groupId: props.groupId, email: newMemberEmail.value.trim() },
     })
 
     manageMailStatus(mailStatus)
@@ -49,7 +49,7 @@ const debouncedSearch = debounce(async (search: string) => {
   const response = await fetcher('/api/v1/users/search', {
     method: 'post',
     body: {
-      search,
+      search: search.trim(),
       excludeGroupId: props.groupId,
     },
   })
