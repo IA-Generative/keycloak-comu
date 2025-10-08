@@ -35,7 +35,7 @@ export function guard({
   // find the requestor's level
   if (group.attributes.owner.includes(requestorId)) {
     // no future check needed, owner is always >= minLevel
-    return LEVEL.ADMIN
+    return LEVEL.OWNER
   } else if (group.attributes.admin.includes(requestorId)) {
     requestorLevel = LEVEL.ADMIN
   } else if (group.members.some(member => member.id === requestorId)) {
