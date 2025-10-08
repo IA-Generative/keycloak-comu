@@ -1,0 +1,49 @@
+{{- if .Values.serviceMonitor.enabled }}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ include "keycloak-comu.fullname" . }}
+  labels:
+    {{- include "keycloak-comu.labels" . | nindent 4 }}
+  {{- with .Values.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  endpoints:
+  {{- range .Values.serviceMonitor.endpoints }}
+  - port: http
+    path: {{ .path }}
+    honorLabels: {{ .honorLabels }}
+    {{- if and .basicAuth .basicAuth.username .basicAuth.password }}
+    basicAuth: {{- toYaml .basicAuth | nindent 6 }}
+    {{- end }}
+    {{- if and .bearerTokenSecret .bearerTokenSecret.name .bearerTokenSecret.key }}
+    bearerTokenSecret: {{- toYaml .bearerTokenSecret | nindent 6 }}
+    {{- end }}
+    {{- if .interval }}
+    interval: {{ .interval }}
+    {{- end }}
+    {{- if .scrapeTimeout }}
+    scrapeTimeout: {{ .scrapeTimeout }}
+    {{- end }}
+    {{- if .relabelings }}
+    relabelings: {{- toYaml .relabelings | nindent 6 }}
+    {{- end }}
+    {{- if .metricRelabelings }}
+    metricRelabelings: {{- toYaml .metricRelabelings | nindent 6 }}
+    {{- end }}
+    {{- if .scheme }}
+    scheme: {{ .scheme }}
+    {{- end }}
+    {{- if .tlsConfig }}
+    tlsConfig: {{- toYaml .tlsConfig | nindent 6 }}
+    {{- end }}
+  {{- end }}
+  namespaceSelector:
+    matchNames:
+    - {{ .Release.Namespace | quote }}
+  selector:
+    matchLabels:
+      {{- include "keycloak-comu.labels" . | nindent 6 }}
+{{- end }}
