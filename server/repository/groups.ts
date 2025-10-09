@@ -10,6 +10,8 @@ export const INVITE_ATTRIBUTE = 'invite'
 export const REQUEST_ATTRIBUTE = 'request'
 export const OWNER_ATTRIBUTE = 'owner'
 export const ADMIN_ATTRIBUTE = 'admin'
+export const EXPIRES_AT_ATTRIBUTE = 'expiresAt' as const
+export const EXPIRING_MAIL_SENT_ATTRIBUTE = 'expiringMailSent'
 
 export interface GroupSearchResult {
   id: string
@@ -20,9 +22,11 @@ export interface GroupDetails extends GroupSearchResult {
   members: UserRow[]
   invites: UserRow[]
   requests: UserRow[]
+  expiresAt: string
+  tos: string
   attributes: Attributes
   teams: TeamsDtoType
-  description: string | null
+  description: string
 }
 
 interface SearchParams {
@@ -129,7 +133,7 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [], admin: [] },
+    attributes: { owner: [], invite: [], admin: [], expiresAt: '', tos: '', extras: {} },
   }
 }
 
@@ -139,6 +143,39 @@ export async function editGroup(groupId: string, description: string, name: stri
     id: groupId,
     realm: realmName,
   }, { description, name })
+}
+
+// Renew group by setting a new expiration timestamp
+export async function renewGroup(groupId: string, timestamp: string): Promise<void> {
+  await setAttribute(groupId, EXPIRES_AT_ATTRIBUTE, [timestamp])
+  await deleteAttribute(groupId, EXPIRING_MAIL_SENT_ATTRIBUTE)
+}
+
+// Get group expiring in before timestamp
+export async function getExpiringGroups(before: string, withMailSent: boolean = false): Promise<{ id: string, value: string | null }[]> {
+  const groups = await db.query(
+    `SELECT g.id, ga_exp.value
+      FROM keycloak_group g
+      LEFT JOIN group_attribute ga_exp
+        ON g.id = ga_exp.group_id
+        AND ga_exp.name = '${EXPIRES_AT_ATTRIBUTE}'
+      LEFT JOIN group_attribute ga_mail
+        ON g.id = ga_mail.group_id
+        AND ga_mail.name = '${EXPIRING_MAIL_SENT_ATTRIBUTE}'
+      WHERE (
+        ga_exp.value::numeric <= $1::numeric
+        ${withMailSent ? '' : 'AND (ga_mail.value IS NULL)'}
+      )
+      AND g.realm_id = $2`,
+    [before, await db.getRealmId()],
+  ) as { rows: { id: string, value: string | null }[] }
+
+  return groups.rows
+}
+
+// Get group expiring in before timestamp
+export async function setExpiringMailSent(groupId: string): Promise<void> {
+  await setAttribute(groupId, EXPIRING_MAIL_SENT_ATTRIBUTE, [String(Date.now())])
 }
 
 // not exported cause no check on root group hierarchy
@@ -163,12 +200,33 @@ async function setAttribute(groupId: string, name: string, values: string[]): Pr
     throw new Error('Group not found')
   }
 
+  console.trace(`Setting attribute ${name} for group ${groupId} to values:`, values)
   await kcClient.groups.update({ id: groupId }, {
     name: group.name,
+    description: group.description || undefined,
     attributes: {
       ...group.attributes,
       [name]: values,
     },
+  })
+}
+
+// not exported cause no check on root group hierarchy
+async function deleteAttribute(groupId: string, name: string): Promise<void> {
+  const group = await kcClient.groups.findOne({
+    id: groupId,
+    realm: realmName,
+  })
+  if (!group) {
+    throw new Error('Group not found')
+  }
+
+  delete group.attributes?.[name]
+
+  await kcClient.groups.update({ id: groupId }, {
+    name: group.name,
+    description: group.description || undefined,
+    attributes: group.attributes,
   })
 }
 
@@ -237,7 +295,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
      FROM keycloak_group g
      WHERE g.id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
     [groupId, await db.getRealmId(), getRootGroup().id],
-  )
+  ) as { rowCount: number, rows: { id: string, name: string, description: string | null }[] }
   if (groupRes.rowCount === 0) {
     return null
   }
@@ -246,15 +304,27 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
   const { attributes, members, invites, requests } = await getGroupAttributesAndMembers(groupId)
   const teams = await getTeams(groupId)
 
+  const mergedAttributes = mergeUniqueGroupAttributes(attributes)
+
+  if (!mergedAttributes[EXPIRES_AT_ATTRIBUTE]) {
+    console.warn(`Group ${groupId} has no expiration date set.`)
+    // timestamp in a month with valueOf
+    const newExpiresAt = String(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).valueOf())
+    console.warn(`Setting expiration date to ${newExpiresAt}`)
+    await renewGroup(groupId, newExpiresAt) // set to 30 days from now if not set
+    mergedAttributes[EXPIRES_AT_ATTRIBUTE] = newExpiresAt
+  }
   return {
-    description: group.description,
+    description: group.description ?? '',
     id: group.id,
     name: group.name,
-    attributes: mergeUniqueGroupAttributes(attributes),
+    attributes: mergedAttributes,
     members,
     invites,
     requests,
     teams,
+    expiresAt: mergedAttributes.expiresAt,
+    tos: mergedAttributes.tos,
   }
 }
 

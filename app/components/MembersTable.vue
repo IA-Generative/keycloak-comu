@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
 import ActionMember from './ActionMember.vue'
-import { DsfrDataTable } from '@gouvminint/vue-dsfr'
+import { DsfrDataTable, type DsfrDataTableHeaderCell } from '@gouvminint/vue-dsfr'
 
 const props = defineProps<{
   group: GroupDtoType
@@ -44,12 +44,13 @@ const membersRows = computed(() => {
       }
     }) ?? []
 })
-const headers = [
-  { label: '', key: 'identifier' },
-  { label: 'Rôle', key: 'role' },
+const headers: DsfrDataTableHeaderCell[] = [
+  { label: '', key: 'identifier', headerAttrs: { class: 'w-1/12' } },
+  { label: 'Rôle', key: 'role', headerAttrs: { class: 'w-1/12' } },
+
   { label: 'Nom', key: 'name' },
   { label: 'Email', key: 'email' },
-  { label: '', key: 'actions' },
+  { label: '', key: 'actions', headerAttrs: { class: 'w-1/12' } },
 ]
 </script>
 
@@ -70,7 +71,9 @@ const headers = [
           />
         </template>
         <template v-else-if="colKey === 'email'">
-          <a :href="`mailto:${cell as string}`">{{ cell }}</a>
+          <div class="w-max">
+            <a :href="`mailto:${cell as string}`">{{ cell }}</a>
+          </div>
         </template>
         <template v-else-if="colKey === 'name'">
           {{ cell.text }}

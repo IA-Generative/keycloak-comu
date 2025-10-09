@@ -1,18 +1,27 @@
 import prom from 'prom-client'
-import * as repo from '../repository/metrics.js'
-
-const instanceId = process.env.HOSTNAME || crypto.randomUUID().slice(0, 6)
-const config = useRuntimeConfig()
-prom.register.setDefaultLabels({
-  instance_id: instanceId,
-  version: config.public.version,
-})
+import * as repoMetrics from '../repository/metrics.js'
+import { getExpiringGroups } from '../repository/groups.js'
 
 const groupCountGauge = new prom.Gauge({
   name: 'group_count',
   help: 'Total number of groups',
   labelNames: ['type'] as const,
 })
+
+// quantile of members per group
+const groupExpirationMonthHistogram = new prom.Histogram({
+  name: 'group_expiration_month',
+  help: 'Number of groups expiring in X Months',
+  buckets: [0, 1, 2, 3, 4, 5, 6, 12],
+})
+
+const groupExpiredCount = new prom.Gauge({
+  name: 'group_expired_count',
+  help: 'Number of groups expired',
+  labelNames: ['reason'] as const,
+})
+groupExpiredCount.set({ reason: 'expired' }, 0)
+groupExpiredCount.set({ reason: 'no_expiration' }, 0)
 
 // quantile of members per group
 const membersPerGroupHisto = new prom.Histogram({
@@ -32,15 +41,12 @@ const pendingsPerGroupHisto = new prom.Histogram({
 export const emailSentGauge = new prom.Counter({
   name: 'emails_sent_total',
   help: 'Total number of emails sent',
-  labelNames: ['status'] as const,
+  labelNames: ['status', 'instance_id', 'version'] as const,
 })
-emailSentGauge.inc({ status: 'sent' }, 0) // initialize metric
-emailSentGauge.inc({ status: 'failed' }, 0) // initialize metric
 
 function assignGaugePrometheusMetrics(metric: prom.Gauge<string>, values: Promise<number>, labelNames?: Record<string, string>): void {
   values.then((resolvedValues) => {
-    const values = resolvedValues
-    metric.set(labelNames ?? {}, values)
+    metric.set(labelNames ?? {}, resolvedValues)
   })
 }
 
@@ -54,16 +60,20 @@ function assignHistoPrometheusMetrics(metric: prom.Histogram<string>, values: Pr
 }
 
 export async function retrieveGroupMetrics() {
-  assignGaugePrometheusMetrics(groupCountGauge, repo.countGroupMetrics())
+  assignGaugePrometheusMetrics(groupCountGauge, repoMetrics.countGroupMetrics())
+  groupExpirationMonthHistogram.reset()
+  assignHistoPrometheusMetrics(groupExpirationMonthHistogram, repoMetrics.countExpiringGroups())
+  assignGaugePrometheusMetrics(groupExpiredCount, getExpiringGroups(String(Date.now().valueOf()), true).then(groups => groups.length), { reason: 'expired' })
+  assignGaugePrometheusMetrics(groupExpiredCount, repoMetrics.countGroupWithoutExpiration(), { reason: 'no_expiration' })
 
   membersPerGroupHisto.reset()
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countMembersPerGroupMetrics(), { type: 'member' })
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countAdminsPerGroupMetrics(), { type: 'admin' })
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countOwnersPerGroupMetrics(), { type: 'owner' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countMembersPerGroupMetrics(), { type: 'member' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countAdminsPerGroupMetrics(), { type: 'admin' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countOwnersPerGroupMetrics(), { type: 'owner' })
 
   pendingsPerGroupHisto.reset()
-  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repo.countPendingRequestsPerGroupMetrics(), { type: 'request' })
-  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repo.countPendingInvitesPerGroupMetrics(), { type: 'invite' })
+  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingRequestsPerGroupMetrics(), { type: 'request' })
+  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingInvitesPerGroupMetrics(), { type: 'invite' })
 }
 
 export default defineNitroPlugin(async () => {

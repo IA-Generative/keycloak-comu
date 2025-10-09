@@ -35,12 +35,14 @@ export function groupDetailToDto(group: GroupDetails, requestor: Requestor): Gro
   }
 
   return {
-    description: group.description,
+    description: group.description ?? '',
     id,
     name,
     members: membersWithLevel,
     invites: requestor.membershipLevel >= LEVEL.ADMIN ? invites : invites.filter(invite => invite.id === requestor.userId),
     requests: requestor.membershipLevel >= LEVEL.ADMIN ? group.requests : group.requests.filter(request => request.id === requestor.userId),
     teams: group.teams,
+    expiresAt: group.attributes.expiresAt,
+    tos: group.attributes.tos,
   }
 }
