@@ -37,7 +37,7 @@ async function setupRootGroup(rootGroupPath: string) {
   }
 }
 
-export async function setupKeycloakClient(retries = 5) {
+export async function setupKeycloakClient(retries = 10) {
   try {
     await kcClient.auth({
       clientId: 'admin-cli',

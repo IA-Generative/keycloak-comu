@@ -6,6 +6,10 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  INVALID_TIMESTAMP: {
+    en: 'Invalid timestamp, must be at least 30 days in the future and at most 1 year from current expiration date',
+    fr: 'Horodatage invalide, doit être d\'au moins 30 jours dans le futur et d\'au plus 1 an à partir de la date d\'expiration actuelle',
+  },
   TEAM_NAME_TOO_SHORT: {
     en: 'The name must be at least 2 characters long',
     fr: 'Le nom doit faire au moins 2 caractères',
