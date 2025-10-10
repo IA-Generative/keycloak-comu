@@ -1,12 +1,5 @@
 import prom from 'prom-client'
-import * as repo from '../repository/metrics.js'
-
-const instanceId = process.env.HOSTNAME || crypto.randomUUID().slice(0, 6)
-const config = useRuntimeConfig()
-prom.register.setDefaultLabels({
-  instance_id: instanceId,
-  version: config.public.version,
-})
+import * as repoMetrics from '../repository/metrics.js'
 
 const groupCountGauge = new prom.Gauge({
   name: 'group_count',
@@ -32,15 +25,12 @@ const pendingsPerGroupHisto = new prom.Histogram({
 export const emailSentGauge = new prom.Counter({
   name: 'emails_sent_total',
   help: 'Total number of emails sent',
-  labelNames: ['status'] as const,
+  labelNames: ['status', 'instance_id', 'version'] as const,
 })
-emailSentGauge.inc({ status: 'sent' }, 0) // initialize metric
-emailSentGauge.inc({ status: 'failed' }, 0) // initialize metric
 
 function assignGaugePrometheusMetrics(metric: prom.Gauge<string>, values: Promise<number>, labelNames?: Record<string, string>): void {
   values.then((resolvedValues) => {
-    const values = resolvedValues
-    metric.set(labelNames ?? {}, values)
+    metric.set(labelNames ?? {}, resolvedValues)
   })
 }
 
@@ -54,18 +44,13 @@ function assignHistoPrometheusMetrics(metric: prom.Histogram<string>, values: Pr
 }
 
 export async function retrieveGroupMetrics() {
-  assignGaugePrometheusMetrics(groupCountGauge, repo.countGroupMetrics())
-
+  assignGaugePrometheusMetrics(groupCountGauge, repoMetrics.countGroupMetrics())
   membersPerGroupHisto.reset()
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countMembersPerGroupMetrics(), { type: 'member' })
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countAdminsPerGroupMetrics(), { type: 'admin' })
-  assignHistoPrometheusMetrics(membersPerGroupHisto, repo.countOwnersPerGroupMetrics(), { type: 'owner' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countMembersPerGroupMetrics(), { type: 'member' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countAdminsPerGroupMetrics(), { type: 'admin' })
+  assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countOwnersPerGroupMetrics(), { type: 'owner' })
 
   pendingsPerGroupHisto.reset()
-  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repo.countPendingRequestsPerGroupMetrics(), { type: 'request' })
-  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repo.countPendingInvitesPerGroupMetrics(), { type: 'invite' })
+  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingRequestsPerGroupMetrics(), { type: 'request' })
+  assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingInvitesPerGroupMetrics(), { type: 'invite' })
 }
-
-export default defineNitroPlugin(async () => {
-  setTimeout(retrieveGroupMetrics, 10000) // Delay to allow Keycloak to start
-})
