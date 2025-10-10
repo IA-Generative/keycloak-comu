@@ -4,22 +4,34 @@ export interface Attributes {
   owner: string[]
   invite: string[]
   admin: string[]
-  [name: string]: string[]
+  extras: {
+    [name: string]: string[]
+  }
 }
 export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
   const attributes: Attributes = {
     owner: [],
     invite: [],
     admin: [],
+    extras: {},
   }
   rows.forEach((row) => {
     if (row.name && row.value) {
-      if (!attributes[row.name]) {
-        attributes[row.name] = []
+      if (!attributes.extras[row.name]) {
+        attributes.extras[row.name] = []
       }
-      attributes[row.name].push(row.value)
+      attributes.extras[row.name].push(row.value)
     }
   })
+
+  // special keys
+  attributes.owner = attributes.extras.owner ?? []
+  delete attributes.extras.owner
+  attributes.invite = attributes.extras.invite ?? []
+  delete attributes.extras.invite
+  attributes.admin = attributes.extras.admin ?? []
+  delete attributes.extras.admin
+
   return attributes
 }
 

@@ -22,7 +22,7 @@ export interface GroupDetails extends GroupSearchResult {
   requests: UserRow[]
   attributes: Attributes
   teams: TeamsDtoType
-  description: string | null
+  description: string
 }
 
 interface SearchParams {
@@ -129,7 +129,7 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [], admin: [] },
+    attributes: { owner: [], invite: [], admin: [], extras: {} },
   }
 }
 
@@ -165,6 +165,7 @@ async function setAttribute(groupId: string, name: string, values: string[]): Pr
 
   await kcClient.groups.update({ id: groupId }, {
     name: group.name,
+    description: group.description,
     attributes: {
       ...group.attributes,
       [name]: values,
@@ -237,7 +238,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
      FROM keycloak_group g
      WHERE g.id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
     [groupId, await db.getRealmId(), getRootGroup().id],
-  )
+  ) as { rowCount: number, rows: { id: string, name: string, description: string | null }[] }
   if (groupRes.rowCount === 0) {
     return null
   }
@@ -246,11 +247,13 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
   const { attributes, members, invites, requests } = await getGroupAttributesAndMembers(groupId)
   const teams = await getTeams(groupId)
 
+  const mergedAttributes = mergeUniqueGroupAttributes(attributes)
+
   return {
-    description: group.description,
+    description: group.description ?? '',
     id: group.id,
     name: group.name,
-    attributes: mergeUniqueGroupAttributes(attributes),
+    attributes: mergedAttributes,
     members,
     invites,
     requests,

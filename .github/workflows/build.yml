@@ -50,4 +50,5 @@ jobs:
       with:
         push: true
         pull: true
-        tags: ${{ steps.get_version.outputs.tags }}
+        tags: |
+          ${{ steps.get_version.outputs.tags }}
