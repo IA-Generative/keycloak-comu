@@ -1,10 +1,29 @@
 # keycloak-comu
 
-![Version: 0.1.5](https://img.shields.io/badge/Version-0.1.5-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.5.1](https://img.shields.io/badge/AppVersion-0.5.1-informational?style=flat-square)
+![Version: 0.1.6](https://img.shields.io/badge/Version-0.1.6-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.0](https://img.shields.io/badge/AppVersion-0.6.0-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
 ## Values
+
+### Servicename
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| serviceMonitor.annotations | object | `{}` | Prometheus ServiceMonitor annotations. |
+| serviceMonitor.enabled | bool | `true` | Enable a prometheus ServiceMonitor. |
+| serviceMonitor.endpoints[0] | object | `{"honorLabels":false,"interval":"30s","metricRelabelings":[],"path":"/metrics","relabelings":[],"scheme":"","scrapeTimeout":"10s","selector":{},"tlsConfig":{}}` | Prometheus ServiceMonitor interval. |
+| serviceMonitor.endpoints[0].honorLabels | bool | `false` | When true, honorLabels preserves the metric’s labels when they collide with the target’s labels. |
+| serviceMonitor.endpoints[0].metricRelabelings | list | `[]` | Prometheus MetricRelabelConfigs to apply to samples before ingestion. |
+| serviceMonitor.endpoints[0].path | string | `"/metrics"` | Path used by the Prometheus ServiceMonitor to scrape metrics. |
+| serviceMonitor.endpoints[0].relabelings | list | `[]` | Prometheus RelabelConfigs to apply to samples before scraping. |
+| serviceMonitor.endpoints[0].scheme | string | `""` | Prometheus ServiceMonitor scheme. |
+| serviceMonitor.endpoints[0].scrapeTimeout | string | `"10s"` | Prometheus ServiceMonitor scrapeTimeout. If empty, Prometheus uses the global scrape timeout unless it is less than the target's scrape interval value in which the latter is used. |
+| serviceMonitor.endpoints[0].selector | object | `{}` | Prometheus ServiceMonitor selector. |
+| serviceMonitor.endpoints[0].tlsConfig | object | `{}` | Prometheus ServiceMonitor tlsConfig. |
+| serviceMonitor.labels | object | `{}` | Prometheus ServiceMonitor labels. |
+
+### Other Values
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
@@ -60,6 +79,7 @@ A Helm chart for Kubernetes
 | readinessProbe.httpGet.port | string | `"http"` |  |
 | replicaCount | int | `1` |  |
 | resources | object | `{}` |  |
+| revisionHistoryLimit | int | `5` |  |
 | securityContext | object | `{}` |  |
 | service.port | int | `8080` |  |
 | service.type | string | `"ClusterIP"` |  |
