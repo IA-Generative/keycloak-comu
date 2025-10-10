@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.6.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.5.1...v0.6.0) (2025-10-10)
+
+
+### Features
+
+* add CI workflow for pull request handling and environment setup ([4f81e91](https://github.com/IA-Generative/keycloak-comu/commit/4f81e91d286f8a1776b38c9ca86688c0effae05b))
+* add group description editing functionality ([56f3fe1](https://github.com/IA-Generative/keycloak-comu/commit/56f3fe1a817d77545eac3937ec769462c839cfa3))
+* integrate Prometheus metrics for email and group statistics ([4334666](https://github.com/IA-Generative/keycloak-comu/commit/4334666b1e1542da7037f1c188f74e91c713567f))
+
+
+### Bug Fixes
+
+* component split and fix metrics ([5502f2c](https://github.com/IA-Generative/keycloak-comu/commit/5502f2c0446e5745dbb8304af505e004007b6946))
+* correct requestor level check in manageLevel function ([721046d](https://github.com/IA-Generative/keycloak-comu/commit/721046dfa7100d8e0d5b50612217eafad3053791))
+* enhance delete group functionality with confirmation prompt ([16dc99a](https://github.com/IA-Generative/keycloak-comu/commit/16dc99afbfb51578b61713a841d43e3a27ea9df2))
+* refactor keycloak initialization and add version info to config ([bf3dae8](https://github.com/IA-Generative/keycloak-comu/commit/bf3dae8942f06ef5e22e7f935bb3517bd764193c))
+* replace user profile display with DsfrTable for improved layout ([bd1675a](https://github.com/IA-Generative/keycloak-comu/commit/bd1675adb76f40f2283a9a433efe803892f75669))
+* trim whitespace from email input in invite member functionality ([b3481eb](https://github.com/IA-Generative/keycloak-comu/commit/b3481ebf80a813edc5a534addd99250e5a4fbbee))
+* trim whitespace from email input in invite member functionality ([8b2115b](https://github.com/IA-Generative/keycloak-comu/commit/8b2115ba926c1260c81ad51e44d6d0e747c32dc7))
+
 ## [0.5.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.5.0...v0.5.1) (2025-10-07)
 
 
