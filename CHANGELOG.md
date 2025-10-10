@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.6.0...v0.6.1) (2025-10-10)
+
+
+### Bug Fixes
+
+* add teams per group metrics ([2fc5b35](https://github.com/IA-Generative/keycloak-comu/commit/2fc5b35cd140977d3ea3eb987ff330c5eb73806e))
+
 ## [0.6.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.5.1...v0.6.0) (2025-10-10)
 
 
