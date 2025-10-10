@@ -10,7 +10,7 @@ const groupCountGauge = new prom.Gauge({
 // quantile of members per group
 const membersPerGroupHisto = new prom.Histogram({
   name: 'members_per_group',
-  help: 'Average number of members per group',
+  help: 'Number of members per group',
   buckets: [0, 1, 5, 20, 100],
   labelNames: ['type'] as const,
 })
@@ -20,6 +20,12 @@ const pendingsPerGroupHisto = new prom.Histogram({
   help: 'Number of pendings per group',
   buckets: [0, 1, 5, 20],
   labelNames: ['type'] as const,
+})
+
+const teamsPerGroupHisto = new prom.Histogram({
+  name: 'teams_per_group',
+  help: 'Number of teams per group',
+  buckets: [0, 1, 5, 20, 100],
 })
 
 export const emailSentGauge = new prom.Counter({
@@ -45,6 +51,10 @@ function assignHistoPrometheusMetrics(metric: prom.Histogram<string>, values: Pr
 
 export async function retrieveGroupMetrics() {
   assignGaugePrometheusMetrics(groupCountGauge, repoMetrics.countGroupMetrics())
+
+  teamsPerGroupHisto.reset()
+  assignHistoPrometheusMetrics(teamsPerGroupHisto, repoMetrics.countTeamsPerGroupMetrics())
+
   membersPerGroupHisto.reset()
   assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countMembersPerGroupMetrics(), { type: 'member' })
   assignHistoPrometheusMetrics(membersPerGroupHisto, repoMetrics.countAdminsPerGroupMetrics(), { type: 'admin' })

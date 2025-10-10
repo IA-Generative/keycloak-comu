@@ -23,8 +23,7 @@ export async function countMembersPerGroupMetrics(): Promise<number[]> {
       FROM user_group_membership ugm
       RIGHT JOIN keycloak_group g ON g.id = ugm.group_id
       WHERE g.realm_id = $1 AND g.parent_group = $2
-      GROUP BY ugm.group_id
-      ORDER BY COUNT(*)`,
+      GROUP BY ugm.group_id`,
     [await db.getRealmId(), getRootGroup().id],
   )
   return mapValues(groupsResult.rows)
@@ -36,8 +35,7 @@ export async function countOwnersPerGroupMetrics(): Promise<number[]> {
       FROM keycloak_group g
       LEFT JOIN group_attribute ga ON g.id = ga.group_id AND ga.name = $3
       WHERE g.realm_id = $1 AND g.parent_group = $2
-      GROUP BY g.id
-      ORDER BY COUNT(ga.group_id)`,
+      GROUP BY g.id`,
     [await db.getRealmId(), getRootGroup().id, OWNER_ATTRIBUTE],
   )
   return mapValues(groupsResult.rows)
@@ -49,8 +47,7 @@ export async function countAdminsPerGroupMetrics(): Promise<number[]> {
       FROM keycloak_group g
       LEFT JOIN group_attribute ga ON g.id = ga.group_id AND ga.name = $3
       WHERE g.realm_id = $1 AND g.parent_group = $2
-      GROUP BY g.id
-      ORDER BY COUNT(ga.group_id)`,
+      GROUP BY g.id`,
     [await db.getRealmId(), getRootGroup().id, ADMIN_ATTRIBUTE],
   )
   return mapValues(groupsResult.rows)
@@ -62,8 +59,7 @@ export async function countPendingInvitesPerGroupMetrics(): Promise<number[]> {
       FROM keycloak_group g
       LEFT JOIN group_attribute ga ON g.id = ga.group_id AND ga.name = $3
       WHERE g.realm_id = $1 AND g.parent_group = $2
-      GROUP BY g.id
-      ORDER BY COUNT(ga.group_id)`,
+      GROUP BY g.id`,
     [await db.getRealmId(), getRootGroup().id, INVITE_ATTRIBUTE],
   )
   return mapValues(groupsResult.rows)
@@ -79,5 +75,17 @@ export async function countPendingRequestsPerGroupMetrics(): Promise<number[]> {
       ORDER BY COUNT(ga.group_id)`,
     [await db.getRealmId(), getRootGroup().id, REQUEST_ATTRIBUTE],
   )
+  return mapValues(groupsResult.rows)
+}
+
+export async function countTeamsPerGroupMetrics(): Promise<number[]> {
+  const groupsResult = await db.query(
+    `SELECT COUNT(c_g.parent_group)
+      FROM keycloak_group g
+      LEFT JOIN keycloak_group c_g ON g.id = c_g.parent_group 
+      WHERE g.realm_id = $1 AND g.parent_group = $2
+      GROUP BY g.id`,
+    [await db.getRealmId(), getRootGroup().id],
+  ) as { rows: { count: string }[] }
   return mapValues(groupsResult.rows)
 }
