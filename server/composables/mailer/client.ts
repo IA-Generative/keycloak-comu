@@ -1,7 +1,11 @@
 import nodemailer from 'nodemailer'
-import { emailSentGauge } from '~~/server/plugins/metrics.js'
+import { emailSentGauge } from '~~/server/composables/metrics.js'
 
-const { smtp } = useRuntimeConfig()
+const { smtp, version } = useRuntimeConfig()
+const instanceId = process.env.HOSTNAME || crypto.randomUUID().slice(0, 6)
+
+emailSentGauge.inc({ status: 'sent', instance_id: instanceId, version }, 0) // initialize metric
+emailSentGauge.inc({ status: 'failed', instance_id: instanceId, version }, 0) // initialize metric
 
 const smtpClient = nodemailer.createTransport({
   host: smtp.host,
@@ -29,11 +33,11 @@ export async function sendMail({ to, subject, text, html }: { to: string | strin
       text,
       html,
     })
-    emailSentGauge.inc({ status: 'sent' })
+    emailSentGauge.inc({ status: 'sent', instance_id: instanceId, version })
     return 'sent'
   } catch (error) {
     console.error('Error sending email:', error)
-    emailSentGauge.inc({ status: 'failed' })
+    emailSentGauge.inc({ status: 'failed', instance_id: instanceId, version })
     return 'sendFailed'
   }
 }

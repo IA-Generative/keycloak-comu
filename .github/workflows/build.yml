@@ -33,12 +33,9 @@ jobs:
       run: |
         if [ -z "${{ inputs.tags }}" ]; then
           echo "No tags provided, extracting from package.json"
-          VERSION=$(jq -r .version < package.json)
-          MAJOR=$(echo $VERSION | cut -d. -f1)
-          MINOR=$(echo $VERSION | cut -d. -f1,2)
-          echo "MAJOR=ghcr.io/ia-generative/keycloak-comu:$MAJOR" >> $GITHUB_OUTPUT
-          echo "MINOR=ghcr.io/ia-generative/keycloak-comu:$MINOR" >> $GITHUB_OUTPUT
-          echo "PATCH=ghcr.io/ia-generative/keycloak-comu:$VERSION" >> $GITHUB_OUTPUT
+          VERSION='ghcr.io/ia-generative/keycloak-comu:$(jq -r .version < package.json)'
+          MAJOR='ghcr.io/ia-generative/keycloak-comu:$(echo $VERSION | cut -d. -f1)'
+          MINOR='ghcr.io/ia-generative/keycloak-comu:$(echo $VERSION | cut -d. -f1,2)'
           echo "tags=$MAJOR\n$MINOR\n$VERSION" >> $GITHUB_OUTPUT
         else
           echo "Using provided tags"
@@ -50,4 +47,5 @@ jobs:
       with:
         push: true
         pull: true
-        tags: ${{ steps.get_version.outputs.tags }}
+        tags: |
+          ${{ steps.get_version.outputs.tags }}
