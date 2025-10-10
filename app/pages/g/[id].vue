@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DsfrButton, DsfrInput } from '@gouvminint/vue-dsfr'
+import { DsfrButton } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 import MembersTable from '~/components/MembersTable.vue'
 
@@ -29,19 +29,6 @@ const mylevel = computed(() => group.value?.members.find(m => m.id === userId.va
 function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F) {
   fn().finally(() => fetchData())
 }
-
-const isEditingDescription = ref(false)
-function editDescription() {
-  if (group.value) {
-    fetcher('/api/v1/groups/edit', {
-      method: 'post',
-      body: { groupId: group.value.id, description: group.value.description?.trim() },
-    }).finally(() => {
-      isEditingDescription.value = false
-      fetchData()
-    })
-  }
-}
 </script>
 
 <template>
@@ -64,37 +51,10 @@ function editDescription() {
         Actualiser
       </DsfrButton>
     </div>
-    <div>
-      <DsfrInput
-        v-if="isEditingDescription"
-        v-model="group.description"
-        label="Description du groupe"
-        :disabled="mylevel < 20"
-        hint="Une description aide les autres utilisateurs à comprendre l'objectif du groupe."
-        type="textarea"
-        :rows="3"
-        is-textarea
-        @blur="editDescription"
-      />
-      <div v-else>
-        <span
-          v-if="group.description?.trim()"
-          style="white-space: pre;"
-        >{{ group.description.trim() }}</span>
-        <span
-          v-else
-          class="fr-text--italic"
-        >Aucune description fournie.</span>
-      </div>
-      <DsfrButton
-        v-if="mylevel >= 30"
-        tertiary
-        class="fr-mt-2w"
-        icon="ri-edit-line"
-        label="Modifier la description"
-        @click="isEditingDescription = true"
-      />
-    </div>
+    <GroupBaseInfo
+      :group="group"
+      @refresh="fetchData"
+    />
     <div class="flex flex-col xl:flex-col">
       <MembersTable
         :group
