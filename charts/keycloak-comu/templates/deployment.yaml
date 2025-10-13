@@ -46,6 +46,7 @@ spec:
           {{- include "keycloak-comu.keycloakSettings" . | nindent 12 }}
           {{- include "keycloak-comu.smtpSettings" . | nindent 12 }}
           {{- include "keycloak-comu.postgresSettings" . | nindent 12 }}
+          {{- include "keycloak-comu.generalSettings" . | nindent 12 }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           ports:
             - name: http

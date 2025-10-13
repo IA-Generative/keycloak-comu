@@ -52,6 +52,7 @@ export default defineNuxtConfig({
       user: process.env.NUXT_DATABASE_USER || 'keycloak',
       password: process.env.NUXT_DATABASE_PASSWORD || 'password',
     },
+    instanceId: process.env.NUXT_INSTANCE_ID || process.env.HOSTNAME || 'unknown',
   },
   devServer: {
     host: '0.0.0.0',

@@ -130,6 +130,8 @@ environment: production
 
 baseUrl: ""
 
+instanceId: ""
+
 smtp:
   enable: false
   host: ""

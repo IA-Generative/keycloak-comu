@@ -4,7 +4,7 @@ import type { UserRow } from '~~/server/repository/types.js'
 const runtimeConfig = useRuntimeConfig()
 const baseUrl = runtimeConfig.baseUrl.replace(/\/$/, '')
 
-export function generateGroupInviteEmail(group: GroupDetails): string {
+export function generateGroupInviteEmail(group: GroupDetails, hostUser: UserRow): string {
   const groupLink = `${baseUrl}/g/${group.id}`
 
   return `
@@ -25,7 +25,7 @@ export function generateGroupInviteEmail(group: GroupDetails): string {
           <td style="padding: 24px;">
             <p style="font-size: 16px; line-height: 1.5;">Bonjour,</p>
             <p style="font-size: 16px; line-height: 1.5;">
-              Vous avez été invité à rejoindre le groupe 
+              ${hostUser.first_name} ${hostUser.last_name}, vous avez été invité à rejoindre le groupe 
               <strong style="color: #000091;">${group.name}</strong>.
             </p>
             <p style="font-size: 16px; line-height: 1.5;">Pour accéder au groupe, cliquez sur le bouton ci-dessous :</p>

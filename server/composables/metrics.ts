@@ -1,6 +1,13 @@
 import prom from 'prom-client'
 import * as repoMetrics from '../repository/metrics.js'
 
+const config = useRuntimeConfig()
+
+prom.register.setDefaultLabels({
+  instanceId: config.instanceId,
+  version: config.public.version ?? 'unknown',
+})
+
 const groupCountGauge = new prom.Gauge({
   name: 'group_count',
   help: 'Total number of groups',

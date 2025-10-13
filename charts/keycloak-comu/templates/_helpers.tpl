@@ -147,6 +147,12 @@ Create BASE_URL var
   {{- include "keycloak-comu.valueHandler" .Values.postgres.password }}
 {{- end -}}
 
+{{/* General Settings */}}
+{{- define "keycloak-comu.generalSettings" -}}
+- name: NUXT_INSTANCE_ID
+  {{- include "keycloak-comu.valueHandler" (.Values.instanceId | default .Chart.Name) }}
+{{- end -}}
+
 {{/* Values handler */}}
 {{- define "keycloak-comu.valueHandler" -}}
 {{- if kindIs "string" . }}
