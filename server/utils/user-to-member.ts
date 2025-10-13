@@ -42,5 +42,6 @@ export function groupDetailToDto(group: GroupDetails, requestor: Requestor): Gro
     invites: requestor.membershipLevel >= LEVEL.ADMIN ? invites : invites.filter(invite => invite.id === requestor.userId),
     requests: requestor.membershipLevel >= LEVEL.ADMIN ? group.requests : group.requests.filter(request => request.id === requestor.userId),
     teams: group.teams,
+    tos: group.attributes.tos,
   }
 }
