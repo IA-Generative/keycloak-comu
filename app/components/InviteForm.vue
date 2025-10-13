@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { DsfrButton } from '@gouvminint/vue-dsfr'
+import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
 
 defineProps<{
   group: GroupDtoType
@@ -48,5 +48,12 @@ defineEmits<{
       label="Demander à rejoindre le groupe"
       @click="$emit('createRequest')"
     />
+    <DsfrAlert
+      small
+      type="info"
+      class="fr-mt-2w"
+    >
+      En rejoignant ce groupe, vous acceptez de respecter ses conditions d'utilisation.
+    </DsfrAlert>
   </div>
 </template>

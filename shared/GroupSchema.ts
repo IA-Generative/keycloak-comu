@@ -11,6 +11,7 @@ const GroupDtoSchema = z.object({
   invites: z.array(UserDtoSchema),
   requests: z.array(UserDtoSchema),
   description: z.string(),
+  tos: z.string(),
 })
 
 export default GroupDtoSchema

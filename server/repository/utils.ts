@@ -5,6 +5,7 @@ export interface Attributes {
   invite: string[]
   request: string[]
   admin: string[]
+  tos: string
   extras: {
     [name: string]: string[]
   }
@@ -16,6 +17,7 @@ export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
     request: [],
     admin: [],
     extras: {},
+    tos: '',
   }
   rows.forEach((row) => {
     if (row.name && row.value) {
@@ -33,6 +35,9 @@ export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
   delete attributes.extras.invite
   attributes.admin = attributes.extras.admin ?? []
   delete attributes.extras.admin
+
+  attributes.tos = attributes.extras.tos?.[0] ?? ''
+  delete attributes.extras.tos
 
   return attributes
 }

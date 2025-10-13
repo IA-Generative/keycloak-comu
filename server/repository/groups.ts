@@ -23,6 +23,7 @@ export interface GroupDetails extends GroupSearchResult {
   attributes: Attributes
   teams: TeamsDtoType
   description: string
+  tos: string
 }
 
 interface SearchParams {
@@ -129,7 +130,7 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [], request: [], admin: [], extras: {} },
+    attributes: { owner: [], invite: [], request: [], admin: [], extras: {}, tos: '' },
   }
 }
 
@@ -139,6 +140,10 @@ export async function editGroup(groupId: string, description: string, name: stri
     id: groupId,
     realm: realmName,
   }, { description, name })
+}
+
+export async function setTos(groupId: string, tos: string): Promise<void> {
+  return setAttribute(groupId, 'tos', [tos])
 }
 
 // not exported cause no check on root group hierarchy
@@ -258,6 +263,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
     invites,
     requests,
     teams,
+    tos: mergedAttributes.tos,
   }
 }
 
