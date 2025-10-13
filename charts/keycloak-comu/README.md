@@ -1,6 +1,6 @@
 # keycloak-comu
 
-![Version: 0.1.7](https://img.shields.io/badge/Version-0.1.7-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.6.1](https://img.shields.io/badge/AppVersion-0.6.1-informational?style=flat-square)
+![Version: 0.1.8](https://img.shields.io/badge/Version-0.1.8-informational?style=flat-square) ![Type: application](https://img.shields.io/badge/Type-application-informational?style=flat-square) ![AppVersion: 0.7.0](https://img.shields.io/badge/AppVersion-0.7.0-informational?style=flat-square)
 
 A Helm chart for Kubernetes
 
@@ -48,6 +48,7 @@ A Helm chart for Kubernetes
 | ingress.hosts[0].paths[0].path | string | `"/"` |  |
 | ingress.hosts[0].paths[0].pathType | string | `"ImplementationSpecific"` |  |
 | ingress.tls | list | `[]` |  |
+| instanceId | string | `""` |  |
 | keycloak.adminPassword.valueFrom.secretKeyRef.key | string | `"admin-password"` |  |
 | keycloak.adminPassword.valueFrom.secretKeyRef.name | string | `""` |  |
 | keycloak.adminRealm | string | `""` |  |

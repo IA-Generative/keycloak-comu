@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.7.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.6.1...v0.7.0) (2025-10-13)
+
+
+### Features
+
+* add general settings and instance ID support, update email invite functionality ([bea51f4](https://github.com/IA-Generative/keycloak-comu/commit/bea51f4eb86e4314cd9033fca30929fe7e6358bd))
+* implement terms of service management with email notifications ([c5037de](https://github.com/IA-Generative/keycloak-comu/commit/c5037deab4234c749c718d832804627976f5e4f4))
+
+
+### Bug Fixes
+
+* group invite handling with permission checks ([f95f708](https://github.com/IA-Generative/keycloak-comu/commit/f95f7083b86564b7b2964cc52da1bf9271fa0d1b))
+
 ## [0.6.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.6.0...v0.6.1) (2025-10-10)
 
 
