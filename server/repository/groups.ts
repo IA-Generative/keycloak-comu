@@ -129,7 +129,7 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [], admin: [], extras: {} },
+    attributes: { owner: [], invite: [], request: [], admin: [], extras: {} },
   }
 }
 
