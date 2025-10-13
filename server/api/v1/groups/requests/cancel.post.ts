@@ -17,7 +17,7 @@ export default defineEventHandler(async (event) => {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
 
-  if (!group.attributes.request.includes(requestorId)) {
+  if (!group.requests.find(request => request.id === requestorId)) {
     throw createResponseError({ statusCode: 403, data: 'USER_NOT_REQUESTING' })
   }
 

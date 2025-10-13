@@ -3,6 +3,7 @@ import type { AttributeRow } from './types.js'
 export interface Attributes {
   owner: string[]
   invite: string[]
+  request: string[]
   admin: string[]
   extras: {
     [name: string]: string[]
@@ -12,6 +13,7 @@ export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
   const attributes: Attributes = {
     owner: [],
     invite: [],
+    request: [],
     admin: [],
     extras: {},
   }
