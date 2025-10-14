@@ -8,6 +8,25 @@ export const LeaveGroupDtoSchema = z.object({
 })
 export type LeaveGroupDtoType = z.infer<typeof LeaveGroupDtoSchema>
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Leave a group',
+    tags: ['Group Membership'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User left group successfully',
+      },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
   const body = await readValidatedBody(event, body => LeaveGroupDtoSchema.parse(body))

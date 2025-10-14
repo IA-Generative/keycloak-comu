@@ -12,7 +12,35 @@ export const GroupInviteCreateDtoSchema = z.object({
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 
-export default defineEventHandler(async (event) => {
+defineRouteMeta({
+  openAPI: {
+    description: 'Invite a user to join a group',
+    tags: ['Group Invites'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupAndEmailBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User invited to join group successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'string',
+              enum: ['disabled', 'sent', 'sendFailed', 'merged', 'alreadyMember'],
+              description: '\'disabled\' if mail sending is disabled, \'sent\' if the invite has been sent and email is sent, \'sendFailed\' if the invite is created but email sending failed, \'merged\' if the user had a pending request to join and is now added to the group, \'alreadyMember\' if the user is already a member of the group',
+            },
+          },
+        },
+      },
+    },
+  },
+})
+export default defineEventHandler(async (event): Promise<'disabled' | 'sent' | 'sendFailed' | 'merged' | 'alreadyMember'> => {
   const body = await readValidatedBody(event, body => GroupInviteCreateDtoSchema.parse(body))
 
   const requestorId = event.context.user.sub
@@ -28,13 +56,13 @@ export default defineEventHandler(async (event) => {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
   if (group.members.some(member => member.id === invitee.id)) {
-    return
+    return 'alreadyMember'
   }
 
   if (group.requests.find(req => req.id === invitee.id)) {
     await repo.cancelRequestJoinToGroup(invitee.id, body.groupId)
     await repo.addMemberToGroup(invitee.id, body.groupId)
-    return
+    return 'merged'
   }
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
   return sendMail({

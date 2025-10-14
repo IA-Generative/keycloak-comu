@@ -57,22 +57,30 @@ const tosInput = ref<InstanceType<typeof DsfrInput> | null>(null)
         @blur="editDescription"
       />
       <div v-else>
-        <span
+        <p
           v-if="group.description?.trim()"
-          style="white-space: pre;"
-        >{{ group.description.trim() }}</span>
+          v-html="group.description.trim().replace(/\n/g, '<br />')"
+        />
         <span
           v-else
           class="fr-text--italic"
         >Aucune description fournie.</span>
       </div>
       <DsfrButton
-        v-if="mylevel >= 30"
+        v-if="mylevel >= 30 && !isEditingDescription"
         tertiary
         class="fr-mt-2w"
         icon="ri-edit-line"
         label="Modifier la description"
         @click="isEditingDescription = true; descriptionRef = group.description || ''"
+      />
+      <DsfrButton
+        v-else-if="mylevel >= 30 && isEditingDescription"
+        tertiary
+        class="fr-mt-2w"
+        icon="ri-edit-line"
+        label="Enregistrer la description"
+        @click="editDescription"
       />
     </div>
     <div v-if="group.tos || mylevel >= 20">

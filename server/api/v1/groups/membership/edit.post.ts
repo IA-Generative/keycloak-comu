@@ -13,6 +13,25 @@ export const ChangeMemberLevelDtoSchema = z.object({
 })
 export type ChangeMemberLevelDtoType = z.infer<typeof ChangeMemberLevelDtoSchema>
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Change a member level in a group',
+    tags: ['Group Membership'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupUserAndLevelBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User level changed successfully',
+      },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
   const { groupId, userId, level } = await readValidatedBody(event, body => ChangeMemberLevelDtoSchema.parse(body))

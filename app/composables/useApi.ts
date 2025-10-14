@@ -7,16 +7,6 @@ function preparedFetch<F extends (...args: any[]) => any>(fn: F): F {
   return ((...args: Parameters<F>): ReturnType<F> => {
     const { $keycloak } = useNuxtApp()
 
-    if (args[1] && typeof args[1] === 'object' && 'params' in args[1]) {
-      const params = (args[1] as any).params as Record<string, string>
-      for (const key in params) {
-        const regex = new RegExp(`(:${key}\/)`, 'g')
-        args[0] = (args[0] as string).replace(regex, params[key] as string)
-        const regex2 = new RegExp(`(:${key}$)`, 'g')
-        args[0] = (args[0] as string).replace(regex2, params[key] as string)
-      }
-    }
-
     if ($keycloak?.token) {
       if (!args[1] || typeof args[1] !== 'object') {
         args[1] = {}
