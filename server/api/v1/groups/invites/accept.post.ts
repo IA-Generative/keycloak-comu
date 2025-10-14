@@ -7,6 +7,25 @@ export const AcceptGroupInviteDtoSchema = z.object({
 })
 export type AcceptGroupInviteDtoType = z.infer<typeof AcceptGroupInviteDtoSchema>
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Accept an invite to join a group',
+    tags: ['Group Invites'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User invite to join group accepted successfully',
+      },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const userId = event.context.user.sub
 

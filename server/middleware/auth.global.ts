@@ -15,16 +15,22 @@ export default defineEventHandler(async (event) => {
   if (!url.startsWith('/api')) return
 
   // Vérifie Authorization: Bearer <token>
-  const auth = getHeader(event, 'authorization')
+  const authHeader = getHeader(event, 'authorization')
+  const authCookie = getCookie(event, 'KEYCLOAK_TOKEN')
+  const tokenFromCookie = authCookie && !Array.isArray(authCookie) ? authCookie : null
 
-  if (!auth) {
+  const tokenToVerify = authHeader || tokenFromCookie
+
+  if (!tokenToVerify) {
     throw createResponseError({ statusCode: 401, data: 'TOKEN_MISSING' })
   }
-  if (!auth.startsWith('Bearer ')) {
-    throw createResponseError({ statusCode: 401, data: 'TOKEN_MALFORMED' })
+  if (!tokenToVerify.startsWith('Bearer ')) {
+    throw createResponseError({ statusCode: 403, data: 'TOKEN_MALFORMED' })
   }
-
-  const token = auth.split(' ')[1]
+  const token = tokenToVerify?.split(' ')[1]
+  if (!token) {
+    throw createResponseError({ statusCode: 403, data: 'TOKEN_MALFORMED' })
+  }
 
   try {
     const { payload } = await jwtVerify(token, JWKS, { issuer: KEYCLOAK_ISSUER })
@@ -32,6 +38,9 @@ export default defineEventHandler(async (event) => {
     event.context.user = {
       sub: payload.sub,
       username: payload.preferred_username,
+    }
+    if (tokenToVerify !== tokenFromCookie) {
+      setCookie(event, 'KEYCLOAK_TOKEN', tokenToVerify, { httpOnly: true, sameSite: 'strict' })
     }
   } catch (err) {
     console.log(err)

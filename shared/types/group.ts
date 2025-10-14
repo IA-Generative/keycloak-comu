@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import type { UserDtoType } from './index.js'
 
 export const GroupNameSchema = z.string()
   .min(3, { message: 'Le nom doit faire au moins 3 caractères' })
@@ -24,3 +25,10 @@ export const EditGroupDtoSchema = z.object({
 
 export type CreateGroupDtoType = z.infer<typeof CreateGroupDtoSchema>
 export type EditGroupDtoType = z.infer<typeof EditGroupDtoSchema>
+
+export type GroupSearchDtoType = {
+  id: string,
+  name: string,
+  owners: UserDtoType[],
+  description: string
+}

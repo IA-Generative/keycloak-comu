@@ -9,7 +9,35 @@ export const GroupInviteCreateDtoSchema = z.object({
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 
-export default defineEventHandler(async (event) => {
+defineRouteMeta({
+  openAPI: {
+    description: 'Request to join a group',
+    tags: ['Group Requests'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'User request to join group declined successfully',
+        content: {
+          'application/json': {
+            schema: {
+              type: 'string',
+              enum: ['disabled', 'sent', 'sendFailed', 'accepted'],
+              description: '\'disabled\' if mail sending is disabled, \'sent\' if the request has been sent and email is sent, \'sendFailed\' if the request is created but email sending failed, \'accepted\' if the user was automatically added to the group',
+            },
+          },
+        },
+      },
+    },
+  },
+})
+export default defineEventHandler(async (event): Promise<'disabled' | 'sent' | 'sendFailed' | 'accepted'> => {
   const body = await readValidatedBody(event, body => GroupInviteCreateDtoSchema.parse(body))
 
   const requestorId = event.context.user.sub as string
@@ -25,7 +53,7 @@ export default defineEventHandler(async (event) => {
   if (group.invites.find(invite => invite.id === requestorId)) {
     await repo.uninviteMemberFromGroup(requestorId, body.groupId)
     await repo.addMemberToGroup(requestorId, body.groupId)
-    return
+    return 'accepted'
   }
   await repo.requestJoinToGroup(requestorId, body.groupId)
   const emailBody = generateJoinRequestEmail(group, requestor!)

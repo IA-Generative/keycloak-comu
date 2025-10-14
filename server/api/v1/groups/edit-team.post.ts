@@ -4,15 +4,34 @@ import { guard, LEVEL } from '../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 import { TeamNameSchema } from '~~/shared/types/team.js'
 
-export const CreateTeamDtoSchema = z.object({
+export const EditTeamDtoSchema = z.object({
   parentId: z.uuid({ error: 'INVALID_GROUP_ID' }),
   name: z.string(),
   userIds: z.array(z.uuid()).optional(),
 })
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Create or edit a team within a parent group',
+    tags: ['Groups'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupTeamAndUserIdsBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Team created or edited successfully',
+      },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
-  const body = await readValidatedBody(event, body => CreateTeamDtoSchema.parse(body))
+  const body = await readValidatedBody(event, body => EditTeamDtoSchema.parse(body))
   // Use userId to verify permissions to edit group
   const parentGroup = await repo.getGroupDetails(body.parentId)
   if (!parentGroup) {
@@ -33,6 +52,6 @@ export default defineEventHandler(async (event) => {
     const validUserIds = body.userIds.filter(userId => parentGroup.members.find(member => member.id === userId))
 
     // apply userIds to group by passing child group
-    return repo.ensureMembersForChildGroup(childGroup.id, validUserIds)
+    await repo.ensureMembersForChildGroup(childGroup.id, validUserIds)
   }
 })

@@ -4,11 +4,16 @@ import type { DsfrDataTableProps } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 import createGroup from '~/composables/createGroup.js'
 
+const maxDescriptionLength = 30
 const pageSize = ref(8)
 const headers: DsfrDataTableProps['headersRow'] = [
   {
     label: 'Nom du groupe',
     key: 'name',
+  },
+  {
+    label: 'Description',
+    key: 'description',
   },
   {
     label: 'Propriétaires',
@@ -21,11 +26,37 @@ const headers: DsfrDataTableProps['headersRow'] = [
 ]
 const { $router } = useNuxtApp()
 const searchQuery = ref($router.currentRoute.value.query.q as string || '')
-const searchResults = ref<PaginatedResponse<{ id: string, name: string, owners: { email: string }[] }>>({ results: [], total: 0, page: 0, pageSize: pageSize.value, next: false })
+const searchResults = ref<PaginatedResponse<GroupSearchDtoType>>({ results: [], total: 0, page: 0, pageSize: pageSize.value, next: false })
+// add emphasis to search term in description and truncate if too long
+function highlightDescription(description: string) {
+  if (!description) return '-'
+
+  const startMatch = description.toLowerCase().indexOf(searchQuery.value.toLowerCase())
+  if (startMatch === -1) {
+    return description.length > maxDescriptionLength
+      ? `${description.slice(0, maxDescriptionLength - 3)}...`
+      : description
+  }
+  const remainingLength = maxDescriptionLength - searchQuery.value.length
+  const startPadLength = Math.min(Math.ceil(remainingLength / 2), startMatch)
+  const endPadLength = remainingLength - startPadLength
+  let truncatedDescription = ''
+  if (startPadLength > 0 && startMatch - startPadLength > 0) {
+    truncatedDescription += '...'
+  }
+  truncatedDescription += description.slice(startMatch - startPadLength, startMatch)
+  truncatedDescription += `<strong>${description.slice(startMatch, startMatch + searchQuery.value.length)}</strong>`
+  truncatedDescription += description.slice(startMatch + searchQuery.value.length, startMatch + searchQuery.value.length + endPadLength)
+  if (endPadLength > 0 && (startMatch + searchQuery.value.length + endPadLength) < description.length) {
+    truncatedDescription += '...'
+  }
+  return `${truncatedDescription}`
+}
 
 const searchRows = computed(() => [
   ...searchResults.value.results.map(group => ({
     name: group.name,
+    description: highlightDescription(group.description),
     owners: group.owners.map(o => o.email).join(', '),
     id: group.id,
   })),
@@ -126,6 +157,9 @@ const validation = computed(() => {
         </template>
         <template v-else-if="colKey === 'owners'">
           {{ cell }}
+        </template>
+        <template v-else-if="colKey === 'description'">
+          <span v-html="cell" />
         </template>
       </template>
     </DsfrDataTable>

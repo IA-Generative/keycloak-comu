@@ -1,18 +1,43 @@
 import { z } from 'zod'
 
 import repo from '../../../repository'
-import type { UserRow } from '~~/server/repository/types.js'
+import type { GroupSearchDtoType } from '~~/shared/types/group.js'
 
-export const ListQueryDtoSchema = z.object({
+export const searchBodyDtoSchema = z.object({
   search: z.string(),
   exact: z.boolean().optional().default(false),
   page: z.number().min(0).optional().default(0),
   pageSize: z.number().min(1).max(100).optional().default(20),
 })
-export type ListQueryDtoType = z.infer<typeof ListQueryDtoSchema>
+export type ListQueryDtoType = z.infer<typeof searchBodyDtoSchema>
 
-export default defineEventHandler(async (event): Promise<PaginatedResponse<{ id: string, name: string, owners: UserRow[] }>> => {
-  const searchParam = await readValidatedBody(event, body => ListQueryDtoSchema.parse(body))
+defineRouteMeta({
+  openAPI: {
+    description: 'Search for groups',
+    tags: ['Groups'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/SearchGroupBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Successful response',
+        content: {
+          'application/json': {
+            schema: { $ref: '#/components/schemas/PaginatedGroupSearchDto' },
+          },
+        },
+      },
+    },
+  },
+})
+
+export default defineEventHandler(async (event): Promise<PaginatedResponse<GroupSearchDtoType>> => {
+  const searchParam = await readValidatedBody(event, body => searchBodyDtoSchema.parse(body))
 
   // Search logic here
   const { groups, total, next } = await repo.searchGroups({
@@ -24,6 +49,7 @@ export default defineEventHandler(async (event): Promise<PaginatedResponse<{ id:
   return {
     results: groups.map(group => ({
       id: group.id,
+      description: group.description ?? '',
       name: group.name,
       invites: [],
       members: [],

@@ -8,6 +8,25 @@ export const DeleteGroupDtoSchema = z.object({
 })
 export type DeleteGroupDtoType = z.infer<typeof DeleteGroupDtoSchema>
 
+defineRouteMeta({
+  openAPI: {
+    description: 'Delete a group',
+    tags: ['Groups'],
+    requestBody: {
+      required: true,
+      content: {
+        'application/json': {
+          schema: { $ref: '#/components/schemas/GroupBody' },
+        },
+      },
+    },
+    responses: {
+      200: {
+        description: 'Group deleted successfully',
+      },
+    },
+  },
+})
 export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
   const body = await readValidatedBody(event, body => DeleteGroupDtoSchema.parse(body))
