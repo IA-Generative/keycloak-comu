@@ -74,6 +74,7 @@ function triggerAction<F extends (...args: any[]) => Promise<void>>(fn: F) {
     >
       <!-- Formulaire d'ajout de membre -->
       <div
+        v-if="mylevel >= 20"
         class="grow"
       >
         <InviteMember
