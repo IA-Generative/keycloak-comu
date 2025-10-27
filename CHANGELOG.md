@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.8.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.8.0...v0.8.1) (2025-10-27)
+
+
+### Bug Fixes
+
+* conditionally render InviteMember component based on membership level ([625b59c](https://github.com/IA-Generative/keycloak-comu/commit/625b59c5fc05d55386694d24399dc778043163a6))
+
 ## [0.8.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.7.0...v0.8.0) (2025-10-27)
 
 
