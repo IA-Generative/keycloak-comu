@@ -9,25 +9,6 @@ export const KickGroupMemberDtoSchema = z.object({
 })
 export type KickGroupMemberDtoType = z.infer<typeof KickGroupMemberDtoSchema>
 
-defineRouteMeta({
-  openAPI: {
-    description: 'Leave a group or kick a member from a group',
-    tags: ['Group Membership'],
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/GroupAndUserBody' },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'User was kicked successfully',
-      },
-    },
-  },
-})
 export default defineEventHandler(async (event) => {
   const userId = event.context.user.sub
   const body = await readValidatedBody(event, body => KickGroupMemberDtoSchema.parse(body))

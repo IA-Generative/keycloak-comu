@@ -26,7 +26,6 @@
     "@keycloak/keycloak-admin-client": "^26.3.4",
     "@nuxt/icon": "2.0.0",
     "@nuxtjs/tailwindcss": "6.14.0",
-    "@scalar/nuxt": "0.5.20",
     "jose": "^6.1.0",
     "keycloak-js": "^26.2.0",
     "nodemailer": "^7.0.6",

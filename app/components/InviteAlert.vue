@@ -25,7 +25,7 @@ function triggerAction(fn: (groupId: string) => Promise<void>) {
     <div>
       Vous avez été invité à rejoindre le groupe <NuxtLink :to="`/g/${group.id}`">
         {{ group.name }}
-      </NuxtLink>.<br>
+      </NuxtLink>.<br />
       <span class="fr-text--xs">
         Vous acceptez implicitement les conditions d'utilisation du groupe en rejoignant celui-ci
       </span>

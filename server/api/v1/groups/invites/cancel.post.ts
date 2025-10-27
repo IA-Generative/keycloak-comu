@@ -8,25 +8,6 @@ export const GroupInviteCancelDtoSchema = z.object({
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCancelDtoSchema>
 
-defineRouteMeta({
-  openAPI: {
-    description: 'Cancel an invite to join a group',
-    tags: ['Group Invites'],
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/GroupAndUserBody' },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'User invite to join group cancelled successfully',
-      },
-    },
-  },
-})
 export default defineEventHandler(async (event) => {
   const body = await readValidatedBody(event, body => GroupInviteCancelDtoSchema.parse(body))
 
@@ -37,4 +18,5 @@ export default defineEventHandler(async (event) => {
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
 
   await repo.uninviteMemberFromGroup(body.userId, body.groupId)
+  return { message: `Hello ${event.context.clientAddress}` }
 })

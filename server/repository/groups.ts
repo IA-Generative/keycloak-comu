@@ -16,13 +16,6 @@ export interface GroupSearchResult {
   name: string
   attributes: Attributes
 }
-
-export interface ListedGroup {
-  id: string
-  name: string
-  description: string
-}
-
 export interface GroupDetails extends GroupSearchResult {
   members: UserRow[]
   invites: UserRow[]
@@ -43,12 +36,12 @@ interface SearchParams {
 const runtimeConfig = useRuntimeConfig()
 const realmName = runtimeConfig.public.keycloak.realm
 
-export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (Omit<GroupSearchResult, 'attributes'> & { owners: UserRow[], description: string })[], total: number, next: boolean }> {
+export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact
     ? await db.query(
-      'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
-      [query, await db.getRealmId(), limit, skip, getRootGroup().id],
-    ) as { rows: db.GroupRow[] }
+        'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
+        [query, await db.getRealmId(), limit, skip, getRootGroup().id],
+      )
     : await db.searchFn(query, limit, skip)
 
   const owners = await db.query(
@@ -56,15 +49,15 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
      FROM user_entity u
      JOIN group_attribute ga ON u.id = ga.value
      WHERE ga.name = $1 AND ga.group_id = ANY($2::text[])`,
-    [OWNER_ATTRIBUTE, groupsResult.rows.map(g => g.id)],
+    [OWNER_ATTRIBUTE, groupsResult.rows.map((g: GroupSearchResult) => g.id)],
   )
 
   const groups = groupsResult.rows
     .slice(0, limit)
-    .map(group => ({
+    .map((group: GroupSearchResult) => ({
       id: group.id,
       name: group.name,
-      description: group.description ?? '',
+      attributes: {},
       owners: owners.rows.filter((owner: { group_id: string }) => owner.group_id === group.id),
     }))
   const total = await db.query(
@@ -97,7 +90,7 @@ async function getGroupAttributesAndMembers(groupId: string): Promise<{ attribut
 }
 
 // not exported cause no check on root group hierarchy
-async function searchGroupsByAttributes(name: string, value: string): Promise<(GroupSearchResult & ListedGroup)[]> {
+async function searchGroupsByAttributes(name: string, value: string): Promise<GroupSearchResult[]> {
   const groups = await db.query(
     `SELECT g.id, g.name, g.description, ga.name AS attribute_name, ga.value AS attribute_value
      FROM keycloak_group g
@@ -209,7 +202,7 @@ async function getPendingRequestsForGroup(groupId: string): Promise<UserRow[]> {
   return users.rows
 }
 
-export async function listGroupsForUser(userId: string): Promise<{ invited: ListedGroup[], joined: ListedGroup[], requested: ListedGroup[] }> {
+export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[], requested: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
     `SELECT g.id, g.name, g.description
@@ -217,15 +210,11 @@ export async function listGroupsForUser(userId: string): Promise<{ invited: List
      JOIN user_group_membership ugm ON g.id = ugm.group_id
      WHERE ugm.user_id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
     [userId, realmId, getRootGroup().id],
-  ) as { rows: ListedGroup[] }
+  )
   const invited = await searchGroupsByAttributes(INVITE_ATTRIBUTE, userId)
   const requested = await searchGroupsByAttributes(REQUEST_ATTRIBUTE, userId)
 
-  return {
-    invited: invited.map(g => ({ id: g.id, name: g.name, description: g.description ?? '' })),
-    joined: groups.rows.map(g => ({ id: g.id, name: g.name, description: g.description ?? '' })),
-    requested: requested.map(g => ({ id: g.id, name: g.name, description: g.description ?? '' })),
-  }
+  return { invited, joined: groups.rows, requested }
 }
 
 async function getTeams(id: string): Promise<TeamsDtoType> {

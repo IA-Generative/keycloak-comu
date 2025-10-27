@@ -31,17 +31,13 @@ export async function getRealmId(): Promise<string> {
 export interface GroupRow {
   id: string
   name: string
-  description: string | null
   parent_group: string
   realm_id: string
   type: number
 }
 async function defaultGroupSearch(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
   return query(
-    `SELECT * FROM keycloak_group WHERE 
-    (name ILIKE $1) OR (description ILIKE $1)
-    AND realm_id = $2 AND parent_group = $5 
-    LIMIT $3 OFFSET $4`,
+    'SELECT * FROM keycloak_group WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $5 LIMIT $3 OFFSET $4',
     [`%${test}%`, await getRealmId(), limit + 1, skip, getRootGroup().id],
   ) as Promise<{ rows: GroupRow[] }>
 }
@@ -61,14 +57,13 @@ async function defaultUserSearch(test: string, limit: number, skip: number, excl
 
 async function searchGroupTrgm(test: string, limit: number, skip: number): Promise<{ rows: GroupRow[] }> {
   return query(
-    `SELECT *, (name ILIKE '%$1%')::int AS like_match, (description ILIKE '%$1%')::int AS description_match,
-       word_similarity($1, name) AS sim, word_similarity($1, description) AS description_sim
+    `SELECT *, (name ILIKE '%$1%')::int AS like_match,
+       word_similarity($1, name) AS sim
     FROM keycloak_group
     WHERE (
-      (name ILIKE '%$1%' OR word_similarity($1, name) > 0.2)
-      OR (description ILIKE '%$1%' OR word_similarity($1, description) > 0.2)
+      name ILIKE '%$1%' OR word_similarity($1, name) > 0.2
     ) AND realm_id = $2 AND parent_group = $5
-    ORDER BY like_match DESC, sim DESC, description_match DESC, description_sim DESC
+    ORDER BY like_match DESC, sim DESC
     LIMIT $3 OFFSET $4`,
     [test, await getRealmId(), limit + 1, skip, getRootGroup().id],
   ) as Promise<{ rows: GroupRow[] }>

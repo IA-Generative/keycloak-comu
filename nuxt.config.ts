@@ -9,7 +9,6 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/test-utils/module',
     '@artmizu/nuxt-prometheus',
-    '@scalar/nuxt',
   ],
   ssr: false,
   devtools: {
@@ -82,11 +81,5 @@ export default defineNuxtConfig({
   prometheus: {
     verbose: false,
     healthCheck: false,
-  },
-  scalar: {
-    pathRouting: {
-      basePath: '/docs',
-    },
-    title: 'Keycloak Group Manager',
   },
 })

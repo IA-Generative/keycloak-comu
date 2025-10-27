@@ -81,11 +81,6 @@ const afterMandatoryLinks = computed(() => {
       external: true,
       href: `https://github.com/IA-Generative/keycloak-comu/releases/tag/v${config.public.version}`,
     },
-    {
-      label: 'API Docs',
-      external: false,
-      to: '/docs',
-    },
   ]
 })
 </script>

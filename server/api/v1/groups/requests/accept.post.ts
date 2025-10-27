@@ -11,35 +11,7 @@ export const AcceptGroupRequestDtoSchema = z.object({
 })
 export type AcceptGroupRequestDtoType = z.infer<typeof AcceptGroupRequestDtoSchema>
 
-defineRouteMeta({
-  openAPI: {
-    description: 'Accept a user request to join a group',
-    tags: ['Group Requests'],
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/GroupAndUserBody' },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'User request to join group accepted successfully',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'string',
-              enum: ['disabled', 'sent', 'sendFailed'],
-              description: 'Email sending status',
-            },
-          },
-        },
-      },
-    },
-  },
-})
-export default defineEventHandler(async (event): Promise<'disabled' | 'sent' | 'sendFailed'> => {
+export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
 
   const result = await readValidatedBody(event, body => AcceptGroupRequestDtoSchema.parse(body))

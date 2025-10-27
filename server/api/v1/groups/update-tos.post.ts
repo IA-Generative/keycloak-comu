@@ -10,25 +10,6 @@ const UpdateTosDtoSchema = z.object({
   tos: z.string().max(255, { message: 'TOS_TOO_LONG' }),
 })
 
-defineRouteMeta({
-  openAPI: {
-    description: 'Update the terms of service for a group',
-    tags: ['Groups'],
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/GroupAndTosBody' },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Terms of service updated successfully',
-      },
-    },
-  },
-})
 export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
   const { tos, groupId } = await readValidatedBody(event, body => UpdateTosDtoSchema.parse(body))

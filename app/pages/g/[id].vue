@@ -11,7 +11,7 @@ const rootGroupPrefix = config.public.keycloak.rootGroupPath.endsWith('/')
 
 const group = ref<GroupDtoType | null>(null)
 async function fetchData() {
-  const data = await fetcher(`/api/v1/groups/get`, {
+  const data = await fetcher(`/api/v1/groups/:id` as '/api/v1/groups/:id', {
     method: 'get',
     params: { id },
   })

@@ -2,36 +2,6 @@ import repo from '../../../repository'
 import createResponseError from '~~/server/utils/error.js'
 import { LEVEL } from '~~/server/guards/group.js'
 
-defineRouteMeta({
-  openAPI: {
-    description: 'Create a new group',
-    tags: ['Groups'],
-    requestBody: {
-      required: true,
-      content: {
-        'application/json': {
-          schema: { $ref: '#/components/schemas/CreateGroupBody' },
-        },
-      },
-    },
-    responses: {
-      200: {
-        description: 'Group created successfully',
-        content: {
-          'application/json': {
-            schema: {
-              type: 'object',
-              properties: {
-                id: { type: 'string', format: 'uuid' },
-                name: { type: 'string' },
-              },
-            },
-          },
-        },
-      },
-    },
-  },
-})
 export default defineEventHandler(async (event): Promise<Pick<GroupDtoType, 'id' | 'name'>> => {
   const session = event.context
 

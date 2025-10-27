@@ -273,7 +273,7 @@ function selectTag(userId: string) {
         >
           <div
             v-if="teamStatus[team.name] === 'pendingDelete'"
-            class="fr-mb-2w flex flex-col justify-center items-center gap-2 w-full h-full absolute pendingDelete top-0 left-0 p-4 rounded-lg shadow-lg z-10"
+            class="fr-mb-2w flex flex-col justify-center items-center gap-2 w-full h-full absolute bg-white/75 top-0 left-0 p-4 rounded-lg shadow-lg z-10"
           >
             <div class="fr-mb-0 text-wrap text-red-600 font-bold">
               Êtes-vous sûr de vouloir supprimer cette équipe ?
@@ -405,8 +405,5 @@ function selectTag(userId: string) {
 .group-footer {
   border-top: 1px solid #e5e7eb;
   padding-top: 0.5rem;
-}
-.pendingDelete {
-  background-color: color-mix(in srgb, var(--background-alt-grey), transparent 25%);
 }
 </style>
