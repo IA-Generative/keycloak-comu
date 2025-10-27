@@ -37,7 +37,7 @@ export default defineEventHandler(async (event) => {
   if (!group) {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
-  guard({ requiredLevel: LEVEL.OWNER, group, requestorId })
+  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
   await repo.setTos(groupId, tos)
   if (group.tos === tos || !tos) {
     return

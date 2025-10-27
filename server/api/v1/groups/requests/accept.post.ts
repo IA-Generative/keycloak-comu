@@ -50,7 +50,7 @@ export default defineEventHandler(async (event): Promise<'disabled' | 'sent' | '
   }
   guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
 
-  if (!group.attributes.request.includes(result.userId)) {
+  if (!group.requests.find(req => req.id === result.userId)) {
     throw createResponseError({ statusCode: 400, data: 'USER_NOT_REQUESTING' })
   }
   await repo.addMemberToGroup(result.userId, result.groupId)
