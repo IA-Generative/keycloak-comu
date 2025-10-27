@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.8.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.7.0...v0.8.0) (2025-10-27)
+
+
+### Features
+
+* add OpenAPI documentation ([58b2139](https://github.com/IA-Generative/keycloak-comu/commit/58b21395ebfbbdbb1febe1f01cc70f9b856a3fc3))
+
+
+### Bug Fixes
+
+* update permission level for terms of service management to ADMIN ([0f93057](https://github.com/IA-Generative/keycloak-comu/commit/0f9305725e5316234552b9d52ba44422be82f869))
+
 ## [0.7.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.6.1...v0.7.0) (2025-10-13)
 
 
