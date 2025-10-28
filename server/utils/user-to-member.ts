@@ -35,6 +35,7 @@ export function groupDetailToDto(group: GroupDetails, requestor: Requestor): Gro
   }
 
   return {
+    links: group.links,
     description: group.description ?? '',
     id,
     name,

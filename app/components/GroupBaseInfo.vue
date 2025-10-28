@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { DsfrAlert, DsfrButton, DsfrInput, DsfrModal } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
+import LinkForm from './LinkForm.vue'
 
 const props = defineProps<{
   group: GroupDtoType
@@ -40,6 +41,18 @@ async function saveTos() {
   })
 }
 const tosInput = ref<InstanceType<typeof DsfrInput> | null>(null)
+
+const isEditingLinks = ref(false)
+
+async function saveLinks(links: string[]) {
+  await fetcher('/api/v1/groups/update-links', {
+    method: 'post',
+    body: { groupId: props.group.id, links },
+  }).finally(() => {
+    isEditingLinks.value = false
+    emit('refresh')
+  })
+}
 </script>
 
 <template>
@@ -148,6 +161,14 @@ const tosInput = ref<InstanceType<typeof DsfrInput> | null>(null)
         </template>
       </DsfrModal>
     </div>
+  </div>
+  <div>
+    <LinkForm
+      :group="group"
+      :can-edit="mylevel >= 20"
+      @save-links="saveLinks"
+    />
+
   </div>
 </template>
 
