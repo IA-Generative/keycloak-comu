@@ -35,6 +35,12 @@ const teamsPerGroupHisto = new prom.Histogram({
   buckets: [0, 1, 5, 20, 100],
 })
 
+const linksPerGroupHisto = new prom.Histogram({
+  name: 'links_per_group',
+  help: 'Number of links per group',
+  buckets: [0, 1, 5, 20],
+})
+
 export const emailSentGauge = new prom.Counter({
   name: 'emails_sent_total',
   help: 'Total number of emails sent',
@@ -70,4 +76,7 @@ export async function retrieveGroupMetrics() {
   pendingsPerGroupHisto.reset()
   assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingRequestsPerGroupMetrics(), { type: 'request' })
   assignHistoPrometheusMetrics(pendingsPerGroupHisto, repoMetrics.countPendingInvitesPerGroupMetrics(), { type: 'invite' })
+
+  linksPerGroupHisto.reset()
+  assignHistoPrometheusMetrics(linksPerGroupHisto, repoMetrics.countLinksPerGroupMetrics())
 }

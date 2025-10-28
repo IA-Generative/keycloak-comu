@@ -1,4 +1,4 @@
-import { ADMIN_ATTRIBUTE, INVITE_ATTRIBUTE, OWNER_ATTRIBUTE, REQUEST_ATTRIBUTE } from './groups.js'
+import { ADMIN_ATTRIBUTE, INVITE_ATTRIBUTE, LINK_ATTRIBUTE, OWNER_ATTRIBUTE, REQUEST_ATTRIBUTE } from './groups.js'
 import { getRootGroup } from './keycloak.js'
 import * as db from './pg.js'
 
@@ -61,6 +61,18 @@ export async function countPendingInvitesPerGroupMetrics(): Promise<number[]> {
       WHERE g.realm_id = $1 AND g.parent_group = $2
       GROUP BY g.id`,
     [await db.getRealmId(), getRootGroup().id, INVITE_ATTRIBUTE],
+  )
+  return mapValues(groupsResult.rows)
+}
+
+export async function countLinksPerGroupMetrics(): Promise<number[]> {
+  const groupsResult = await db.query(
+    `SELECT COUNT(ga.group_id)
+      FROM keycloak_group g
+      LEFT JOIN group_attribute ga ON g.id = ga.group_id AND ga.name = $3
+      WHERE g.realm_id = $1 AND g.parent_group = $2
+      GROUP BY g.id`,
+    [await db.getRealmId(), getRootGroup().id, LINK_ATTRIBUTE],
   )
   return mapValues(groupsResult.rows)
 }
