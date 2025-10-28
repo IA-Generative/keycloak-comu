@@ -6,6 +6,14 @@ interface ErrorMessages {
 }
 
 const ERROR_MESSAGES = {
+  INVALID_LINK_FORMAT: {
+    en: 'The link format is invalid',
+    fr: 'Le format du lien est invalide',
+  },
+  LINK_TOO_LONG: {
+    en: 'The link must be at most 255 characters long',
+    fr: 'Le lien doit faire au maximum 255 caractères',
+  },
   TEAM_NAME_TOO_SHORT: {
     en: 'The name must be at least 2 characters long',
     fr: 'Le nom doit faire au moins 2 caractères',

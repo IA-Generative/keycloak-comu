@@ -1,6 +1,7 @@
 import type { AttributeRow } from './types.js'
 
 export interface Attributes {
+  link: string[]
   owner: string[]
   invite: string[]
   request: string[]
@@ -12,6 +13,7 @@ export interface Attributes {
 }
 export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
   const attributes: Attributes = {
+    link: [],
     owner: [],
     invite: [],
     request: [],
@@ -38,6 +40,9 @@ export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
 
   attributes.tos = attributes.extras.tos?.[0] ?? ''
   delete attributes.extras.tos
+
+  attributes.link = attributes.extras.link ?? []
+  delete attributes.extras.link
 
   return attributes
 }

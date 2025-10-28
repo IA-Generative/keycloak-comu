@@ -10,6 +10,7 @@ export const INVITE_ATTRIBUTE = 'invite'
 export const REQUEST_ATTRIBUTE = 'request'
 export const OWNER_ATTRIBUTE = 'owner'
 export const ADMIN_ATTRIBUTE = 'admin'
+export const LINK_ATTRIBUTE = 'link'
 
 export interface GroupSearchResult {
   id: string
@@ -20,6 +21,7 @@ export interface GroupDetails extends GroupSearchResult {
   members: UserRow[]
   invites: UserRow[]
   requests: UserRow[]
+  links: string[]
   attributes: Attributes
   teams: TeamsDtoType
   description: string
@@ -70,7 +72,7 @@ export async function searchGroups({ query, limit, skip, exact = false }: Search
 // not exported cause no check on root group hierarchy
 async function getGroupAttributesAndMembers(groupId: string): Promise<{ attributes: AttributeRow[], members: UserRow[], invites: UserRow[], requests: UserRow[] }> {
   const attributes = await db.query(
-    `SELECT ga.name, ga.value, ga.group_id
+    `SELECT ga.name, ga.value
      FROM group_attribute ga
      WHERE ga.group_id = $1`,
     [groupId],
@@ -130,7 +132,15 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
   return {
     id: result.id,
     name,
-    attributes: { owner: [], invite: [], request: [], admin: [], extras: {}, tos: '' },
+    attributes: {
+      owner: [],
+      invite: [],
+      request: [],
+      admin: [],
+      extras: {},
+      tos: '',
+      link: [],
+    },
   }
 }
 
@@ -144,6 +154,10 @@ export async function editGroup(groupId: string, description: string, name: stri
 
 export async function setTos(groupId: string, tos: string): Promise<void> {
   return setAttribute(groupId, 'tos', [tos])
+}
+
+export async function setLinks(groupId: string, links: string[]): Promise<void> {
+  return setAttribute(groupId, 'link', links)
 }
 
 // not exported cause no check on root group hierarchy
@@ -259,6 +273,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
     id: group.id,
     name: group.name,
     attributes: mergedAttributes,
+    links: mergedAttributes.link,
     members,
     invites,
     requests,
