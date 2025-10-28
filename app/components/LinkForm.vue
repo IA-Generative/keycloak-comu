@@ -40,7 +40,6 @@ function cancelEditLinks() {
 }
 
 function extractErrorMessage(link?: string): string {
-  console.log(link)
   if (!link) {
     return ''
   }
