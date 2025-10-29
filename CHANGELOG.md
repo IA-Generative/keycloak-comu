@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.10.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.10.0...v0.10.1) (2025-10-29)
+
+
+### Bug Fixes
+
+* update IMAGE_NAMES variable to remove 'v' prefix from branch or tag name ([e7cf69d](https://github.com/IA-Generative/keycloak-comu/commit/e7cf69d44ed3db0b7aff85f50f9bb42dda08594a))
+
 ## [0.10.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.0...v0.10.0) (2025-10-29)
 
 
