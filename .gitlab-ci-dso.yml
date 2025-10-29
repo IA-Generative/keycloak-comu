@@ -22,7 +22,7 @@ build:
   variables:
     WORKING_DIR: ./
     DOCKERFILE: ./Dockerfile
-    IMAGE_NAMES: app:${CI_COMMIT_SHORT_SHA} app:${CI_COMMIT_REF_NAME}
+    IMAGE_NAMES: app:${CI_COMMIT_SHORT_SHA} app:${CI_COMMIT_REF_NAME#v}
   stage: docker-build
   extends:
   - .kaniko:build-push
