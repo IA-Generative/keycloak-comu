@@ -1,0 +1,46 @@
+include:
+- project: $CATALOG_PATH
+  file: vault-ci.yml
+  ref: main
+- project: $CATALOG_PATH
+  file: kaniko-ci.yml
+  ref: main
+
+default:
+  image: alpine:latest
+
+stages:
+- read-secret
+- docker-build
+
+read_secret:
+  stage: read-secret
+  extends:
+  - .vault:read_secret
+
+generate_var:
+  image: ghcr.io/this-is-tobi/tools/mc:latest
+  stage: read-secret
+  script:
+  - VERSION=$(jq -r .version < package.json)
+  - echo "PATCH=$VERSION" >> vars.env
+  - cat vars.env
+  artifacts:
+    reports:
+      dotenv: vars.env
+
+build:
+  before_script:
+  - echo $PATCH
+  needs: [generate_var, read_secret]
+  variables:
+    WORKING_DIR: ./
+    DOCKERFILE: ./Dockerfile
+    IMAGE_NAMES: app:${PATCH}
+  stage: docker-build
+  extends:
+  - .kaniko:build-push
+  # Triggers job only if a file in the client directory changed in current commit
+  # rules:
+  #   - changes:
+  #     - client/**/*
