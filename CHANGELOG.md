@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.0...v0.9.1) (2025-10-29)
+
+
+### Bug Fixes
+
+* add GitLab CI configuration for Docker build ([b03c91a](https://github.com/IA-Generative/keycloak-comu/commit/b03c91ad6e6736d5043fbd1053fe87c4b6acac8b))
+
 ## [0.9.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.8.1...v0.9.0) (2025-10-29)
 
 
