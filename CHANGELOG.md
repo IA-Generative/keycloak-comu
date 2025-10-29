@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.8.1...v0.9.0) (2025-10-29)
+
+
+### Features
+
+* add link management functionality to groups ([e417242](https://github.com/IA-Generative/keycloak-comu/commit/e41724219144fe60ce8945f7bf92852ab4a1b119))
+* add links per group metrics and histogram ([a35d95d](https://github.com/IA-Generative/keycloak-comu/commit/a35d95dc23440b4f42dbf0a95a8d98be2ad0f80a))
+
 ## [0.8.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.8.0...v0.8.1) (2025-10-27)
 
 
