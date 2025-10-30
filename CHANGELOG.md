@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.2](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.1...v0.9.2) (2025-10-30)
+
+
+### Bug Fixes
+
+* update extraResources to use a map structure for Kubernetes resources ([bf23ebb](https://github.com/IA-Generative/keycloak-comu/commit/bf23ebbaaf3f9c884e7a2c9041f6a6c3e64254ab))
+
 ## [0.9.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.0...v0.9.1) (2025-10-29)
 
 
