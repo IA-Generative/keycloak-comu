@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.4](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.3...v0.9.4) (2025-10-30)
+
+
+### Bug Fixes
+
+* improve root group setup by adding flattenGroups function and refining search logic ([05fcba0](https://github.com/IA-Generative/keycloak-comu/commit/05fcba02189e450c89c15d444e1c08b72c80c7c6))
+
 ## [0.9.3](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.2...v0.9.3) (2025-10-30)
 
 
