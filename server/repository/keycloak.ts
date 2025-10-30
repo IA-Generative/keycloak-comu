@@ -11,14 +11,30 @@ export const kcClient = new KcAdminClient({
 const keycloakAdminRealm = runtimeConfig.keycloak.admin.realm || runtimeConfig.public.keycloak.realm
 kcClient.setConfig({ realmName: keycloakAdminRealm })
 
+function flattenGroups(groups: GroupRepresentation[]): GroupRepresentation[] {
+  const flattened: GroupRepresentation[] = []
+  const recurse = (group: GroupRepresentation) => {
+    flattened.push(group)
+    group.subGroups?.forEach(recurse)
+  }
+  groups.forEach(recurse)
+  return flattened
+}
+
 async function setupRootGroup(rootGroupPath: string) {
   if (rootGroupPath !== '/') {
-    const rootGroupName = rootGroupPath.split('/').pop() as string
-    rootGroup = await kcClient.groups.find({ search: rootGroupName, exact: true }).then((groups) => {
-      if (groups.length === 0) {
+    const rootGroupName = String(rootGroupPath).split('/').pop() as string
+    rootGroup = await kcClient.groups.find({
+      search: rootGroupName,
+      exact: true,
+      realm: runtimeConfig.public.keycloak.realm,
+    }).then((groups) => {
+      const correctGroup = flattenGroups(groups).find(g => g.path === rootGroupPath)
+      if (!correctGroup) {
         throw new Error(`Root group "${rootGroupName}" not found`)
       }
-      return groups[0] as Required<GroupRepresentation>
+
+      return correctGroup as Required<GroupRepresentation>
     })
   } else {
     console.log('No root group path set, using "/" as root group')
