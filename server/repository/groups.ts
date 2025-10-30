@@ -182,7 +182,10 @@ async function setAttribute(groupId: string, name: string, values: string[]): Pr
     throw new Error('Group not found')
   }
 
-  await kcClient.groups.update({ id: groupId }, {
+  await kcClient.groups.update({
+    id: groupId,
+    realm: realmName,
+  }, {
     name: group.name,
     description: group.description,
     attributes: {
