@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.6](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.5...v0.9.6) (2025-10-30)
+
+
+### Bug Fixes
+
+* remove text color from active option in custom dropdown ([52cb675](https://github.com/IA-Generative/keycloak-comu/commit/52cb67579b695e11ce1086317714279a593e9a0d))
+
 ## [0.9.5](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.4...v0.9.5) (2025-10-30)
 
 
