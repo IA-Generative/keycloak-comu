@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.7](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.6...v0.9.7) (2025-10-30)
+
+
+### Bug Fixes
+
+* add keyboard navigation for tab key in InviteMember component ([5997bf9](https://github.com/IA-Generative/keycloak-comu/commit/5997bf970a68c6d65205c043db54fca3dbd8f153))
+* close options on input blur in InviteMember component ([013dd22](https://github.com/IA-Generative/keycloak-comu/commit/013dd22ef338c0af2ae75f0728c2f49bf5c26ed5))
+
 ## [0.9.6](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.5...v0.9.6) (2025-10-30)
 
 
