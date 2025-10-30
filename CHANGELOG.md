@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.5](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.4...v0.9.5) (2025-10-30)
+
+
+### Bug Fixes
+
+* update user profile data retrieval and display in profile component ([d90a929](https://github.com/IA-Generative/keycloak-comu/commit/d90a929a6960c19b3929774d16f54fabd96cd0e8))
+
 ## [0.9.4](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.3...v0.9.4) (2025-10-30)
 
 
