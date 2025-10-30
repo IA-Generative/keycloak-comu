@@ -6,7 +6,7 @@ const userProfile = ref<any>(null)
 onBeforeMount(async () => {
   const { $keycloak } = useNuxtApp()
   if ($keycloak?.token) {
-    userProfile.value = await $keycloak.loadUserProfile()
+    userProfile.value = $keycloak.tokenParsed
   }
 })
 </script>
@@ -19,19 +19,15 @@ onBeforeMount(async () => {
       >
         <tr>
           <th>Nom d'utilisateur</th>
-          <td>{{ userProfile.username }}</td>
+          <td>{{ userProfile.preferred_username }}</td>
         </tr>
         <tr>
           <th>Email</th>
           <td>{{ userProfile.email }}</td>
         </tr>
         <tr>
-          <th>Prénom</th>
-          <td>{{ userProfile.firstName }}</td>
-        </tr>
-        <tr>
-          <th>Nom</th>
-          <td>{{ userProfile.lastName }}</td>
+          <th>Nom, Prénom</th>
+          <td>{{ userProfile.family_name }}, {{ userProfile.given_name }}</td>
         </tr>
       </DsfrTable>
     </div>
