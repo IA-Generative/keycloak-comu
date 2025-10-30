@@ -127,6 +127,7 @@ watch(activeIndex, (newIndex) => {
         @keydown.up.prevent="moveUp"
         @keydown.enter.prevent="selectActive"
         @keydown.esc.prevent="closeOptions"
+        @blur="closeOptions"
       />
       <div
         v-if="isOpen"
