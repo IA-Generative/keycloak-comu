@@ -198,6 +198,5 @@ watch(activeIndex, (newIndex) => {
 
 .custom-options div.active {
   background-color: var(--background-contrast-grey);
-  color: white;
 }
 </style>
