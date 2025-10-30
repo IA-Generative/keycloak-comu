@@ -80,6 +80,10 @@ function moveUp() {
       % suggestions.value.length
 }
 
+function moveTab(e: KeyboardEvent) {
+  (e.shiftKey ? moveUp : moveDown)()
+}
+
 function selectActive() {
   if (activeIndex.value >= 0) {
     selectOption(suggestions.value[activeIndex.value]!)
@@ -127,6 +131,7 @@ watch(activeIndex, (newIndex) => {
         @keydown.up.prevent="moveUp"
         @keydown.enter.prevent="selectActive"
         @keydown.esc.prevent="closeOptions"
+        @keydown.tab.prevent="moveTab"
         @blur="closeOptions"
       />
       <div
