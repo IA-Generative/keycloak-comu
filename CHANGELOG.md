@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.3](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.2...v0.9.3) (2025-10-30)
+
+
+### Bug Fixes
+
+* include realm name in group update request ([dc13a0b](https://github.com/IA-Generative/keycloak-comu/commit/dc13a0b807f1f5c682a17a6a6cae9c45c4ba54c9))
+
 ## [0.9.2](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.1...v0.9.2) (2025-10-30)
 
 
