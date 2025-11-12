@@ -10,12 +10,16 @@ const rootGroupPrefix = config.public.keycloak.rootGroupPath.endsWith('/')
   : `${config.public.keycloak.rootGroupPath}/`
 
 const group = ref<GroupDtoType | null>(null)
+
 async function fetchData() {
   const data = await fetcher(`/api/v1/groups/:id` as '/api/v1/groups/:id', {
     method: 'get',
     params: { id },
   })
   group.value = data
+  useHead({
+    title: `Keycloak Comu - Gestion du groupe ${data?.name}`,
+  })
 }
 
 onBeforeMount(fetchData)
