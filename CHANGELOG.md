@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.8](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.7...v0.9.8) (2025-11-12)
+
+
+### Bug Fixes
+
+* enhance page titles and add favicon support ([3d9f93a](https://github.com/IA-Generative/keycloak-comu/commit/3d9f93afb7d0725f6d8757c743f222a5fadc29b7))
+
 ## [0.9.7](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.6...v0.9.7) (2025-10-30)
 
 
