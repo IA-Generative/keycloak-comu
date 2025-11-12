@@ -82,4 +82,17 @@ export default defineNuxtConfig({
     verbose: false,
     healthCheck: false,
   },
+  app: {
+    head: {
+      title: 'Keycloak Comu',
+      meta: [
+        { name: 'description', content: 'Keycloak Comu - Accueil' },
+      ],
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'apple-touch-icon', href: '/apple-touch-icon.png' },
+        { rel: 'shortcut icon', href: '/favicon.ico', type: 'image/x-icon' },
+      ],
+    },
+  },
 })

@@ -9,6 +9,10 @@ onBeforeMount(async () => {
     userProfile.value = $keycloak.tokenParsed
   }
 })
+
+useHead({
+  title: `Keycloak Comu - Profil`,
+})
 </script>
 
 <template>

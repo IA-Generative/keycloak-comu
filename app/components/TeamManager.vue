@@ -213,7 +213,7 @@ function selectTag(userId: string) {
       <!-- Élément draggable -->
       <div
         v-if="Object.keys(group.teams).length"
-        class="flex flex-row gap-4 mb-4"
+        class="flex flex-row flex-wrap gap-4 mb-4"
       >
         <template v-if="canManage">
           <DsfrTag
