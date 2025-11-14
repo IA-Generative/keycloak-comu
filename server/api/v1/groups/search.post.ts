@@ -2,9 +2,10 @@ import { z } from 'zod'
 
 import repo from '../../../repository'
 import type { UserRow } from '~~/server/repository/types.js'
+import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const ListQueryDtoSchema = z.object({
-  search: z.string(),
+  search: safeText,
   exact: z.boolean().optional().default(false),
   page: z.number().min(0).optional().default(0),
   pageSize: z.number().min(1).max(100).optional().default(20),
