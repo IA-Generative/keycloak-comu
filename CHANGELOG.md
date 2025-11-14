@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.9](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.8...v0.9.9) (2025-11-14)
+
+
+### Bug Fixes
+
+* replace string validation with safeText utility in DTO schemas ([1860ef5](https://github.com/IA-Generative/keycloak-comu/commit/1860ef53cb20036937956376fd7f9e61b8f92762))
+
 ## [0.9.8](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.7...v0.9.8) (2025-11-12)
 
 
