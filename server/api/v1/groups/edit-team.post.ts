@@ -3,10 +3,11 @@ import repo from '../../../repository'
 import { guard, LEVEL } from '../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 import { TeamNameSchema } from '~~/shared/types/team.js'
+import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const CreateTeamDtoSchema = z.object({
   parentId: z.uuid({ error: 'INVALID_GROUP_ID' }),
-  name: z.string(),
+  name: safeText,
   userIds: z.array(z.uuid()).optional(),
 })
 

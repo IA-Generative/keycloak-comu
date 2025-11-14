@@ -132,7 +132,6 @@ watch(activeIndex, (newIndex) => {
         @keydown.enter.prevent="selectActive"
         @keydown.esc.prevent="closeOptions"
         @keydown.tab.prevent="moveTab"
-        @blur="closeOptions"
       />
       <div
         v-if="isOpen"
@@ -148,7 +147,7 @@ watch(activeIndex, (newIndex) => {
           :value="user.email"
           :class="{ active: index === activeIndex }"
           role="option"
-          @click="selectOption(user)"
+          @click.prevent="selectOption(user)"
         >
           {{ user.first_name }} {{ user.last_name }} ({{ user.email }})
         </div>
@@ -159,7 +158,7 @@ watch(activeIndex, (newIndex) => {
       >
         <div
           role="option"
-          @click.prevent="closeOptions"
+          @click.capture="closeOptions"
         >
           Aucun utilisateur trouvé avec cet email
         </div>

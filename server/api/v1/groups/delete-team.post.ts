@@ -2,10 +2,11 @@ import { z } from 'zod'
 import repo from '../../../repository'
 import { guard, LEVEL } from '../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
+import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const DeleteTeamDtoSchema = z.object({
   groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
-  name: z.string(),
+  name: safeText,
 })
 export type DeleteTeamDtoType = z.infer<typeof DeleteTeamDtoSchema>
 

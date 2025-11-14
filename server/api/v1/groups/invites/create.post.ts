@@ -5,10 +5,11 @@ import createResponseError from '~~/server/utils/error.js'
 import { sendMail } from '~~/server/composables/mailer/client.js'
 import { generateGroupInviteEmail } from '~~/server/composables/mailer/body-builder.js'
 import type { UserRow } from '~~/server/repository/types.js'
+import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
-  email: z.string().trim(),
+  email: safeText,
 })
 export type GroupInviteDtoType = z.infer<typeof GroupInviteCreateDtoSchema>
 
