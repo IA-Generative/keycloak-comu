@@ -2,9 +2,9 @@ import { z } from 'zod'
 import GroupDtoSchema from './GroupSchema.js'
 
 export const ListGroupDtoSchema = z.object({
-  joined: GroupDtoSchema.omit({ members: true, invites: true, requests: true }).array(),
-  invited: GroupDtoSchema.omit({ members: true, invites: true, requests: true }).array(),
-  requested: GroupDtoSchema.omit({ members: true, invites: true, requests: true }).array(),
+  joined: GroupDtoSchema.pick({ id: true, name: true }).array(),
+  invited: GroupDtoSchema.pick({ id: true, name: true }).array(),
+  requested: GroupDtoSchema.pick({ id: true, name: true }).array(),
 })
 export type ListGroupDtoType = z.infer<typeof ListGroupDtoSchema>
 

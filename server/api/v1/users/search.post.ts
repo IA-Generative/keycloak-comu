@@ -2,9 +2,10 @@ import { z } from 'zod'
 
 import repo from '../../../repository'
 import type { UserRow } from '~~/server/repository/types.js'
+import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const ListUsersQueryDtoSchema = z.object({
-  search: z.string(),
+  search: safeText,
   excludeGroupId: z.string().uuid().optional(),
 })
 export type ListQueryDtoType = z.infer<typeof ListUsersQueryDtoSchema>
