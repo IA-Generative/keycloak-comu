@@ -16,8 +16,12 @@ const editingLinks = ref(false)
 
 const links = ref(props.group.links)
 
+const isLastLinkEmpty = computed(() => {
+  return links.value.length === 0 || links.value.slice(-1)[0] === ''
+})
+
 function addLink() {
-  if (links.value.length === 0 || links.value.slice(-1)[0] !== '') {
+  if (!isLastLinkEmpty.value) {
     links.value.push('')
   }
 }
@@ -30,7 +34,10 @@ function removeLink(idx: number) {
 }
 
 function saveLinks() {
-  emits('saveLinks', links.value.filter(link => link.trim() !== ''))
+  const trimmedLinks = links.value.filter(link => link.trim() !== '')
+  console.log(trimmedLinks)
+  emits('saveLinks', trimmedLinks)
+  links.value = trimmedLinks
   editingLinks.value = false
 }
 
@@ -50,15 +57,24 @@ function extractErrorMessage(link?: string): string {
   const err = parsed.error.issues[0]?.message
   return ERROR_MESSAGES[err as keyof typeof ERROR_MESSAGES]?.fr ?? 'Erreur inconnue'
 }
+
+function startEditingLinks() {
+  editingLinks.value = true
+  console.log(isLastLinkEmpty.value)
+
+  if (!isLastLinkEmpty.value) {
+    links.value.push('')
+  }
+}
 </script>
 
 <template>
   <div>
     <div>
       <div
-        v-for="(link, idx) in props.group.links"
+        v-for="(link, idx) in links"
         :key="idx"
-        class="flex flex-row gap-2 items-start mb-2"
+        class="flex flex-row gap-2 items-start"
       >
         <DsfrInputGroup
           v-if="editingLinks"
@@ -72,13 +88,13 @@ function extractErrorMessage(link?: string): string {
         <a
           v-else
           :href="link"
+          class="mb-2"
           target="_blank"
           rel="noopener noreferrer"
         >{{ link }}</a>
         <DsfrButton
           v-if="editingLinks"
           tertiary
-          class="mb-4"
           @click="removeLink(idx)"
         >
           Suppr.
@@ -121,7 +137,7 @@ function extractErrorMessage(link?: string): string {
         class="fr-mt-2w"
         icon="ri-edit-line"
         label="Modifier les liens"
-        @click="editingLinks = true"
+        @click="startEditingLinks"
       />
     </template>
   </div>
