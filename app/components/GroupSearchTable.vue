@@ -23,6 +23,10 @@ const { $router } = useNuxtApp()
 const searchQuery = ref($router.currentRoute.value.query.q as string || '')
 const searchResults = ref<PaginatedResponse<{ id: string, name: string, owners: { email: string }[] }>>({ results: [], total: 0, page: 0, pageSize: pageSize.value, next: false })
 
+const exactMatch = computed(() => {
+  return searchResults.value.results.find(g => g.name.toLocaleLowerCase() === searchQuery.value.toLocaleLowerCase())
+})
+
 const searchRows = computed(() => [
   ...searchResults.value.results.map(group => ({
     name: group.name,
@@ -65,6 +69,12 @@ watch(searchQuery, (newQuery) => {
 const validation = computed(() => {
   return CreateGroupDtoSchema.safeParse({ name: searchQuery.value })
 })
+
+function goExactMatch() {
+  if (exactMatch.value) {
+    $router.push(`/g/${exactMatch.value.id}`)
+  }
+}
 </script>
 
 <template>
@@ -77,35 +87,38 @@ const validation = computed(() => {
           id="group-search"
           :model-value="searchQuery"
           label="Nom du groupe"
-          hint="Rechercher un groupe par son nom, minimum 3 lettres"
+          hint="Tapez au moins 3 caractères pour lancer la recherche ou créer un nouveau groupe."
           type="text"
           name="group-search"
-          placeholder="Rechercher un groupe, minimum 3 caractères"
+          placeholder="Tapez au moins 3 caractères pour lancer la recherche ou créer un nouveau groupe."
           @update:model-value="(value) => searchQuery = value"
+          @search="goExactMatch"
         />
-      </div>
-
-      <div
-        v-if="searchQuery.length >= 3"
-        class="min-w-10"
-      >
-        <DsfrButton
-          :disabled="searchResults.results.find(g => g.name === searchQuery) !== undefined || !validation.success"
-          :title="validation.error ? (validation.error.issues[0]?.message || '') : ''"
-          @click="() => createGroup(searchQuery)"
-        >
-          Créer le groupe
-        </DsfrButton>
-        <span
-          v-if="validation.error"
-          class="text-red-600 text-sm alert-name"
-        >
-          {{ validation.error.issues[0]?.message }}
-        </span>
       </div>
     </div>
   </DsfrFieldset>
-  <template v-if="searchResults.results.length > 0">
+  <div
+    v-if="searchResults.results.length > 0"
+    class="flex flex-col mt-4"
+  >
+    <div
+      v-if="searchQuery.length >= 3"
+      class="self-end right-0"
+    >
+      <DsfrButton
+        :disabled="searchResults.results.find(g => g.name === searchQuery) !== undefined || !validation.success"
+        :title="validation.error ? (validation.error.issues[0]?.message || '') : ''"
+        @click="() => createGroup(searchQuery)"
+      >
+        Créer le groupe
+      </DsfrButton>
+      <span
+        v-if="validation.error"
+        class="text-red-600 text-sm block text-right mt-1"
+      >
+        {{ validation.error.issues[0]?.message }}
+      </span>
+    </div>
     <DsfrDataTable
       title="Résultats de la recherche"
       class="fr-mb-0"
@@ -122,7 +135,7 @@ const validation = computed(() => {
           <strong>{{ cell }}</strong>
         </template>
         <template v-if="colKey === 'id'">
-          <a :href="`/g/${cell as string}`">Voir le groupe</a>
+          <router-link :to="`/g/${cell as string}`">Voir le groupe</router-link>
         </template>
         <template v-else-if="colKey === 'owners'">
           {{ cell }}
@@ -135,16 +148,31 @@ const validation = computed(() => {
     >
       D'autres résultats existent. Affinez votre recherche.
     </p>
-  </template>
-  <template v-else-if="searchQuery.length >= 3">
+  </div>
+  <div
+    v-else-if="searchQuery.length >= 3"
+    class="fr-mt-2w text-center"
+  >
     <p
       type="info"
       small
-      class="fr-mt-2w text-center"
     >
-      Aucun groupe trouvé.
+      Aucun groupe trouvé, essayez avec d'autres mots-clés ou créez-le.
     </p>
-  </template>
+    <DsfrButton
+      :disabled="searchResults.results.find(g => g.name === searchQuery) !== undefined || !validation.success"
+      :title="validation.error ? (validation.error.issues[0]?.message || '') : ''"
+      @click="() => createGroup(searchQuery)"
+    >
+      Créer le groupe
+    </DsfrButton>
+    <span
+      v-if="validation.error"
+      class="text-red-600 text-sm block mt-1"
+    >
+      {{ validation.error.issues[0]?.message }}
+    </span>
+  </div>
 </template>
 
 <style lang="css" scoped>
