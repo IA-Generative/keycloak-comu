@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.9.10](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.9...v0.9.10) (2025-12-02)
+
+
+### Bug Fixes
+
+* enhance group search functionality with exact match and improved hints ([0370200](https://github.com/IA-Generative/keycloak-comu/commit/03702002707103377e0c2aae1d46f41bc88106e8))
+* improve link management in LinkForm component with better empty link handling ([3d4202c](https://github.com/IA-Generative/keycloak-comu/commit/3d4202c8bd0722dd574de63a8528551893fe9442))
+
 ## [0.9.9](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.8...v0.9.9) (2025-11-14)
 
 
