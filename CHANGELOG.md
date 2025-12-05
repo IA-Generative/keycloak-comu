@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.12](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.11...v0.9.12) (2025-12-05)
+
+
+### Bug Fixes
+
+* update userIds conversion to use Array.from for better compatibility ([2ce56dd](https://github.com/IA-Generative/keycloak-comu/commit/2ce56ddff00b5bb78d792b3bf8231f0ca67c3167))
+
 ## [0.9.11](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.10...v0.9.11) (2025-12-05)
 
 
