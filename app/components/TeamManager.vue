@@ -159,7 +159,7 @@ watch(wanted, async (newVal) => {
         body: {
           parentId: props.group.id,
           name,
-          userIds: userSet.values().toArray(),
+          userIds: Array.from(userSet.values()),
         },
       })
     } catch (e) {
