@@ -286,9 +286,12 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
 }
 
 export async function deleteGroup(id: string): Promise<void> {
-  const group = await kcClient.groups.findOne({ id })
-  if (!group || !group.path?.startsWith(getRootGroup().path)) {
+  const group = await kcClient.groups.findOne({ id, realm: realmName })
+  if (!group) {
     throw new Error('Group not found')
+  }
+  if (!group.path?.startsWith(getRootGroup().path)) {
+    throw new Error('Cannot delete group outside of root group hierarchy')
   }
   await kcClient.groups.del({
     id,
