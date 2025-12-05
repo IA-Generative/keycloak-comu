@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.9.11](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.10...v0.9.11) (2025-12-05)
+
+
+### Bug Fixes
+
+* enhance group deletion logic to prevent deletion outside root group hierarchy ([eb44bb3](https://github.com/IA-Generative/keycloak-comu/commit/eb44bb3fb1be0e707ba8d825f511a150bd66f6ae))
+
 ## [0.9.10](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.9...v0.9.10) (2025-12-02)
 
 
