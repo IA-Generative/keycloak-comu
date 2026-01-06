@@ -1,39 +1,22 @@
 <script setup lang="ts">
-import { DsfrTable } from '@gouvminint/vue-dsfr'
-import { ref } from 'vue'
-
-const userProfile = ref<any>(null)
-onBeforeMount(async () => {
-  const { $keycloak } = useNuxtApp()
-  if ($keycloak?.token) {
-    userProfile.value = $keycloak.tokenParsed
-  }
-})
+import UserInfos from '~/components/profile/UserInfos.vue'
+import UserSettings from '~/components/profile/UserSettings.vue'
+import { featureFlags } from '#imports'
 
 useHead({
   title: `Keycloak Comu - Profil`,
 })
+
+const displayUserSettings = computed(() => {
+  return featureFlags.value.includes('userSettings')
+})
 </script>
 
 <template>
-  <div>
-    <div v-if="userProfile">
-      <DsfrTable
-        title="Informations utilisateur"
-      >
-        <tr>
-          <th>Nom d'utilisateur</th>
-          <td>{{ userProfile.preferred_username }}</td>
-        </tr>
-        <tr>
-          <th>Email</th>
-          <td>{{ userProfile.email }}</td>
-        </tr>
-        <tr>
-          <th>Nom, Prénom</th>
-          <td>{{ userProfile.family_name }}, {{ userProfile.given_name }}</td>
-        </tr>
-      </DsfrTable>
-    </div>
+  <div class="flex flex-col gap-8">
+    <UserInfos />
+    <UserSettings
+      :enabled="displayUserSettings"
+    />
   </div>
 </template>

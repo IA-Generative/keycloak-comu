@@ -3,7 +3,7 @@ import repo from '../../../../repository'
 import { guard, LEVEL } from '../../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 import { sendMail } from '~~/server/composables/mailer/client.js'
-import { generateGroupInviteEmail } from '~~/server/composables/mailer/body-builder.js'
+import { generateAutoJoinNotificationEmail, generateGroupInviteEmail } from '~~/server/composables/mailer/body-builder.js'
 import type { UserRow } from '~~/server/repository/types.js'
 import { safeText } from '~~/server/utils/input-cleaner.js'
 
@@ -37,6 +37,18 @@ export default defineEventHandler(async (event) => {
     await repo.addMemberToGroup(invitee.id, body.groupId)
     return
   }
+
+  const inviteeSettings = await repo.getUserSettings(invitee.id)
+  if (inviteeSettings?.autoAcceptInvites) {
+    await repo.addMemberToGroup(invitee.id, body.groupId)
+    sendMail({
+      to: body.email,
+      subject: `Vous avez été ajouté au groupe ${group.name}`,
+      html: generateAutoJoinNotificationEmail(group, requestor),
+    })
+    return 'autoJoin'
+  }
+
   await repo.inviteMemberToGroup(invitee.id, body.groupId)
   return sendMail({
     to: body.email,

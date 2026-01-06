@@ -66,3 +66,13 @@ export function mergeMultipleGroupAttributes(rows: AttributeRow[]): MultiGroupAt
   })
   return attributes
 }
+
+export const bts = (v: boolean) => v ? 'true' : 'false'
+export function stb(v?: string | undefined) {
+  return v === 'true'
+    ? true
+    : v === 'false' ? false : null
+}
+
+const runtimeConfig = useRuntimeConfig()
+export const realmName = runtimeConfig.public.keycloak.realm

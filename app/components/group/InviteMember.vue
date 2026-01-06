@@ -12,13 +12,16 @@ const emits = defineEmits<{
 
 const newMemberEmail = ref('')
 
-function manageMailStatus(status: 'sent' | 'disabled' | 'sendFailed' | undefined) {
+function manageInviteStatus(status: 'sent' | 'disabled' | 'sendFailed' | 'autoJoin' | undefined) {
   if (status === 'sent') {
     addMessage({ type: 'success', text: 'Invitation envoyée avec succès' })
     return
   }
   if (status === 'sendFailed') {
     addMessage({ type: 'warning', text: 'Invitation créée, mais échec de l\'envoi du mail' })
+  }
+  if (status === 'autoJoin') {
+    addMessage({ type: 'info', text: 'L\'utilisateur a été ajouté automatiquement au groupe' })
   }
 }
 async function addMember() {
@@ -29,7 +32,7 @@ async function addMember() {
       body: { groupId: props.groupId, email: newMemberEmail.value.trim() },
     })
 
-    manageMailStatus(mailStatus)
+    manageInviteStatus(mailStatus)
     newMemberEmail.value = ''
   } catch (error) {
     addMessage({ type: 'error', text: 'Erreur lors de l\'ajout du membre' })
