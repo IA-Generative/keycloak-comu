@@ -3,7 +3,7 @@ import { LEVEL } from '../guards/group.js'
 import * as db from './pg.js'
 import type { AttributeRow, UserRow } from './types.js'
 import type { Attributes } from './utils.js'
-import { mergeUniqueGroupAttributes } from './utils.js'
+import { mergeUniqueGroupAttributes, realmName } from './utils.js'
 import type { TeamsDtoType } from '~~/shared/types/team.js'
 
 export const INVITE_ATTRIBUTE = 'invite'
@@ -34,9 +34,6 @@ interface SearchParams {
   skip: number
   exact?: boolean
 }
-
-const runtimeConfig = useRuntimeConfig()
-const realmName = runtimeConfig.public.keycloak.realm
 
 export async function searchGroups({ query, limit, skip, exact = false }: SearchParams): Promise<{ groups: (GroupSearchResult & { owners: UserRow[] })[], total: number, next: boolean }> {
   const groupsResult = exact

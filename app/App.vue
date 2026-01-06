@@ -22,6 +22,8 @@ onMounted(async () => {
       if (refreshed) console.log('Token refresh OK')
     }
   }, 20000)
+
+  loadFeatureFlags()
 })
 
 function logout() {
