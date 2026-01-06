@@ -1,7 +1,12 @@
 <script setup lang="ts">
 import { DsfrButton } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
-import MembersTable from '~/components/MembersTable.vue'
+import MembersTable from '~/components/group/MembersTable.vue'
+import InvitesList from '~/components/group/InvitesList.vue'
+import DangerZone from '~/components/group/DangerZone.vue'
+import InviteForm from '~/components/group/InviteForm.vue'
+import InviteMember from '~/components/group/InviteMember.vue'
+import TeamManager from '~/components/group/TeamManager.vue'
 
 const id = useRoute().params.id
 const config = useRuntimeConfig()
