@@ -1,3 +1,4 @@
+import UserSettingsSchema from '~~/shared/UserSettingsSchema.js'
 import repo from '../../../repository/index.js'
 
 export default defineEventHandler(async (event) => {

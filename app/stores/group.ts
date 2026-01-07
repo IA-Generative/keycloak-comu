@@ -91,6 +91,22 @@ export const useGroupStore = defineStore('group', () => {
     await refreshGroup()
   }
 
+  async function kickMember(userId: string, groupId: string) {
+    await fetcher('/api/v1/groups/membership/kick', {
+      method: 'post',
+      body: { groupId, userId },
+    })
+    await refreshGroup()
+  }
+
+  async function leaveGroup() {
+    const { $router } = useNuxtApp()
+    await fetcher('/api/v1/groups/membership/leave', {
+      method: 'post',
+      body: { groupId: group.value?.id },
+    })
+    $router.push('/')
+  }
   return {
     group,
     fetchGroup,
@@ -102,5 +118,7 @@ export const useGroupStore = defineStore('group', () => {
     acceptRequest,
     declineRequest,
     cancelRequest,
+    kickMember,
+    leaveGroup,
   }
 })

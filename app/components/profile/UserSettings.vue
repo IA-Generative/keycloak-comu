@@ -6,7 +6,7 @@ const props = defineProps<{
   enabled: boolean | undefined
 }>()
 
-const settings = ref<Settings | null>(null)
+const settings = ref<UserSettings | null>(null)
 
 async function getSettings() {
   if (!props.enabled)
@@ -21,12 +21,7 @@ async function getSettings() {
 watch(props, getSettings)
 onBeforeMount(getSettings)
 
-const yesNoOptions = [
-  { label: 'Oui', value: true },
-  { label: 'Non', value: false },
-]
-
-async function updateSettings(key: keyof Settings, value: boolean) {
+async function updateSettings(key: keyof UserSettings, value: boolean) {
   await fetcher('/api/v1/users/settings', {
     method: 'post',
     body: {

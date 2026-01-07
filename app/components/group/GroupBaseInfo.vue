@@ -82,7 +82,7 @@ async function saveLinks(links: string[]) {
         @click="isEditingDescription = true; descriptionRef = group.description || ''"
       />
     </div>
-    <div v-if="group.tos || mylevel >= 20">
+    <div v-if="group.tos || mylevel >= 10">
       <DsfrButton
         tertiary
         icon="ri-file-text-line"

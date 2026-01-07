@@ -3,6 +3,8 @@ import repo from '../../../../repository'
 import createResponseError from '~~/server/utils/error.js'
 import { generateJoinRequestEmail } from '~~/server/composables/mailer/body-builder.js'
 import { sendMail } from '~~/server/composables/mailer/client.js'
+import { AUTO_ACCEPT_REQUESTS } from '~~/server/repository/groups.js'
+import { stb } from '~~/server/repository/utils.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
   groupId: z.uuid({ error: 'INVALID_GROUP_ID' }),
@@ -27,6 +29,13 @@ export default defineEventHandler(async (event) => {
     await repo.addMemberToGroup(requestorId, body.groupId)
     return
   }
+
+  if (stb(group.settings[AUTO_ACCEPT_REQUESTS])) {
+    await repo.uninviteMemberFromGroup(requestorId, body.groupId)
+    await repo.addMemberToGroup(requestorId, body.groupId)
+    return
+  }
+
   await repo.requestJoinToGroup(requestorId, body.groupId)
   const emailBody = generateJoinRequestEmail(group, requestor!)
   const tos = group.members

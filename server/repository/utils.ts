@@ -1,3 +1,4 @@
+import { SETTING_PREFIX } from './groups.js'
 import type { AttributeRow } from './types.js'
 
 export interface Attributes {
@@ -7,6 +8,7 @@ export interface Attributes {
   request: string[]
   admin: string[]
   tos: string
+  settings: Record<string, string>
   extras: {
     [name: string]: string[]
   }
@@ -20,14 +22,19 @@ export function mergeUniqueGroupAttributes(rows: AttributeRow[]): Attributes {
     admin: [],
     extras: {},
     tos: '',
+    settings: {},
   }
+
   rows.forEach((row) => {
-    if (row.name && row.value) {
-      if (!attributes.extras[row.name]) {
-        attributes.extras[row.name] = []
-      }
-      attributes.extras[row.name].push(row.value)
+    if (!row.name || !row.value)
+      return
+    if (!attributes.extras[row.name]) {
+      attributes.extras[row.name] = []
     }
+    if (row.name.startsWith(SETTING_PREFIX)) {
+      attributes.settings[row.name.slice(SETTING_PREFIX.length)] = row.value
+    }
+    attributes.extras[row.name].push(row.value)
   })
 
   // special keys

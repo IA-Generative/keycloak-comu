@@ -1,6 +1,5 @@
 <script setup lang="ts">
 import MembersTable from '~/components/group/MembersTable.vue'
-import InviteForm from '~/components/group/InviteForm.vue'
 import InvitesList from '~/components/group/InvitesList.vue'
 import InviteMember from '~/components/group/InviteMember.vue'
 
@@ -28,11 +27,8 @@ const mylevel = computed(() => groupStore.mylevel)
         />
       </div>
       <div class="grow">
-        <InviteForm
-          v-if="mylevel === 0"
-        />
         <InvitesList
-          v-else-if="mylevel >= 20"
+          v-if="mylevel >= 20"
         />
       </div>
     </div>

@@ -29,6 +29,7 @@ definePageMeta({
     <SideMenu />
     <div class="mt-5 md:mt-0">
       <NuxtPage />
+      <GroupAccess />
     </div>
   </div>
 </template>

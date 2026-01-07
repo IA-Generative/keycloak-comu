@@ -29,7 +29,7 @@ async function getUserAttributes(userId: string): Promise<UserAttributesRow[]> {
   return attributesRows.rows
 }
 
-export async function getUserSettings(userId: string): Promise<Settings> {
+export async function getUserSettings(userId: string): Promise<UserSettings> {
   const userAttributes = await getUserAttributes(userId)
   const autoAcceptInvitesAttribute = userAttributes.find(row => row.name === AUTO_ACCEPT_INVITES_ATTRIBUTE)?.value
 
@@ -38,14 +38,14 @@ export async function getUserSettings(userId: string): Promise<Settings> {
   }
 }
 
-export async function setUserSettings(userId: string, settings: Partial<Settings>) {
+export async function setUserSettings(userId: string, settings: Partial<UserSettings>) {
   for (const [key, value] of Object.entries(settings)) {
-    await setAttribute(userId, key as keyof Settings, [value === null ? '' : value.toString()])
+    await setAttribute(userId, key as keyof UserSettings, [value === null ? '' : value.toString()])
   }
 }
 
 // UTILS
-async function setAttribute(userId: string, name: keyof Settings, values: string[]): Promise<void> {
+async function setAttribute(userId: string, name: keyof UserSettings, values: string[]): Promise<void> {
   const user = await kcClient.users.findOne({
     id: userId,
     realm: realmName,

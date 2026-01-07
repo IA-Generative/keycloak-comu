@@ -8,45 +8,52 @@ const headingTitle = computed(() => group.value ? `${group.value.name}` : 'Group
 
 const $route = useRoute()
 
-const menuItems = ref([
-  {
-    id: '11',
-    to: `/g/${group.value.id}/base`,
-    active: computed(() => $route.fullPath.endsWith('base')),
-    text: 'Informations',
+watch($route, () => {
+  groupStore.refreshGroup()
+})
+
+const menuItems = ref([{
+  id: '11',
+  to: `/g/${group.value.id}/base`,
+  active: computed(() => $route.fullPath.endsWith('base')),
+  text: 'Informations',
+  requiredLevel: 0,
+}, {
+  id: '12',
+  to: `/g/${group.value.id}/users`,
+  active: computed(() => $route.fullPath.endsWith('users')),
+  text: 'Utilisateurs',
+  requiredLevel: 0,
+  attr: {
+    a: 'a',
   },
-  {
-    id: '12',
-    to: `/g/${group.value.id}/users`,
-    active: computed(() => $route.fullPath.endsWith('users')),
-    text: 'Utilisateurs',
-  },
-  {
-    id: '13',
-    to: `/g/${group.value.id}/teams`,
-    active: computed(() => $route.fullPath.endsWith('teams')),
-    text: 'Équipes',
-  },
-  {
-    id: '14',
-    to: `/g/${group.value.id}/settings`,
-    active: computed(() => $route.fullPath.endsWith('settings')),
-    text: 'Paramètres',
-  },
-])
+}, {
+  id: '13',
+  to: `/g/${group.value.id}/teams`,
+  active: computed(() => $route.fullPath.endsWith('teams')),
+  text: 'Équipes',
+  requiredLevel: 10,
+}, {
+  id: '14',
+  to: `/g/${group.value.id}/settings`,
+  active: computed(() => $route.fullPath.endsWith('settings')),
+  text: 'Paramètres',
+  requiredLevel: 20,
+}])
 </script>
 
 <template>
   <DsfrSideMenu
     :heading-title="headingTitle"
-    :menu-items="menuItems"
+    :menu-items="menuItems.filter(item => groupStore.mylevel >= item.requiredLevel)"
     collapse-value="a"
     title-tag="h2"
     button-label="Menu du groupe"
+    :class="{ 'has-notifications': group.requests.length && groupStore.mylevel >= 20 }"
   />
 </template>
 
-<style module>
+<style>
 li::marker {
   display: none;
   content: "";
@@ -56,5 +63,17 @@ li::marker {
 }
 li {
   list-style-type: none;
+}
+.has-notifications .fr-sidemenu__item:nth-child(2):after {
+  background-color: var(--border-default-red-marianne) !important;
+  content: '';
+  position: absolute;
+  right: 0.2rem;
+  font-weight: 900;
+  top: calc(50% - (1rem / 2));
+  height: 1rem;
+  width: 1rem;
+  /* clip-path for round background*/
+  clip-path: circle(20%);
 }
 </style>

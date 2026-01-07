@@ -1,6 +1,8 @@
 import { LEVEL } from '../guards/group.js'
 import type { Level } from '../guards/group.js'
+import { AUTO_ACCEPT_REQUESTS } from '../repository/groups.js'
 import type { GroupDetails } from '../repository/groups.js'
+import { stb } from '../repository/utils.js'
 
 function findMembershipLevel(
   group: GroupDetails,
@@ -44,5 +46,8 @@ export function groupDetailToDto(group: GroupDetails, requestor: Requestor): Gro
     requests: requestor.membershipLevel >= LEVEL.ADMIN ? group.requests : group.requests.filter(request => request.id === requestor.userId),
     teams: group.teams,
     tos: group.attributes.tos,
+    settings: {
+      autoAcceptRequests: stb(group.settings[AUTO_ACCEPT_REQUESTS]) ?? false,
+    },
   }
 }
