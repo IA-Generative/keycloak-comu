@@ -3,18 +3,17 @@ import { DsfrButton, DsfrInputGroup } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
 import ERROR_MESSAGES from '~~/shared/ErrorMessages.js'
 
-const props = defineProps<{
-  group: GroupDtoType
-  canEdit: boolean
-}>()
-
 const emits = defineEmits<{
   saveLinks: [string[]]
 }>()
 
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
+const canEdit = computed(() => groupStore.mylevel >= 20)
+
 const editingLinks = ref(false)
 
-const links = ref(props.group.links)
+const links = ref(group.value.links)
 
 const isLastLinkEmpty = computed(() => {
   return links.value.length === 0 || links.value.slice(-1)[0] === ''
@@ -43,7 +42,7 @@ function saveLinks() {
 
 function cancelEditLinks() {
   editingLinks.value = false
-  links.value = props.group.links
+  links.value = group.value.links
 }
 
 function extractErrorMessage(link?: string): string {
@@ -60,9 +59,8 @@ function extractErrorMessage(link?: string): string {
 
 function startEditingLinks() {
   editingLinks.value = true
-  console.log(isLastLinkEmpty.value)
 
-  if (!isLastLinkEmpty.value) {
+  if (isLastLinkEmpty.value) {
     links.value.push('')
   }
 }

@@ -2,21 +2,17 @@
 import { DsfrButton, DsfrCallout } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 
-const props = defineProps<{
-  group: GroupDtoType
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group)
 
-const { $keycloak, $router } = useNuxtApp()
-const userId = computed(() => $keycloak?.tokenParsed?.sub as string)
-
-const mylevel = computed(() => props.group.members.find(m => m.id === userId.value)?.membershipLevel || 0)
+const { $router } = useNuxtApp()
 
 const amIOwner = computed(() => {
-  return mylevel.value === 30
+  return groupStore.mylevel >= 30
 })
 const canLeaveGroup = computed(() => {
   if (!amIOwner.value) return true
-  if (props.group && props.group.members.filter(member => member.membershipLevel === 30).length > 1) return true
+  if (group.value && group.value.members.filter(member => member.membershipLevel === 30).length > 1) return true
   return false
 })
 
@@ -30,7 +26,7 @@ async function deleteGroup(confirm: boolean) {
   }
   const data = await fetcher(`/api/v1/groups/delete`, {
     method: 'post',
-    body: { groupId: props.group.id },
+    body: { groupId: group.value?.id },
   })
   $router.push('/')
   return data
@@ -40,7 +36,7 @@ async function leaveGroup() {
   const { $router } = useNuxtApp()
   await fetcher('/api/v1/groups/membership/leave', {
     method: 'post',
-    body: { groupId: props.group.id },
+    body: { groupId: group.value?.id },
   })
   $router.push('/')
 }
@@ -48,7 +44,7 @@ async function leaveGroup() {
 
 <template>
   <DsfrCallout
-    v-if="mylevel > 0"
+    v-if="groupStore.mylevel > 0"
     title="Zone de danger"
     title-tag="h3"
     class="relative"

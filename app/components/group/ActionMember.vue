@@ -14,10 +14,7 @@ const props = defineProps<{
   group: GroupDtoType
 }>()
 
-const emits = defineEmits<{
-  (e: 'refresh'): void
-}>()
-
+const groupStore = useGroupStore()
 const dialogOpened = ref(false)
 
 async function kickMember(userId: string) {
@@ -25,7 +22,7 @@ async function kickMember(userId: string) {
     method: 'post',
     body: { groupId: props.group.id, userId },
   })
-  emits('refresh')
+  await groupStore.refreshGroup()
   dialogOpened.value = false
 }
 function openDialog() {
@@ -47,7 +44,8 @@ async function changeMemberLevel(userId: string, newLevel: number) {
     })
   } finally {
     nextTick()
-    emits('refresh')
+    await groupStore.refreshGroup()
+
     dialogOpened.value = false
     isLoading.value = false
   }

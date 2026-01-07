@@ -6,9 +6,7 @@ const props = defineProps<{
   groupId: string
 }>()
 
-const emits = defineEmits<{
-  refresh: []
-}>()
+const groupStore = useGroupStore()
 
 const newMemberEmail = ref('')
 
@@ -38,7 +36,7 @@ async function addMember() {
     addMessage({ type: 'error', text: 'Erreur lors de l\'ajout du membre' })
     console.error('Error adding member:', error)
   }
-  emits('refresh')
+  await groupStore.refreshGroup()
 }
 
 const suggestions = ref<UserDtoType[]>([])

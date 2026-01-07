@@ -135,7 +135,9 @@ function goExactMatch() {
           <strong>{{ cell }}</strong>
         </template>
         <template v-if="colKey === 'id'">
-          <router-link :to="`/g/${cell as string}`">Voir le groupe</router-link>
+          <router-link :to="`/g/${cell as string}`">
+            Voir le groupe
+          </router-link>
         </template>
         <template v-else-if="colKey === 'owners'">
           {{ cell }}

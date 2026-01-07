@@ -9,6 +9,8 @@ const emits = defineEmits<{
   (e: 'refresh'): void
 }>()
 
+const groupStore = useGroupStore()
+
 function triggerAction(fn: (groupId: string) => Promise<void>) {
   fn(props.group.id).then(() => {
     emits('refresh')
@@ -25,7 +27,7 @@ function triggerAction(fn: (groupId: string) => Promise<void>) {
     <div>
       Vous avez été invité à rejoindre le groupe <NuxtLink :to="`/g/${group.id}`">
         {{ group.name }}
-      </NuxtLink>.<br />
+      </NuxtLink>.<br>
       <span class="fr-text--xs">
         Vous acceptez implicitement les conditions d'utilisation du groupe en rejoignant celui-ci
       </span>
@@ -34,7 +36,7 @@ function triggerAction(fn: (groupId: string) => Promise<void>) {
       <DsfrButton
         size="small"
         class="fr-ml-2w"
-        @click="triggerAction(acceptInvite)"
+        @click="triggerAction(groupStore.acceptInvite)"
       >
         Accepter
       </DsfrButton>
@@ -42,7 +44,7 @@ function triggerAction(fn: (groupId: string) => Promise<void>) {
         size="small"
         secondary
         class="fr-ml-2w"
-        @click="triggerAction(declineInvite)"
+        @click="triggerAction(groupStore.declineInvite)"
       >
         Refuser
       </DsfrButton>

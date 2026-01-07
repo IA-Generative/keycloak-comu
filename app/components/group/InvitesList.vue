@@ -2,36 +2,31 @@
 import { DsfrButton } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 
-const props = defineProps<{
-  group: GroupDtoType
-}>()
-
-const emits = defineEmits<{
-  refresh: []
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
 
 async function uninviteMember(userId: string) {
   await fetcher('/api/v1/groups/invites/cancel', {
     method: 'post',
-    body: { groupId: props.group.id, userId },
+    body: { groupId: group.value.id, userId },
   })
-  emits('refresh')
+  await groupStore.refreshGroup()
 }
 
 async function acceptRequest(userId: string) {
   await fetcher('/api/v1/groups/requests/accept', {
     method: 'post',
-    body: { groupId: props.group.id, userId },
+    body: { groupId: group.value.id, userId },
   })
-  emits('refresh')
+  await groupStore.refreshGroup()
 }
 
 async function declineRequest(userId: string) {
   await fetcher('/api/v1/groups/requests/decline', {
     method: 'post',
-    body: { groupId: props.group.id, userId },
+    body: { groupId: group.value.id, userId },
   })
-  emits('refresh')
+  await groupStore.refreshGroup()
 }
 </script>
 
