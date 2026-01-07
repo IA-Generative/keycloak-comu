@@ -9,16 +9,6 @@ interface UserAttributesRow {
   value: string
 }
 
-// async function getRealm() {
-//   const realm = await kcClient.components.find({
-//     type: 'org.keycloak.userprofile.UserProfileProvider',
-//     realm: realmName,
-//   })
-//   console.log(JSON.parse(realm[0].config.['kc.user.profile.config'][0]).unmanagedAttributePolicy)
-// }
-// setTimeout(() =>
-//   getRealm(), 2000)
-
 async function getUserAttributes(userId: string): Promise<UserAttributesRow[]> {
   const attributesRows = await db.query(
     `SELECT name, value

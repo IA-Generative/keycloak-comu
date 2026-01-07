@@ -23,9 +23,9 @@ export function generateGroupInviteEmail(group: GroupDetails, hostUser: UserRow)
         </tr>
         <tr>
           <td style="padding: 24px;">
-            <p style="font-size: 16px; line-height: 1.5;">Bonjour,</p>
+            <p style="font-size: 16px; line-height: 1.5;">Bonjour ${hostUser.first_name} ${hostUser.last_name},</p>
             <p style="font-size: 16px; line-height: 1.5;">
-              ${hostUser.first_name} ${hostUser.last_name}, vous avez été invité à rejoindre le groupe 
+              Vous avez été invité à rejoindre le groupe 
               <strong style="color: #000091;">${group.name}</strong>.
             </p>
             <p style="font-size: 16px; line-height: 1.5;">Pour accéder au groupe, cliquez sur le bouton ci-dessous :</p>

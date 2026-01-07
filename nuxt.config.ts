@@ -25,10 +25,6 @@ export default defineNuxtConfig({
         clientId: process.env.NUXT_PUBLIC_KEYCLOAK_CLIENT_ID,
         rootGroupPath: process.env.NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH || '/',
       },
-      defaultUserConfig: {
-        autoAcceptInvites: process.env.NUXT_PUBLIC_DEFAULT_USER_CONFIG_AUTO_ACCEPT_INVITES === 'true',
-        receiveEmailNotifications: process.env.NUXT_PUBLIC_DEFAULT_USER_CONFIG_RECEIVE_EMAIL_NOTIFICATIONS === 'true',
-      },
     },
     keycloak: {
       admin: {
