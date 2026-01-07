@@ -1,16 +1,10 @@
 <script setup lang="ts">
 import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
 
-defineProps<{
-  group: GroupDtoType
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
 
-defineEmits<{
-  acceptInvite: []
-  declineInvite: []
-  cancelRequest: []
-  createRequest: []
-}>()
+const { $keycloak } = useNuxtApp()
 </script>
 
 <template>
@@ -22,7 +16,7 @@ defineEmits<{
     <DsfrButton
       label="Annuler la demande d'adhésion au groupe"
       secondary
-      @click="$emit('cancelRequest')"
+      @click="groupStore.cancelRequest(group.id, $keycloak?.tokenParsed?.sub as string)"
     />
   </div>
   <div
@@ -33,12 +27,12 @@ defineEmits<{
     <div class="flex gap-4">
       <DsfrButton
         label="Accepter l'invitation"
-        @click="$emit('acceptInvite')"
+        @click="groupStore.acceptInvite(group.id)"
       />
       <DsfrButton
         label="Décliner l'invitation"
         secondary
-        @click="$emit('declineInvite')"
+        @click="groupStore.declineInvite(group.id)"
       />
     </div>
   </div>
@@ -46,7 +40,7 @@ defineEmits<{
     <p>Vous ne faites pas partie de ce groupe pour le moment.</p>
     <DsfrButton
       label="Demander à rejoindre le groupe"
-      @click="$emit('createRequest')"
+      @click="groupStore.createRequest(group.id)"
     />
     <DsfrAlert
       small

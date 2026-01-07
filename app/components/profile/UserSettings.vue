@@ -46,7 +46,7 @@ async function updateSettings(key: keyof Settings, value: boolean) {
     >
       <p class="fr-text--sm fr-text--italic mb-0 text-center">
         Les paramètres utilisateurs sont actuellement désactivés.
-        <br />
+        <br>
         Les paramètres déjà enregistrés sont conservés mais nous ne pouvons affirmer qu'ils seront pris en compte.
       </p>
     </div>

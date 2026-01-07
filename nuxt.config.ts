@@ -9,6 +9,7 @@ export default defineNuxtConfig({
     '@nuxtjs/tailwindcss',
     '@nuxt/test-utils/module',
     '@artmizu/nuxt-prometheus',
+    '@pinia/nuxt',
   ],
   ssr: false,
   devtools: {

@@ -1,29 +1,24 @@
 <script setup lang="ts">
 import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
-import ActionMember from './ActionMember.vue'
 import { DsfrDataTable } from '@gouvminint/vue-dsfr'
 import type { DsfrDataTableHeaderCell } from '@gouvminint/vue-dsfr'
+import ActionMember from './ActionMember.vue'
 
-const props = defineProps<{
-  group: GroupDtoType
-}>()
-
-const emits = defineEmits<{
-  refresh: []
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
 
 const { $keycloak } = useNuxtApp()
 
 const userId = computed(() => $keycloak?.tokenParsed?.sub as string)
 
-const mylevel = computed(() => props.group.members.find(m => m.id === userId.value)?.membershipLevel || 0)
+const mylevel = computed(() => group.value.members.find(m => m.id === userId.value)?.membershipLevel || 0)
 
 const amIOwner = computed(() => {
-  return mylevel.value === 30
+  return mylevel.value >= 30
 })
 
 const membersRows = computed(() => {
-  return props.group.members
+  return group.value.members
     .toSorted((a, b) => (a.membershipLevel === b.membershipLevel ? 0 : a.membershipLevel > b.membershipLevel ? -1 : 1))
     .map((member) => {
       return {
@@ -37,9 +32,9 @@ const membersRows = computed(() => {
         actions: (member.id === $keycloak?.tokenParsed?.sub || amIOwner.value || (mylevel.value >= 20 && mylevel.value > member.membershipLevel)
           ? {
               member: { ...member },
-              group: props.group,
+              group: group.value,
               mylevel: mylevel.value,
-              onRefresh: () => emits('refresh'),
+              onRefresh: () => groupStore.refreshGroup(),
             }
           : null),
       }

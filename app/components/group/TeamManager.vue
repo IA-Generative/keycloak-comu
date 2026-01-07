@@ -1,19 +1,14 @@
 <script setup lang="ts">
-import { DsfrAccordion, DsfrButton, DsfrInput, DsfrTag } from '@gouvminint/vue-dsfr'
+import { DsfrButton, DsfrInput, DsfrTag } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
 
 import { ref } from 'vue'
 import ERROR_MESSAGES from '~~/shared/ErrorMessages.js'
 import type { ErrorMessageKey } from '~~/shared/ErrorMessages.js'
 
-const props = defineProps<{
-  group: GroupDtoType
-  canManage: boolean
-}>()
-
-const emits = defineEmits<{
-  refresh: []
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
+const canManage = computed(() => groupStore.mylevel >= 20)
 
 const config = useRuntimeConfig()
 const rootGroupPrefix = config.public.keycloak.rootGroupPath.endsWith('/')
@@ -25,11 +20,11 @@ function sortFunction<T extends Record<string, any>>(array: T[], key: keyof T, f
 }
 
 const groupMembersSorted = computed(() => {
-  return sortFunction(props.group.members, 'first_name', 'email')
+  return sortFunction(group.value.members, 'first_name', 'email')
 })
 
 const sortedTeams = computed(() => {
-  return sortFunction(props.group.teams, 'name', 'id').map(team => ({
+  return sortFunction(group.value.teams, 'name', 'id').map(team => ({
     ...team,
     members: sortFunction(team.members.map(m => groupMembersSorted.value.find(u => u.id === m)) as UserDtoType[], 'first_name', 'email'),
   }))
@@ -49,12 +44,12 @@ const newGroupName = ref('')
 const newGroupNameValidation = computed(() => TeamNameSchema.safeParse(newGroupName.value))
 
 const actual = computed(() => {
-  return props.group.teams.reduce((acc, sg) => {
+  return group.value.teams.reduce((acc, sg) => {
     acc[sg.name] = Array.from(new Set(sg.members))
     return acc
   }, {} as Record<string, string[]>)
 })
-const wanted = ref(props.group.teams.reduce((acc, sg) => {
+const wanted = ref(group.value.teams.reduce((acc, sg) => {
   acc[sg.name] = Array.from(new Set(sg.members))
   return acc
 }, {} as Record<string, string[]>),
@@ -65,7 +60,7 @@ async function createTeam() {
   await fetcher('/api/v1/groups/edit-team', {
     method: 'post',
     body: {
-      parentId: props.group.id,
+      parentId: group.value.id,
       name: newGroupName.value,
       members: [],
     },
@@ -74,7 +69,7 @@ async function createTeam() {
       newGroupName.value = ''
       isCreatingTeam.value = false
     })
-    .finally(() => emits('refresh'))
+    .finally(groupStore.refreshGroup)
 }
 
 async function deleteTeam(name: string, confirm = false) {
@@ -87,12 +82,13 @@ async function deleteTeam(name: string, confirm = false) {
     await fetcher('/api/v1/groups/delete-team', {
       method: 'post',
       body: {
-        groupId: props.group.id,
+        groupId: group.value.id,
         name,
       },
     })
   } finally {
-    emits('refresh')
+    groupStore.refreshGroup()
+
     delete wanted.value[name]
     delete teamStatus.value[name]
   }
@@ -116,7 +112,7 @@ function onDragLeave(groupName: string) {
 }
 
 async function removeUserFromTeam(userId: string, teamName: string) {
-  if (!props.canManage) return
+  if (!canManage.value) return
 
   wanted.value[teamName] = (wanted.value[teamName] ?? []).filter(id => id !== userId)
 }
@@ -157,7 +153,7 @@ watch(wanted, async (newVal) => {
       await fetcher('/api/v1/groups/edit-team', {
         method: 'post',
         body: {
-          parentId: props.group.id,
+          parentId: group.value.id,
           name,
           userIds: Array.from(userSet.values()),
         },
@@ -165,7 +161,7 @@ watch(wanted, async (newVal) => {
     } catch (e) {
       console.error('Failed to save team members', e)
     } finally {
-      emits('refresh')
+      await groupStore.refreshGroup()
     }
   }
 }, { deep: true })
@@ -193,172 +189,167 @@ function selectTag(userId: string) {
     selectedTags.value.push(userId)
   }
 }
+
+const emptyGroupMessage = computed(() => {
+  if (canManage.value) {
+    return 'Déposez ici de nouveaux membres'
+  }
+  return 'Cette équipe n\'a pas encore de membres.'
+})
 </script>
 
 <template>
-  <DsfrAccordion
-    id="team-manager"
-    title-tag="h2"
-    :title="`Gérer les équipes (${Object.keys(group.teams).length})`"
-    :default-opened="false"
+  <div
+    class="fr-container"
   >
-    <template #title>
-      <h4 class="fr-m-0">
-        {{ canManage ? 'Gérer' : 'Voir' }} les équipes ({{ Object.keys(group.teams).length }})
-      </h4>
-    </template>
+    <!-- Élément draggable -->
     <div
-      class="fr-container"
+      v-if="Object.keys(group.teams).length"
+      class="flex flex-row flex-wrap gap-4 mb-4"
     >
-      <!-- Élément draggable -->
-      <div
-        v-if="Object.keys(group.teams).length"
-        class="flex flex-row flex-wrap gap-4 mb-4"
-      >
-        <template v-if="canManage">
-          <DsfrTag
-            v-for="member in groupMembersSorted"
-            :key="member.id"
-            :label="`${member.first_name} ${member.last_name}`"
-            draggable="true"
-            selectable
-            :aria-pressed="selectMode && selectedTags.includes(member.id) ? 'true' : 'false'"
-            @dragstart="onDragStart($event, member.id)"
-            @click="selectTag(member.id)"
-          />
-        </template>
-      </div>
+      <template v-if="canManage">
+        <DsfrTag
+          v-for="member in groupMembersSorted"
+          :key="member.id"
+          :label="`${member.first_name} ${member.last_name}`"
+          draggable="true"
+          selectable
+          :aria-pressed="selectMode && selectedTags.includes(member.id) ? 'true' : 'false'"
+          @dragstart="onDragStart($event, member.id)"
+          @click="selectTag(member.id)"
+        />
+      </template>
+    </div>
 
-      <!-- Zone de dépôt stylée DSFR -->
+    <!-- Zone de dépôt stylée DSFR -->
+    <div
+      class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+    >
       <div
-        class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+        v-if="canManage"
+        class="fr-mb-2w new-group group"
+      >
+        <form
+          class="flex flex-row gap-2"
+          @submit.prevent="createTeam"
+        >
+          <div>
+            <DsfrInput
+              v-model="newGroupName"
+              placeholder="Nom de l'équipe"
+              label="Créer une nouvelle équipe"
+              label-visible
+            />
+          </div>
+          <DsfrButton
+            class="self-start fr-mt-3w"
+            title="Créer le groupe"
+            :disabled="!newGroupNameValidation.success"
+          >
+            +
+          </DsfrButton>
+        </form>
+        <span
+          v-if="!newGroupNameValidation.success && newGroupName"
+          class="fr-text--xs fr-error-text"
+        >{{ ERROR_MESSAGES[newGroupNameValidation.error.issues[0]?.message as ErrorMessageKey].fr }}</span>
+      </div>
+      <div
+        v-for="(team) in sortedTeams"
+        :key="team.id"
+        class="fr-mb-2w group flex flex-col relative gap-4"
+        :class="{ 'fr-upload--dragover': currentDragged === team.name }"
+        @dragover.prevent="onDragOver(team.name)"
+        @dragleave="onDragLeave(team.name)"
+        @drop="onDrop($event, team.name)"
       >
         <div
-          v-if="canManage"
-          class="fr-mb-2w new-group group"
+          v-if="teamStatus[team.name] === 'pendingDelete'"
+          class="fr-mb-2w flex flex-col justify-center items-center gap-2 w-full h-full absolute bg-white/75 top-0 left-0 p-4 rounded-lg shadow-lg z-10"
         >
-          <form
-            class="flex flex-row gap-2"
-            @submit.prevent="createTeam"
-          >
-            <div>
-              <DsfrInput
-                v-model="newGroupName"
-                placeholder="Nom de l'équipe"
-                label="Créer une nouvelle équipe"
-                label-visible
-              />
-            </div>
+          <div class="fr-mb-0 text-wrap text-red-600 font-bold">
+            Êtes-vous sûr de vouloir supprimer cette équipe ?
+          </div>
+          <div class="flex flex-row gap-2">
             <DsfrButton
-              class="self-start fr-mt-3w"
-              title="Créer le groupe"
-              :disabled="!newGroupNameValidation.success"
+              secondary
+              title="Annuler la suppression"
+              @click="() => { teamStatus[team.name] = 'idle' }"
             >
-              +
+              Annuler
             </DsfrButton>
-          </form>
-          <span
-            v-if="!newGroupNameValidation.success && newGroupName"
-            class="fr-text--xs fr-error-text"
-          >{{ ERROR_MESSAGES[newGroupNameValidation.error.issues[0]?.message as ErrorMessageKey].fr }}</span>
+            <DsfrButton
+              class="bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700"
+              title="Confirmer la suppression"
+              @click="() => deleteTeam(team.name, true)"
+            >
+              Confirmer
+            </DsfrButton>
+          </div>
         </div>
         <div
-          v-for="(team) in sortedTeams"
-          :key="team.id"
-          class="fr-mb-2w group flex flex-col relative gap-4"
-          :class="{ 'fr-upload--dragover': currentDragged === team.name }"
-          @dragover.prevent="onDragOver(team.name)"
-          @dragleave="onDragLeave(team.name)"
-          @drop="onDrop($event, team.name)"
+          class="w-full flex flex-col h-full gap-4"
+          :class="{ 'blur-sm': ['pendingDelete'].includes(teamStatus[team.name] ?? 'idle') }"
         >
           <div
-            v-if="teamStatus[team.name] === 'pendingDelete'"
-            class="fr-mb-2w flex flex-col justify-center items-center gap-2 w-full h-full absolute bg-white/75 top-0 left-0 p-4 rounded-lg shadow-lg z-10"
+            class="flex flex-wrap justify-between align-start w-full"
           >
-            <div class="fr-mb-0 text-wrap text-red-600 font-bold">
-              Êtes-vous sûr de vouloir supprimer cette équipe ?
+            <div class="fr-mb-0 text-wrap fr-text--lg font-bold">
+              {{ team.name }}
             </div>
-            <div class="flex flex-row gap-2">
-              <DsfrButton
-                secondary
-                title="Annuler la suppression"
-                @click="() => { teamStatus[team.name] = 'idle' }"
-              >
-                Annuler
-              </DsfrButton>
-              <DsfrButton
-                class="bg-red-600 border-red-600 hover:bg-red-700 hover:border-red-700"
-                title="Confirmer la suppression"
-                @click="() => deleteTeam(team.name, true)"
-              >
-                Confirmer
-              </DsfrButton>
-            </div>
+            <DsfrTag
+              v-if="canManage"
+              icon-only
+              selectable
+              icon="ri-close-line"
+              @click.capture="() => deleteTeam(team.name, false)"
+            />
           </div>
-          <div
-            class="w-full flex flex-col h-full gap-4"
-            :class="{ 'blur-sm': ['pendingDelete'].includes(teamStatus[team.name] ?? 'idle') }"
-          >
+          <div class="grow">
+            <label
+              v-if="!team.members.length"
+              class="fr-label text-sm italic"
+            >{{ emptyGroupMessage }}</label>
             <div
-              class="flex flex-wrap justify-between align-start w-full"
+              v-else
+              class="fr-upload__msg"
             >
-              <div class="fr-mb-0 text-wrap fr-text--lg font-bold">
-                {{ team.name }}
-              </div>
-              <DsfrTag
-                v-if="canManage"
-                icon-only
-                selectable
-                icon="ri-close-line"
-                @click.capture="() => deleteTeam(team.name, false)"
-              />
-            </div>
-            <div class="grow">
-              <label
-                v-if="!team.members.length"
-                class="fr-label text-sm italic"
-              >Déposez ici de nouveaux membres</label>
-              <div
-                v-else
-                class="fr-upload__msg"
-              >
-                <div class="flex flex-row  flex-wrap gap-4">
-                  <DsfrTag
-                    v-for="user in team.members.toSorted()"
-                    :key="user.id"
-                    :icon="canManage ? 'ri-close-line' : undefined"
-                    :selectable="canManage"
-                    :label="`${user.first_name} ${user.last_name}`"
-                    :class="usersClass[user.id]?.[team.name]"
-                    @click="() => removeUserFromTeam(user.id, team.name)"
-                  />
-                </div>
-              </div>
-            </div>
-            <div class="flex flex-row justify-between w-full group-footer">
-              <label
-                class="fr-label text-sm italic align-end opacity-75"
-              >
-                {{ rootGroupPrefix }}{{ group.name }}/{{ team.name }}
-              </label>
-
-              <div
-                v-if="selectMode && selectedTags.length"
-              >
-                <DsfrButton
-                  class=""
-                  secondary
-                  size="sm"
-                  label="Ajouter ici"
-                  @click="() => addSelectedTags(team.name)"
+              <div class="flex flex-row  flex-wrap gap-4">
+                <DsfrTag
+                  v-for="user in team.members.toSorted()"
+                  :key="user.id"
+                  :icon="canManage ? 'ri-close-line' : undefined"
+                  :selectable="canManage"
+                  :label="`${user.first_name} ${user.last_name}`"
+                  :class="usersClass[user.id]?.[team.name]"
+                  @click="() => removeUserFromTeam(user.id, team.name)"
                 />
               </div>
+            </div>
+          </div>
+          <div class="flex flex-row justify-between w-full group-footer">
+            <label
+              class="fr-label text-sm italic align-end opacity-75"
+            >
+              {{ rootGroupPrefix }}{{ group.name }}/{{ team.name }}
+            </label>
+
+            <div
+              v-if="selectMode && selectedTags.length"
+            >
+              <DsfrButton
+                class=""
+                secondary
+                size="sm"
+                label="Ajouter ici"
+                @click="() => addSelectedTags(team.name)"
+              />
             </div>
           </div>
         </div>
       </div>
     </div>
-  </DsfrAccordion>
+  </div>
 </template>
 
 <style deep>

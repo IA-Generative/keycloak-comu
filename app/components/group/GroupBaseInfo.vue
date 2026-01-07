@@ -3,41 +3,35 @@ import { DsfrAlert, DsfrButton, DsfrInput, DsfrModal } from '@gouvminint/vue-dsf
 import fetcher from '~/composables/useApi.js'
 import LinkForm from './LinkForm.vue'
 
-const props = defineProps<{
-  group: GroupDtoType
-}>()
+const groupStore = useGroupStore()
+const group = computed(() => groupStore.group as GroupDtoType)
 
-const emit = defineEmits<{
-  refresh: []
-}>()
 const { $keycloak } = useNuxtApp()
 
 const userId = computed(() => $keycloak?.tokenParsed?.sub as string)
 
-const mylevel = computed(() => props.group.members.find(m => m.id === userId.value)?.membershipLevel || 0)
-
-const descriptionRef = ref(props.group.description)
+const mylevel = computed(() => group.value.members.find(m => m.id === userId.value)?.membershipLevel || 0)
+const descriptionRef = ref(group.value.description)
 
 const isEditingDescription = ref(false)
 function editDescription() {
   fetcher('/api/v1/groups/edit', {
     method: 'post',
-    body: { groupId: props.group.id, description: descriptionRef.value.trim() },
+    body: { groupId: group.value.id, description: descriptionRef.value.trim() },
   }).finally(() => {
     isEditingDescription.value = false
-    emit('refresh')
   })
 }
 const isTosModalOpen = ref(false)
 const isEditingTos = ref(false)
-const tos = ref(props.group.tos || '')
+const tos = ref(group.value.tos || '')
 async function saveTos() {
   await fetcher('/api/v1/groups/update-tos', {
     method: 'post',
-    body: { groupId: props.group.id, tos: tos.value.trim() },
+    body: { groupId: group.value.id, tos: tos.value.trim() },
   }).finally(() => {
     isEditingTos.value = false
-    emit('refresh')
+    groupStore.fetchGroup(group.value.id)
   })
 }
 const tosInput = ref<InstanceType<typeof DsfrInput> | null>(null)
@@ -47,10 +41,10 @@ const isEditingLinks = ref(false)
 async function saveLinks(links: string[]) {
   await fetcher('/api/v1/groups/update-links', {
     method: 'post',
-    body: { groupId: props.group.id, links },
+    body: { groupId: group.value.id, links },
   }).finally(() => {
     isEditingLinks.value = false
-    emit('refresh')
+    groupStore.fetchGroup(group.value.id)
   })
 }
 </script>
@@ -131,7 +125,7 @@ async function saveLinks(links: string[]) {
           icon="ri-edit-line"
           label="Modifier les conditions d'utilisation"
           data-fr-opened="tos-edit-modal"
-          @click="isEditingTos = true; $emit('refresh'); $nextTick(() => { tosInput?.focus() })"
+          @click="isEditingTos = true; groupStore.refreshGroup(); $nextTick(() => { tosInput?.focus() })"
         />
         <template #footer>
           <div class="flex flex-col gap-6">
@@ -164,11 +158,8 @@ async function saveLinks(links: string[]) {
   </div>
   <div>
     <LinkForm
-      :group="group"
-      :can-edit="mylevel >= 20"
       @save-links="saveLinks"
     />
-
   </div>
 </template>
 
