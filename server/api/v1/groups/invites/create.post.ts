@@ -4,7 +4,6 @@ import { guard, LEVEL } from '../../../../guards/group.js'
 import createResponseError from '~~/server/utils/error.js'
 import { sendMail } from '~~/server/composables/mailer/client.js'
 import { generateAutoJoinNotificationEmail, generateGroupInviteEmail } from '~~/server/composables/mailer/body-builder.js'
-import type { UserRow } from '~~/server/repository/types.js'
 import { safeText } from '~~/server/utils/input-cleaner.js'
 
 export const GroupInviteCreateDtoSchema = z.object({
@@ -19,7 +18,6 @@ export default defineEventHandler(async (event) => {
   const requestorId = event.context.user.sub
   // Use requestorId to verify permissions to invite to group
   const group = await repo.getGroupDetails(body.groupId)
-  const requestor = await repo.getUserById(requestorId) as UserRow
   const invitee = await repo.getUserByEmail(body.email)
   if (!invitee) {
     throw createResponseError({ statusCode: 404, data: 'USER_NOT_FOUND' })
@@ -44,7 +42,7 @@ export default defineEventHandler(async (event) => {
     sendMail({
       to: body.email,
       subject: `Vous avez été ajouté au groupe ${group.name}`,
-      html: generateAutoJoinNotificationEmail(group, requestor),
+      html: generateAutoJoinNotificationEmail(group, invitee),
     })
     return 'autoJoin'
   }
@@ -53,6 +51,6 @@ export default defineEventHandler(async (event) => {
   return sendMail({
     to: body.email,
     subject: `Vous avez été invité à rejoindre le groupe ${group.name}`,
-    html: generateGroupInviteEmail(group, requestor),
+    html: generateGroupInviteEmail(group, invitee),
   })
 })

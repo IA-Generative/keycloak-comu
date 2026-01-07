@@ -14,28 +14,25 @@ watch($route, () => {
 
 const menuItems = ref([{
   id: '11',
-  to: `/g/${group.value.id}/base`,
+  to: `base`,
   active: computed(() => $route.fullPath.endsWith('base')),
   text: 'Informations',
   requiredLevel: 0,
 }, {
   id: '12',
-  to: `/g/${group.value.id}/users`,
+  to: `users`,
   active: computed(() => $route.fullPath.endsWith('users')),
   text: 'Utilisateurs',
   requiredLevel: 0,
-  attr: {
-    a: 'a',
-  },
 }, {
   id: '13',
-  to: `/g/${group.value.id}/teams`,
+  to: `teams`,
   active: computed(() => $route.fullPath.endsWith('teams')),
   text: 'Équipes',
   requiredLevel: 10,
 }, {
   id: '14',
-  to: `/g/${group.value.id}/settings`,
+  to: `settings`,
   active: computed(() => $route.fullPath.endsWith('settings')),
   text: 'Paramètres',
   requiredLevel: 20,

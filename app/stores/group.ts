@@ -22,16 +22,6 @@ export const useGroupStore = defineStore('group', () => {
     },
   )
 
-  const route = useRoute()
-
-  watch(route, async (newRoute, oldRoute) => {
-    console.log(newRoute)
-
-    if (newRoute.params.id !== oldRoute.params.id) {
-      group.value = await fetchGroup(newRoute.params.id as string)
-    }
-  })
-
   async function refreshGroup() {
     if (group.value) {
       group.value = await fetchGroup(group.value.id)
