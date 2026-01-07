@@ -6,6 +6,8 @@ import type { Attributes } from './utils.js'
 import { mergeUniqueGroupAttributes, realmName } from './utils.js'
 import type { TeamsDtoType } from '~~/shared/types/team.js'
 
+export const SETTING_PREFIX = 'keycloak-comu.settings.'
+export const AUTO_ACCEPT_REQUESTS = 'autoAcceptRequests'
 export const INVITE_ATTRIBUTE = 'invite'
 export const REQUEST_ATTRIBUTE = 'request'
 export const OWNER_ATTRIBUTE = 'owner'
@@ -26,6 +28,7 @@ export interface GroupDetails extends GroupSearchResult {
   teams: TeamsDtoType
   description: string
   tos: string
+  settings: Record<string, string>
 }
 
 interface SearchParams {
@@ -137,6 +140,7 @@ export async function createGroup(name: string, parentId?: string): Promise<Grou
       extras: {},
       tos: '',
       link: [],
+      settings: {},
     },
   }
 }
@@ -279,6 +283,7 @@ export async function getGroupDetails(groupId: string): Promise<GroupDetails | n
     requests,
     teams,
     tos: mergedAttributes.tos,
+    settings: mergedAttributes.settings,
   }
 }
 
@@ -461,4 +466,11 @@ export async function searchUsers(options: { query: string, excludeGroupId?: str
     }
   }
   return (await db.searchUsersFn(options.query, 10, 0, excludedMembers)).rows
+}
+
+export async function setGroupSettings(groupId: string, settings: Partial<GroupSettings>) {
+  for (const [key, value] of Object.entries(settings)) {
+    console.log(key, value)
+    await setAttribute(groupId, `${SETTING_PREFIX}${key}` as keyof GroupSettings, [value === null ? '' : value.toString()])
+  }
 }

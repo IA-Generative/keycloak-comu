@@ -2,6 +2,7 @@ import { z } from 'zod'
 import UserDtoSchema from './UserSchema.js'
 import MembershipLevel from './MembershipLevel.js'
 import TeamDtoSchema from './TeamSchema.js'
+import GroupSettingsDtoSchema from './GroupSettingsSchema.js'
 
 const GroupDtoSchema = z.object({
   id: z.string(),
@@ -13,6 +14,7 @@ const GroupDtoSchema = z.object({
   description: z.string(),
   tos: z.string(),
   links: z.array(z.string()),
+  settings: GroupSettingsDtoSchema,
 })
 
 export default GroupDtoSchema

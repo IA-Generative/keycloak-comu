@@ -14,17 +14,13 @@ const props = defineProps<{
   group: GroupDtoType
 }>()
 
+const { $keycloak } = useNuxtApp()
+const userId = computed(() => $keycloak?.tokenParsed?.sub as string)
+
+const itsMe = computed(() => userId.value === props.member.id)
 const groupStore = useGroupStore()
 const dialogOpened = ref(false)
 
-async function kickMember(userId: string) {
-  await fetcher('/api/v1/groups/membership/kick', {
-    method: 'post',
-    body: { groupId: props.group.id, userId },
-  })
-  await groupStore.refreshGroup()
-  dialogOpened.value = false
-}
 function openDialog() {
   dialogOpened.value = true
 }
@@ -84,11 +80,18 @@ const options = computed(() => [
           @update:model-value="(v: number | string) => changeMemberLevel(member.id, Number(v))"
         />
         <DsfrButton
-          v-if="$keycloak?.tokenParsed?.sub !== member.id"
-          class="fr-mt-8w self-end"
+          v-if="itsMe"
+          class="fr-mt-4w self-end"
+          type="button"
+          label="Quitter le groupe"
+          @click="groupStore.leaveGroup()"
+        />
+        <DsfrButton
+          v-else
+          class="fr-mt-4w self-end"
           type="button"
           label="Retirer du groupe"
-          @click="kickMember(member.id); dialogOpened = false"
+          @click="groupStore.kickMember(member.id, group.id); dialogOpened = false"
         />
       </template>
     </DsfrModal>

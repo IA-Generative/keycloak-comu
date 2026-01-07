@@ -7,14 +7,12 @@ const group = computed(() => groupStore.group)
 
 const { $router } = useNuxtApp()
 
-const amIOwner = computed(() => {
-  return groupStore.mylevel >= 30
-})
-const canLeaveGroup = computed(() => {
-  if (!amIOwner.value) return true
-  if (group.value && group.value.members.filter(member => member.membershipLevel === 30).length > 1) return true
-  return false
-})
+const amIOwner = computed(() => groupStore.mylevel >= 30)
+// const canLeaveGroup = computed(() => {
+//   if (!amIOwner.value) return true
+//   if (group.value && group.value.members.filter(member => member.membershipLevel === 30).length > 1) return true
+//   return false
+// })
 
 type Action = 'idle' | 'pendingDelete' | 'deleting'
 const actionInProgress = ref<Action>('idle')
@@ -30,15 +28,6 @@ async function deleteGroup(confirm: boolean) {
   })
   $router.push('/')
   return data
-}
-
-async function leaveGroup() {
-  const { $router } = useNuxtApp()
-  await fetcher('/api/v1/groups/membership/leave', {
-    method: 'post',
-    body: { groupId: group.value?.id },
-  })
-  $router.push('/')
 }
 </script>
 
@@ -82,21 +71,6 @@ async function leaveGroup() {
       class="flex flex-col gap-12 items-start fr-mt-4w"
       :class="{ 'blur-sm': actionInProgress !== 'idle' }"
     >
-      <div class="flex flex-row justify-between gap-4 w-full">
-        <div>
-          <h6>Quitter le groupe</h6>
-          <p class="fr-text--xs">
-            Vous ne pourrez plus accéder aux ressources du groupe
-          </p>
-        </div>
-        <DsfrButton
-          :disabled="!canLeaveGroup"
-          :title="!canLeaveGroup ? 'Vous ne pouvez pas quitter le groupe car vous êtes le seul propriétaire.' : ''"
-          secondary
-          label="Quitter"
-          @click="leaveGroup"
-        />
-      </div>
       <div
         v-if="amIOwner"
         class="flex flex-row justify-between gap-4 w-full"

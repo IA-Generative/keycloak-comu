@@ -349,6 +349,14 @@ const emptyGroupMessage = computed(() => {
         </div>
       </div>
     </div>
+    <div
+      v-if="!canManage && !group.teams.length"
+      class="text-center w-full mt-5"
+    >
+      <p>
+        Ce groupe ne possède aucune équipe pour le moment
+      </p>
+    </div>
   </div>
 </template>
 

@@ -1,11 +1,12 @@
 <script setup lang="ts">
 import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
-import { DsfrDataTable } from '@gouvminint/vue-dsfr'
+import { DsfrButton, DsfrDataTable, DsfrModal } from '@gouvminint/vue-dsfr'
 import type { DsfrDataTableHeaderCell } from '@gouvminint/vue-dsfr'
 import ActionMember from './ActionMember.vue'
 
 const groupStore = useGroupStore()
 const group = computed(() => groupStore.group as GroupDtoType)
+const pendingLeave = ref(false)
 
 const { $keycloak } = useNuxtApp()
 
@@ -19,7 +20,18 @@ const amIOwner = computed(() => {
 
 const membersRows = computed(() => {
   return group.value.members
-    .toSorted((a, b) => (a.membershipLevel === b.membershipLevel ? 0 : a.membershipLevel > b.membershipLevel ? -1 : 1))
+    .toSorted((a, b) => {
+      if (a.membershipLevel === b.membershipLevel) {
+        if (userId.value === a.id)
+          return -1
+        if (userId.value === b.id)
+          return 1
+        return 0
+      }
+      if (a.membershipLevel > b.membershipLevel)
+        return -1
+      return 1
+    })
     .map((member) => {
       return {
         identifier: member.id === $keycloak?.tokenParsed?.sub ? ' (Vous)' : '',
@@ -31,7 +43,7 @@ const membersRows = computed(() => {
         email: member.email,
         actions: (member.id === $keycloak?.tokenParsed?.sub || amIOwner.value || (mylevel.value >= 20 && mylevel.value > member.membershipLevel)
           ? {
-              member: { ...member },
+              member,
               group: group.value,
               mylevel: mylevel.value,
               onRefresh: () => groupStore.refreshGroup(),
@@ -60,8 +72,16 @@ const headers: DsfrDataTableHeaderCell[] = [
     >
       <template #cell="{ colKey, cell }">
         <template v-if="colKey === 'actions'">
+          <DsfrButton
+            v-if="cell.member?.id === userId && mylevel === 10"
+            secondary
+            size="small"
+            @click="pendingLeave = true"
+          >
+            Quitter
+          </DsfrButton>
           <ActionMember
-            v-if="cell"
+            v-else-if="cell"
             v-bind="cell"
           />
         </template>
@@ -79,5 +99,30 @@ const headers: DsfrDataTableHeaderCell[] = [
         </template>
       </template>
     </DsfrDataTable>
+    <DsfrModal
+      v-if="pendingLeave"
+      v-model:opened="pendingLeave"
+      title=""
+      @close="pendingLeave = false"
+    >
+      <template #default>
+        <p>Êtes-vous sûr de vouloir quitter ce groupe ?</p>
+        <div
+          class="flex gap-4"
+        >
+          <DsfrButton
+            type="button"
+            label="Quitter"
+            @click="groupStore.leaveGroup(); pendingLeave = false"
+          />
+          <DsfrButton
+            type="button"
+            secondary
+            label="Annuler"
+            @click="pendingLeave = false"
+          />
+        </div>
+      </template>
+    </DsfrModal>
   </div>
 </template>
