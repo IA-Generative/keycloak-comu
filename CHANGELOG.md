@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.10.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.12...v0.10.0) (2026-01-07)
+
+
+### Features
+
+* add user settings and profile components with feature flag integration ([c9e19f7](https://github.com/IA-Generative/keycloak-comu/commit/c9e19f78b73531f49b4177ede63fddf71f7a7c56))
+* implement group settings management ([98e26f7](https://github.com/IA-Generative/keycloak-comu/commit/98e26f7893d7b31cbb15bfb46bb1788695900160))
+
 ## [0.9.12](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.11...v0.9.12) (2025-12-05)
 
 
