@@ -187,12 +187,116 @@ keycloak-comu/
 
 ### Variables d'environnement
 
-Les principales variables d'environnement à configurer :
+L'application utilise les variables d'environnement suivantes pour sa configuration :
+
+#### Configuration générale
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NODE_ENV` | - | Environnement d'exécution (`development` ou `production`) |
+| `NUXT_PUBLIC_API_PORT` | `8080` | Port d'écoute du serveur de développement |
+
+#### Configuration Keycloak (publique)
+
+Ces variables sont accessibles côté client et serveur :
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_PUBLIC_KEYCLOAK_URL` | - | URL publique de l'instance Keycloak |
+| `NUXT_PUBLIC_KEYCLOAK_REALM` | - | Nom du realm Keycloak |
+| `NUXT_PUBLIC_KEYCLOAK_CLIENT_ID` | - | ID du client Keycloak |
+| `NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH` | `/` | Chemin du groupe racine Keycloak |
+
+#### Configuration Keycloak Admin (serveur)
+
+Ces variables sont uniquement accessibles côté serveur :
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_KEYCLOAK_ADMIN_USERNAME` | - | Nom d'utilisateur administrateur Keycloak |
+| `NUXT_KEYCLOAK_ADMIN_PASSWORD` | - | Mot de passe administrateur Keycloak |
+| `NUXT_KEYCLOAK_ADMIN_REALM` | `NUXT_PUBLIC_KEYCLOAK_REALM` | Realm de l'administrateur (utilise le realm public par défaut) |
+| `NUXT_KEYCLOAK_INTERNAL_URL` | `NUXT_PUBLIC_KEYCLOAK_URL` | URL interne de Keycloak (pour communications serveur à serveur) |
+
+#### Configuration Base URL
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_BASE_URL` | `http://localhost:8080` | URL de base de l'application (utilisée pour les liens dans les emails) |
+
+#### Configuration SMTP
+
+Variables pour l'envoi d'emails :
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_SMTP_ENABLE` | `false` | Active ou désactive l'envoi d'emails |
+| `NUXT_SMTP_HOST` | `mailhog` | Hôte du serveur SMTP |
+| `NUXT_SMTP_PORT` | `1025` | Port du serveur SMTP |
+| `NUXT_SMTP_FROM` | `<noreply@example.com>` | Adresse email d'expédition |
+| `NUXT_SMTP_AUTH_TYPE` | `LOGIN` | Type d'authentification SMTP |
+| `NUXT_SMTP_USER` | - | Nom d'utilisateur SMTP |
+| `NUXT_SMTP_PASS` | - | Mot de passe SMTP |
+| `NUXT_SMTP_SECURE` | `false` | Active TLS/SSL (true/false) |
+| `NUXT_SMTP_IGNORE_TLS` | `false` | Ignore les erreurs TLS (true/false) |
+
+#### Configuration Base de données
+
+Variables pour la connexion à PostgreSQL :
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_DATABASE_HOST` | `localhost` | Hôte de la base de données |
+| `NUXT_DATABASE_PORT` | `5432` | Port de la base de données |
+| `NUXT_DATABASE_NAME` | `keycloak` | Nom de la base de données |
+| `NUXT_DATABASE_USER` | `keycloak` | Utilisateur de la base de données |
+| `NUXT_DATABASE_PASSWORD` | `password` | Mot de passe de la base de données |
+
+#### Configuration Instance
+
+| Variable | Défaut | Description |
+|----------|--------|-------------|
+| `NUXT_INSTANCE_ID` | `HOSTNAME` ou `unknown` | Identifiant unique de l'instance (pour le monitoring) |
+
+### Exemple de fichier .env
 
 ```bash
-NODE_ENV=development|production
-NITRO_HOST=0.0.0.0
-NITRO_PORT=8080
+# Environnement
+NODE_ENV=development
+
+# Application
+NUXT_BASE_URL=http://localhost:8080
+NUXT_INSTANCE_ID=dev-instance-1
+
+# Keycloak (public)
+NUXT_PUBLIC_KEYCLOAK_URL=http://localhost:8180
+NUXT_PUBLIC_KEYCLOAK_REALM=my-realm
+NUXT_PUBLIC_KEYCLOAK_CLIENT_ID=keycloak-comu
+NUXT_PUBLIC_KEYCLOAK_ROOT_GROUP_PATH=/
+
+# Keycloak (admin)
+NUXT_KEYCLOAK_ADMIN_USERNAME=admin
+NUXT_KEYCLOAK_ADMIN_PASSWORD=admin
+NUXT_KEYCLOAK_ADMIN_REALM=master
+NUXT_KEYCLOAK_INTERNAL_URL=http://keycloak:8080
+
+# Base de données
+NUXT_DATABASE_HOST=localhost
+NUXT_DATABASE_PORT=5432
+NUXT_DATABASE_NAME=keycloak
+NUXT_DATABASE_USER=keycloak
+NUXT_DATABASE_PASSWORD=password
+
+# SMTP
+NUXT_SMTP_ENABLE=true
+NUXT_SMTP_HOST=smtp.example.com
+NUXT_SMTP_PORT=587
+NUXT_SMTP_FROM=noreply@example.com
+NUXT_SMTP_AUTH_TYPE=LOGIN
+NUXT_SMTP_USER=smtp-user
+NUXT_SMTP_PASS=smtp-password
+NUXT_SMTP_SECURE=true
+NUXT_SMTP_IGNORE_TLS=false
 ```
 
 ### Configuration Keycloak
