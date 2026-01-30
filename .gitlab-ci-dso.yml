@@ -19,7 +19,7 @@ read_secret:
   - .vault:read_secret
 
 generate_var:
-  image: ghcr.io/this-is-tobi/tools/mc:latest
+  image: ghcr.io/this-is-tobi/tools/curl:latest
   stage: read-secret
   script:
   - VERSION=$(jq -r .version < package.json)
