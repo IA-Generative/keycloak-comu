@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.2](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.1...v0.11.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* correct conditional check for NUXT_APP_TITLE environment variable ([7949914](https://github.com/IA-Generative/keycloak-comu/commit/7949914712e5b3e25317fa4d1f8bb1feaa9a0a02))
+* update appTitle to use NUXT_PUBLIC_APP_TITLE environment variable ([0a0d82d](https://github.com/IA-Generative/keycloak-comu/commit/0a0d82dde9c7bf8d580c7453ea28f3e53ac04e89))
+
 ## [0.11.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.0...v0.11.1) (2026-02-06)
 
 
