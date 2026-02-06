@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.11.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.10.0...v0.11.0) (2026-02-06)
+
+
+### Features
+
+* make app title configurable via environment variable ([0eb15d3](https://github.com/IA-Generative/keycloak-comu/commit/0eb15d3183961351970b94605e40b1dd2677c4fe))
+
+
+### Bug Fixes
+
+* update image for generate_var job to use curl tool ([53fc190](https://github.com/IA-Generative/keycloak-comu/commit/53fc1901b3f9b4a3cd3b49bc201f6d8155780786))
+
 ## [0.10.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.9.12...v0.10.0) (2026-01-07)
 
 
