@@ -18,7 +18,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     isProd: !(process.env.NODE_ENV !== 'production'),
     public: {
-      appTitle: process.env.NUXT_APP_TITLE || 'Keycloak Comu',
+      appTitle: process.env.NUXT_PUBLIC_APP_TITLE || 'Keycloak Comu',
       version: pkg.version,
       keycloak: {
         url: process.env.NUXT_PUBLIC_KEYCLOAK_URL,
