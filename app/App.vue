@@ -92,7 +92,7 @@ const afterMandatoryLinks = computed(() => {
     <DsfrHeader
       home-to="/"
       :quick-links="quickLinks"
-      logo-text="Keycloak Comu"
+      :logo-text="config.public.appTitle"
       class="grow-0"
     />
 
