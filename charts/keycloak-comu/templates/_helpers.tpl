@@ -74,10 +74,14 @@ Create NODE_ENV var
 {{/*
 Create BASE_URL var
 */}}
-{{- define "keycloak-comu.baseUrl" -}}
-{{- if .Values.baseUrl -}}
+{{- define "keycloak-comu.app" -}}
+{{- if .Values.app.baseUrl -}}
 - name: NUXT_BASE_URL
-  value: {{ .Values.baseUrl }}
+  value: {{ .Values.app.baseUrl }}
+{{- end }}
+{{- if .Values.app.title -}}
+- name: NUXT_APP_TITLE
+  value: {{ .Values.app.title }}
 {{- end }}
 {{- end }}
 

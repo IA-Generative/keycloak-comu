@@ -128,7 +128,9 @@ affinity: {}
 # Application specific settings
 environment: production
 
-baseUrl: ""
+app:
+  baseUrl: ""
+  title: ""
 
 instanceId: ""
 
