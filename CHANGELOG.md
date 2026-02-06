@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.11.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.0...v0.11.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* update application environment variables to include baseUrl and title ([9714465](https://github.com/IA-Generative/keycloak-comu/commit/9714465035badacf98078253b81fea6bebfca366))
+
 ## [0.11.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.10.0...v0.11.0) (2026-02-06)
 
 
