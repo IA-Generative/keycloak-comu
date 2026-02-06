@@ -79,7 +79,7 @@ Create BASE_URL var
 - name: NUXT_BASE_URL
   value: {{ .Values.app.baseUrl }}
 {{- end }}
-{{- if .Values.app.title -}}
+{{- if .Values.app.title }}
 - name: NUXT_APP_TITLE
   value: {{ .Values.app.title }}
 {{- end }}
