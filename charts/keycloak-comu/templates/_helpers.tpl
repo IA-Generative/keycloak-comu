@@ -80,7 +80,7 @@ Create BASE_URL var
   value: {{ .Values.app.baseUrl }}
 {{- end }}
 {{- if .Values.app.title }}
-- name: NUXT_APP_TITLE
+- name: NUXT_PUBLIC_APP_TITLE
   value: {{ .Values.app.title }}
 {{- end }}
 {{- end }}
