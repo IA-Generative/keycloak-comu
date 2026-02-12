@@ -1,6 +1,7 @@
 <script setup lang="ts">
+const config = useRuntimeConfig()
 useHead({
-  title: `Keycloak Comu - Accueil`,
+  title: `${config.public.appTitle} - Accueil`,
 })
 </script>
 

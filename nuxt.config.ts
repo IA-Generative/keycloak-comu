@@ -86,7 +86,7 @@ export default defineNuxtConfig({
   },
   app: {
     head: {
-      title: process.env.NUXT_APP_TITLE || 'Keycloak Comu',
+      title: process.env.NUXT_PUBLIC_APP_TITLE || 'Keycloak Comu',
       meta: [
         { name: 'description', content: 'Keycloak Comu - Accueil' },
       ],

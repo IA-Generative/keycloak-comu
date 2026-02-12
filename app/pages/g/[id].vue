@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import SideMenu from '~/components/group/SideMenu.vue'
 
+const config = useRuntimeConfig()
 const groupStore = useGroupStore()
 const id = useRoute().params.id
 
@@ -10,7 +11,7 @@ async function fetchData() {
   const data = await groupStore.fetchGroup(id as string)
   group.value = data
   useHead({
-    title: `Keycloak Comu - Gestion du groupe ${data?.name}`,
+    title: `${config.public.appTitle} - Gestion du groupe ${data?.name}`,
   })
 }
 

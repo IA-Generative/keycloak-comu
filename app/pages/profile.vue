@@ -3,8 +3,9 @@ import UserInfos from '~/components/profile/UserInfos.vue'
 import UserSettings from '~/components/profile/UserSettings.vue'
 import { featureFlags } from '#imports'
 
+const config = useRuntimeConfig()
 useHead({
-  title: `Keycloak Comu - Profil`,
+  title: `${config.public.appTitle} - Profil`,
 })
 
 const displayUserSettings = computed(() => {
