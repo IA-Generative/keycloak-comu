@@ -33,7 +33,7 @@ async function deleteGroup(confirm: boolean) {
 
 <template>
   <DsfrCallout
-    v-if="groupStore.mylevel > 0"
+    v-if="groupStore.mylevel > 20"
     title="Zone de danger"
     title-tag="h3"
     class="relative"
