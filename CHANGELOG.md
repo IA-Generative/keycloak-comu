@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.3](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.2...v0.11.3) (2026-02-12)
+
+
+### Bug Fixes
+
+* update page titles to use appTitle from runtime config ([5040f89](https://github.com/IA-Generative/keycloak-comu/commit/5040f89ca9bebb31739b680616f03c3594ebe6ca))
+* update visibility condition for DangerZone component ([e35212f](https://github.com/IA-Generative/keycloak-comu/commit/e35212fe5bd9d99cfb43df8e2dab266936621e7c))
+
 ## [0.11.2](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.1...v0.11.2) (2026-02-06)
 
 
