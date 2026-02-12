@@ -10,7 +10,7 @@ export default defineEventHandler(async (event) => {
   if (!group) {
     throw createResponseError({ statusCode: 404, data: 'GROUP_NOT_FOUND' })
   }
-  guard({ requiredLevel: LEVEL.OWNER, group, requestorId })
+  guard({ requiredLevel: LEVEL.ADMIN, group, requestorId })
   if (typeof description !== 'undefined') {
     await repo.editGroup(groupId, description, group.name)
   }

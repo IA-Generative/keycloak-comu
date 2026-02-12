@@ -14,12 +14,13 @@ const mylevel = computed(() => group.value.members.find(m => m.id === userId.val
 const descriptionRef = ref(group.value.description)
 
 const isEditingDescription = ref(false)
-function editDescription() {
+async function editDescription() {
   fetcher('/api/v1/groups/edit', {
     method: 'post',
     body: { groupId: group.value.id, description: descriptionRef.value.trim() },
   }).finally(() => {
     isEditingDescription.value = false
+    groupStore.fetchGroup(group.value.id)
   })
 }
 const isTosModalOpen = ref(false)
@@ -56,10 +57,9 @@ async function saveLinks(links: string[]) {
         v-if="isEditingDescription"
         v-model="descriptionRef"
         label="Description du groupe"
-        :disabled="mylevel < 20"
         hint="Une description aide les autres utilisateurs à comprendre l'objectif du groupe."
         type="textarea"
-        :rows="3"
+        :rows="descriptionRef.split('\n').length + 1"
         is-textarea
         @blur="editDescription"
       />
@@ -74,7 +74,7 @@ async function saveLinks(links: string[]) {
         >Aucune description fournie.</span>
       </div>
       <DsfrButton
-        v-if="mylevel >= 30"
+        v-if="mylevel >= 20"
         tertiary
         class="fr-mt-2w"
         icon="ri-edit-line"
