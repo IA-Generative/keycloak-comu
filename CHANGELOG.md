@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.11.4](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.3...v0.11.4) (2026-02-13)
+
+
+### Bug Fixes
+
+* change required permission level for editing group description to ADMIN ([dd462ba](https://github.com/IA-Generative/keycloak-comu/commit/dd462ba63d730823b3cdb66b842ebd61fd829238))
+* update menu item active state logic to use currentPath computed property ([956baf4](https://github.com/IA-Generative/keycloak-comu/commit/956baf45fc8bdf5c633e97ec3a22d4b04fdbf85e))
+
 ## [0.11.3](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.2...v0.11.3) (2026-02-12)
 
 
