@@ -23,7 +23,7 @@ const menuItems = ref([{
   id: '12',
   to: `users`,
   active: computed(() => currentPath.value === 'users'),
-  text: 'Utilisateurs',
+  text: 'Membres',
   requiredLevel: 0,
 }, {
   id: '13',

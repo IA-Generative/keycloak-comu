@@ -27,6 +27,7 @@ function addLink() {
 
 function removeLink(idx: number) {
   if (links.value.length <= 1) {
+    links.value = ['']
     return
   }
   links.value.splice(idx, 1)
