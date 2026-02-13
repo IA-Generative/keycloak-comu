@@ -1,32 +1,14 @@
 <script setup lang="ts">
 import { DsfrAlert, DsfrButton, DsfrTile } from '@gouvminint/vue-dsfr'
-import fetcher from '~/composables/useApi.js'
 
-const isLoading = ref(true)
-const groups = ref<ListGroupDtoType>({ invited: [], joined: [], requested: [] })
-
-onBeforeMount(getGroups)
-
-async function getGroups() {
-  const data = await fetcher('/api/v1/groups/list', {
-    method: 'get',
-  })
-  groups.value = data
-  isLoading.value = false
-}
+const dashboardStore = useDashboardStore()
+const groups = computed(() => dashboardStore.groups)
+const isLoading = computed(() => dashboardStore.isLoading)
+onBeforeMount(dashboardStore.getGroups)
 </script>
 
 <template>
   <div class="fr-container fr-mt-4w">
-    <template v-if="groups.invited.length > 0">
-      <InviteAlert
-        v-for="group in groups.invited"
-        :key="group.id"
-        :group="group"
-        @refresh="getGroups"
-      />
-    </template>
-
     <GroupSearchTable />
 
     <div class="flex justify-between items-center mb-4 mt-8">
@@ -34,7 +16,7 @@ async function getGroups() {
       <div>
         <DsfrButton
           tertiary
-          @click="getGroups"
+          @click="dashboardStore.getGroups"
         >
           Actualiser
         </DsfrButton>

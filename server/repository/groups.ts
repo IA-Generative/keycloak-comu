@@ -92,7 +92,7 @@ async function getGroupAttributesAndMembers(groupId: string): Promise<{ attribut
 }
 
 // not exported cause no check on root group hierarchy
-async function searchGroupsByAttributes(name: string, value: string): Promise<GroupSearchResult[]> {
+async function searchGroupsByAttribute(name: string, value: string): Promise<GroupSearchResult[]> {
   const groups = await db.query(
     `SELECT g.id, g.name, g.description, ga.name AS attribute_name, ga.value AS attribute_value
      FROM keycloak_group g
@@ -101,6 +101,31 @@ async function searchGroupsByAttributes(name: string, value: string): Promise<Gr
     [name, value, await db.getRealmId()],
   )
   return groups.rows
+}
+
+// not exported cause no check on root group hierarchy
+interface GlobalRequest { groupId: string, groupName: string, userEmail: string, userFirstName: string, userLastName: string, userId: string }
+async function searchGlobalPendingRequests(userId: string): Promise<GlobalRequest[]> {
+  const requests = await db.query(
+    `SELECT g.id "groupId", g.name "groupName",
+      ue.email "userEmail", ue.first_name "userFirstName", ue.last_name "userLastName", ue.id as "userId"
+      FROM group_attribute ga
+          join keycloak_group g ON ga.group_id  = g.id
+          inner join user_entity ue  ON ga.value = ue.id
+      WHERE ga."name" = '${REQUEST_ATTRIBUTE}'
+        AND ga.group_id IN (
+          SELECT ga.group_id 
+          FROM group_attribute ga
+          join keycloak_group g ON ga.group_id  = g.id
+          WHERE g.realm_id  = $2
+            AND g.parent_group  = $1
+            AND ga."name" IN ('${ADMIN_ATTRIBUTE}', '${OWNER_ATTRIBUTE}')
+            AND ga.value = $3
+        );`,
+    [getRootGroup().id, await db.getRealmId(), userId],
+  )
+
+  return requests.rows
 }
 
 export async function getGroupByName(name: string): Promise<GroupSearchResult | null> {
@@ -220,7 +245,7 @@ async function getPendingRequestsForGroup(groupId: string): Promise<UserRow[]> {
   return users.rows
 }
 
-export async function listGroupsForUser(userId: string): Promise<{ invited: GroupSearchResult[], joined: GroupSearchResult[], requested: GroupSearchResult[] }> {
+export async function listGroupsForUser(userId: string): Promise<{ joined: GroupSearchResult[], requested: GroupSearchResult[] }> {
   const realmId = await db.getRealmId()
   const groups = await db.query(
     `SELECT g.id, g.name, g.description
@@ -229,10 +254,15 @@ export async function listGroupsForUser(userId: string): Promise<{ invited: Grou
      WHERE ugm.user_id = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
     [userId, realmId, getRootGroup().id],
   )
-  const invited = await searchGroupsByAttributes(INVITE_ATTRIBUTE, userId)
-  const requested = await searchGroupsByAttributes(REQUEST_ATTRIBUTE, userId)
+  const requested = await searchGroupsByAttribute(REQUEST_ATTRIBUTE, userId)
 
-  return { invited, joined: groups.rows, requested }
+  return { joined: groups.rows, requested }
+}
+
+export async function notificationsForUser(userId: string): Promise<{ invites: GroupSearchResult[], requests: GlobalRequest[] }> {
+  const invites = await searchGroupsByAttribute(INVITE_ATTRIBUTE, userId)
+  const requests = await searchGlobalPendingRequests(userId)
+  return { invites, requests }
 }
 
 async function getTeams(id: string): Promise<TeamsDtoType> {

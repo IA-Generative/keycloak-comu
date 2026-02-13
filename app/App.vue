@@ -5,15 +5,20 @@ import { DsfrFooter, DsfrHeader, useScheme } from '@gouvminint/vue-dsfr'
 import type { DsfrHeaderMenuLinkProps } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
 import type { KeycloakTokenParsed } from 'keycloak-js'
+import NotificationsList from './components/NotificationsList.vue'
 
 const username = ref('')
 const loggedIn = ref(false)
+const isDisplayingNotifications = ref(false)
 
 const { $keycloak } = useNuxtApp()
+const notificationsStore = useNotificationsStore()
+
 onMounted(async () => {
   await $keycloak.init({ onLoad: 'login-required', checkLoginIframe: true })
   username.value = $keycloak.tokenParsed?.preferred_username
   loggedIn.value = true
+  notificationsStore.fetchNotifications()
 
   // Rafraîchir le token avant expiration
   setInterval(async () => {
@@ -22,7 +27,6 @@ onMounted(async () => {
       if (refreshed) console.log('Token refresh OK')
     }
   }, 20000)
-
   loadFeatureFlags()
 })
 
@@ -38,16 +42,47 @@ function getUserName(payload: KeycloakTokenParsed): string {
   return payload.preferred_username || 'Profil'
 }
 
-const quickLinks = ref<(DsfrHeaderMenuLinkProps & { text: string })[]>([])
-watch(loggedIn, (newVal) => {
-  if (newVal) {
-    quickLinks.value = [
-      { text: 'Accueil', to: '/' },
-      { text: getUserName($keycloak.tokenParsed ?? {}), to: '/profile' },
-      { text: 'Déconnexion', to: '#', onClick: logout },
-    ]
+function displayNotifications() {
+  isDisplayingNotifications.value = true
+}
+
+const notificationsLink = computed<DsfrHeaderMenuLinkProps>(() => {
+  const unreadNotifications = notificationsStore.notificationsLength > 0
+  return {
+    label: `Notifications`,
+    button: true,
+    icon: {
+      name: unreadNotifications ? 'ri-notification-3-fill' : 'ri-notification-3-line',
+      animation: unreadNotifications ? 'ring' : undefined,
+      class: unreadNotifications ? 'unread' : undefined,
+    },
+    iconRight: true,
+    to: '',
+    onClick: ($event: Event) => {
+      $event.preventDefault()
+      displayNotifications()
+    },
   }
-}, { immediate: true })
+})
+
+const profileLink = computed(() => ({
+  label: getUserName($keycloak.tokenParsed as KeycloakTokenParsed),
+  to: '/profile',
+}))
+
+const quickLinks = computed(() => {
+  const newLinks: (DsfrHeaderMenuLinkProps)[] = [
+    { label: 'Accueil', to: '/' },
+  ]
+  if (loggedIn.value) {
+    newLinks.push(notificationsLink.value)
+    newLinks.push(profileLink.value)
+    newLinks.push({ label: 'Déconnexion', to: '#', onClick: logout })
+  } else {
+    newLinks.push({ label: 'Connexion', to: '#', onClick: () => $keycloak.login() })
+  }
+  return newLinks
+})
 
 const themeLight = {
   label: 'Clair',
@@ -106,5 +141,10 @@ const afterMandatoryLinks = computed(() => {
         :after-mandatory-links="afterMandatoryLinks"
       />
     </div>
+    <NotificationsList
+      :displaying="isDisplayingNotifications"
+      :is-authenticated="loggedIn"
+      @close="isDisplayingNotifications = false"
+    />
   </div>
 </template>
