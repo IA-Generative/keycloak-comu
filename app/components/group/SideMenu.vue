@@ -12,28 +12,29 @@ watch($route, () => {
   groupStore.refreshGroup()
 })
 
+const currentPath = computed(() => $route.path.split('/').slice(-1)[0])
 const menuItems = ref([{
   id: '11',
   to: `base`,
-  active: computed(() => $route.fullPath.endsWith('base')),
+  active: computed(() => currentPath.value === 'base'),
   text: 'Informations',
   requiredLevel: 0,
 }, {
   id: '12',
   to: `users`,
-  active: computed(() => $route.fullPath.endsWith('users')),
+  active: computed(() => currentPath.value === 'users'),
   text: 'Utilisateurs',
   requiredLevel: 0,
 }, {
   id: '13',
   to: `teams`,
-  active: computed(() => $route.fullPath.endsWith('teams')),
+  active: computed(() => currentPath.value === 'teams'),
   text: 'Équipes',
   requiredLevel: 10,
 }, {
   id: '14',
   to: `settings`,
-  active: computed(() => $route.fullPath.endsWith('settings')),
+  active: computed(() => currentPath.value === 'settings'),
   text: 'Paramètres',
   requiredLevel: 20,
 }])
