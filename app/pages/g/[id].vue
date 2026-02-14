@@ -17,6 +17,7 @@ async function fetchData() {
 
 onBeforeMount(fetchData)
 
+setInterval(fetchData, 30000)
 definePageMeta({
   redirect: to => `/g/${to.params.id}/base`,
 })
@@ -29,7 +30,9 @@ definePageMeta({
   >
     <SideMenu />
     <div class="mt-5 md:mt-0">
-      <NuxtPage />
+      <NuxtPage
+        :myLevel="groupStore.mylevel"
+      />
       <GroupAccess />
     </div>
   </div>
