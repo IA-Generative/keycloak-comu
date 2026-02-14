@@ -51,7 +51,7 @@ async function triggerAction(fn: (...args: any[]) => Promise<void>, args: any[])
         icon="ri-close-line"
         icon-only
         :disabled="inProgress"
-        @click="triggerAction(groupStore.cancelRequest, [request.groupId, request.userId])"
+        @click="triggerAction(groupStore.declineRequest, [request.groupId, request.userId])"
       />
     </div>
   </DsfrAlert>

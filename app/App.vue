@@ -17,8 +17,8 @@ const notificationsStore = useNotificationsStore()
 onMounted(async () => {
   await $keycloak.init({ onLoad: 'login-required', checkLoginIframe: true })
   username.value = $keycloak.tokenParsed?.preferred_username
+  await notificationsStore.fetchNotifications()
   loggedIn.value = true
-  notificationsStore.fetchNotifications()
 
   // Rafraîchir le token avant expiration
   setInterval(async () => {

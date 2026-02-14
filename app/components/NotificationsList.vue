@@ -26,10 +26,15 @@ function reloadNotifications() {
 
 let reloadInterval: NodeJS.Timeout | undefined
 onMounted(() => {
-  reloadInterval = setInterval(reloadNotifications, 10000)
+  reloadInterval = setInterval(reloadNotifications, 30000)
   reloadNotifications()
 })
 
+watch(() => props.displaying, (newVal) => {
+  if (newVal) {
+    reloadNotifications()
+  }
+})
 onUnmounted(() => {
   if (reloadInterval) {
     clearInterval(reloadInterval)
