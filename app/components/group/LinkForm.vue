@@ -16,13 +16,19 @@ const editingLinks = ref(false)
 const links = ref(group.value.links)
 
 const isLastLinkEmpty = computed(() => {
-  return links.value.length === 0 || links.value.slice(-1)[0] === ''
+  return links.value.length === 0 || !links.value.slice(-1)[0]
 })
 
 function addLink() {
   if (!isLastLinkEmpty.value) {
     links.value.push('')
   }
+  nextTick(() => {
+    const input = document.getElementById('last-input') as HTMLInputElement | null
+    input?.select()
+    input?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+    input?.focus()
+  })
 }
 
 function removeLink(idx: number) {
@@ -35,7 +41,6 @@ function removeLink(idx: number) {
 
 function saveLinks() {
   const trimmedLinks = links.value.filter(link => link.trim() !== '')
-  console.log(trimmedLinks)
   emits('saveLinks', trimmedLinks)
   links.value = trimmedLinks
   editingLinks.value = false
@@ -43,7 +48,7 @@ function saveLinks() {
 
 function cancelEditLinks() {
   editingLinks.value = false
-  links.value = group.value.links
+  links.value = group.value.links.filter(link => link.trim() !== '')
 }
 
 function extractErrorMessage(link?: string): string {
@@ -77,12 +82,14 @@ function startEditingLinks() {
       >
         <DsfrInputGroup
           v-if="editingLinks"
+          :id="idx === links.length - 1 ? 'last-input' : ''"
           v-model="links[idx]"
           class="grow"
           :error-message="extractErrorMessage(links[idx])"
           label="Lien associé au groupe"
           placeholder="Ajouter un lien pertinent pour les membres du groupe (site web, documentation, etc.)."
           type="url"
+          @keyup.enter="addLink"
         />
         <a
           v-else
@@ -94,10 +101,15 @@ function startEditingLinks() {
         <DsfrButton
           v-if="editingLinks"
           tertiary
+          icon-only
+          icon="ri-close-line"
           @click="removeLink(idx)"
-        >
-          Suppr.
-        </DsfrButton>
+        />
+      </div>
+      <div
+        v-if="!links.length && !editingLinks"
+      >
+        Aucun lien associé à ce groupe pour le moment.
       </div>
     </div>
     <div
@@ -107,6 +119,7 @@ function startEditingLinks() {
         v-if="editingLinks"
         :disabled="links.slice(-1)[0] === ''"
         tertiary
+        icon="ri-add-line"
         @click="addLink"
       >
         Ajouter un lien
