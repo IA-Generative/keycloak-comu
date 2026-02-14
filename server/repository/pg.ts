@@ -2,6 +2,7 @@
 import { Pool } from 'pg'
 import { getRootGroup } from './keycloak.js'
 import type { UserRow } from './types.js'
+import { internalFeatureFlags } from '../composables/feature-flags.js'
 
 const runtimeConfig = useRuntimeConfig()
 
@@ -106,6 +107,7 @@ export async function setSearchFunctions() {
   );`, [])
   const pgTrgmInstalled = res.rows[0].exists
   if (pgTrgmInstalled) {
+    internalFeatureFlags.trgmSearch = true
     searchFn = searchGroupTrgm
     searchUsersFn = searchUserTrgm
   }
