@@ -1,8 +1,13 @@
 import type KeycloakAdminClient from '@keycloak/keycloak-admin-client'
 import { realmName } from '../repository/utils.js'
+import type prom from 'prom-client'
 
 export const featureFlags = {
   userSettings: false,
+}
+
+export const internalFeatureFlags = {
+  trgmSearch: false,
 }
 
 async function setUserSettingsFlag(kcClient: KeycloakAdminClient) {
@@ -21,4 +26,13 @@ async function setUserSettingsFlag(kcClient: KeycloakAdminClient) {
 }
 export async function initFeatureFlags(kcClient: KeycloakAdminClient) {
   await setUserSettingsFlag(kcClient)
+}
+
+export function exportMetricsForFeatureFlags(metric: prom.Gauge<string>) {
+  for (const [flag, enabled] of Object.entries(featureFlags)) {
+    metric.set({ name: flag }, enabled ? 1 : 0)
+  }
+  for (const [flag, enabled] of Object.entries(internalFeatureFlags)) {
+    metric.set({ name: flag }, enabled ? 1 : 0)
+  }
 }
