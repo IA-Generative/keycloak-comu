@@ -1,19 +1,19 @@
 <script setup lang="ts">
 import '@gouvfr/dsfr/dist/dsfr.min.css' // Import des styles du DSFR //
 import '@gouvminint/vue-dsfr/styles'
-import { DsfrFooter, DsfrHeader, useScheme } from '@gouvminint/vue-dsfr'
-import type { DsfrHeaderMenuLinkProps } from '@gouvminint/vue-dsfr'
+import { DsfrFooter, useScheme } from '@gouvminint/vue-dsfr'
 import { ref } from 'vue'
-import type { KeycloakTokenParsed } from 'keycloak-js'
-import NotificationsList from './components/NotificationsList.vue'
+import Header from './components/Header.vue'
 
 const username = ref('')
 const loggedIn = ref(false)
-const isDisplayingNotifications = ref(false)
 
 const { $keycloak } = useNuxtApp()
 const notificationsStore = useNotificationsStore()
 
+function logout() {
+  $keycloak.logout()
+}
 onMounted(async () => {
   await $keycloak.init({ onLoad: 'login-required', checkLoginIframe: true })
   username.value = $keycloak.tokenParsed?.preferred_username
@@ -28,60 +28,6 @@ onMounted(async () => {
     }
   }, 20000)
   loadFeatureFlags()
-})
-
-function logout() {
-  $keycloak.logout()
-}
-
-function getUserName(payload: KeycloakTokenParsed): string {
-  if (payload.name) return payload.name
-  if (payload.given_name && payload.family_name) {
-    return `${payload.given_name} ${payload.family_name}`
-  }
-  return payload.preferred_username || 'Profil'
-}
-
-function displayNotifications() {
-  isDisplayingNotifications.value = true
-}
-
-const notificationsLink = computed<DsfrHeaderMenuLinkProps>(() => {
-  const unreadNotifications = notificationsStore.notificationsLength > 0
-  return {
-    label: `Notifications`,
-    button: true,
-    icon: {
-      name: unreadNotifications ? 'ri-notification-3-fill' : 'ri-notification-3-line',
-      animation: unreadNotifications ? 'ring' : undefined,
-      class: unreadNotifications ? 'unread' : undefined,
-    },
-    iconRight: true,
-    to: '',
-    onClick: ($event: Event) => {
-      $event.preventDefault()
-      displayNotifications()
-    },
-  }
-})
-
-const profileLink = computed(() => ({
-  label: getUserName($keycloak.tokenParsed as KeycloakTokenParsed),
-  to: '/profile',
-}))
-
-const quickLinks = computed(() => {
-  const newLinks: (DsfrHeaderMenuLinkProps)[] = [
-    { label: 'Accueil', to: '/' },
-  ]
-  if (loggedIn.value) {
-    newLinks.push(notificationsLink.value)
-    newLinks.push(profileLink.value)
-    newLinks.push({ label: 'Déconnexion', to: '#', onClick: logout })
-  } else {
-    newLinks.push({ label: 'Connexion', to: '#', onClick: () => $keycloak.login() })
-  }
-  return newLinks
 })
 
 const themeLight = {
@@ -111,7 +57,7 @@ const afterMandatoryLinks = computed(() => {
       label: `Theme: ${themes[theme.value as keyof typeof themes].label}`,
       button: true,
       to: '#',
-      onclick: changeTheme,
+      onClick: changeTheme,
     },
     {
       label: `Version: ${config.public.version}`,
@@ -124,11 +70,10 @@ const afterMandatoryLinks = computed(() => {
 
 <template>
   <div class="flex flex-col min-h-screen">
-    <DsfrHeader
-      home-to="/"
-      :quick-links="quickLinks"
+    <Header
+      :logged-in="loggedIn"
       :logo-text="config.public.appTitle"
-      class="grow-0"
+      @logout="logout"
     />
 
     <div class="fr-container fr-mt-4w grow">
@@ -141,10 +86,5 @@ const afterMandatoryLinks = computed(() => {
         :after-mandatory-links="afterMandatoryLinks"
       />
     </div>
-    <NotificationsList
-      :displaying="isDisplayingNotifications"
-      :is-authenticated="loggedIn"
-      @close="isDisplayingNotifications = false"
-    />
   </div>
 </template>
