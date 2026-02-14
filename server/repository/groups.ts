@@ -5,6 +5,7 @@ import type { AttributeRow, UserRow } from './types.js'
 import type { Attributes } from './utils.js'
 import { mergeUniqueGroupAttributes, realmName } from './utils.js'
 import type { TeamsDtoType } from '~~/shared/types/team.js'
+import type { GlobalRequestType } from '~~/shared/types/global-request.js'
 
 export const SETTING_PREFIX = 'keycloak-comu.settings.'
 export const AUTO_ACCEPT_REQUESTS = 'autoAcceptRequests'
@@ -104,25 +105,24 @@ async function searchGroupsByAttribute(name: string, value: string): Promise<Gro
 }
 
 // not exported cause no check on root group hierarchy
-interface GlobalRequest { groupId: string, groupName: string, userEmail: string, userFirstName: string, userLastName: string, userId: string }
-async function searchGlobalPendingRequests(userId: string): Promise<GlobalRequest[]> {
+async function searchGlobalPendingRequests(userId: string): Promise<GlobalRequestType[]> {
   const requests = await db.query(
     `SELECT g.id "groupId", g.name "groupName",
       ue.email "userEmail", ue.first_name "userFirstName", ue.last_name "userLastName", ue.id as "userId"
       FROM group_attribute ga
           join keycloak_group g ON ga.group_id  = g.id
           inner join user_entity ue  ON ga.value = ue.id
-      WHERE ga."name" = '${REQUEST_ATTRIBUTE}'
+      WHERE ga."name" = $4
         AND ga.group_id IN (
           SELECT ga.group_id 
           FROM group_attribute ga
           join keycloak_group g ON ga.group_id  = g.id
           WHERE g.realm_id  = $2
             AND g.parent_group  = $1
-            AND ga."name" IN ('${ADMIN_ATTRIBUTE}', '${OWNER_ATTRIBUTE}')
+            AND ga."name" IN ($5, $6)
             AND ga.value = $3
         );`,
-    [getRootGroup().id, await db.getRealmId(), userId],
+    [getRootGroup().id, await db.getRealmId(), userId, REQUEST_ATTRIBUTE, ADMIN_ATTRIBUTE, OWNER_ATTRIBUTE],
   )
 
   return requests.rows
@@ -259,7 +259,7 @@ export async function listGroupsForUser(userId: string): Promise<{ joined: Group
   return { joined: groups.rows, requested }
 }
 
-export async function notificationsForUser(userId: string): Promise<{ invites: GroupSearchResult[], requests: GlobalRequest[] }> {
+export async function notificationsForUser(userId: string): Promise<{ invites: GroupSearchResult[], requests: GlobalRequestType[] }> {
   const invites = await searchGroupsByAttribute(INVITE_ATTRIBUTE, userId)
   const requests = await searchGlobalPendingRequests(userId)
   return { invites, requests }
