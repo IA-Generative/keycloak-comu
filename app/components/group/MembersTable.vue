@@ -26,7 +26,11 @@ const membersRows = computed(() => {
           return -1
         if (userId.value === b.id)
           return 1
-        return 0
+        const fullNameA = `${a.first_name || ''} ${a.last_name || ''}`.trim()
+        const fullNameB = `${b.first_name || ''} ${b.last_name || ''}`.trim()
+        if (fullNameA && fullNameB)
+          return fullNameA.localeCompare(fullNameB)
+        return a.email.localeCompare(b.email)
       }
       if (a.membershipLevel > b.membershipLevel)
         return -1
