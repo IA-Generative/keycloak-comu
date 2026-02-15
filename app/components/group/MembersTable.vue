@@ -63,46 +63,54 @@ const headers: DsfrDataTableHeaderCell[] = [
   { label: 'Email', key: 'email' },
   { label: '', key: 'actions', headerAttrs: { class: 'w-1/12' } },
 ]
+const currentPage = ref<number>(0)
 </script>
 
 <template>
   <div>
-    <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
-    <DsfrDataTable
-      no-caption
-      title="Membres du groupe"
-      :headers-row="headers"
-      :rows="membersRows"
-    >
-      <template #cell="{ colKey, cell }">
-        <template v-if="colKey === 'actions'">
-          <DsfrButton
-            v-if="cell.member?.id === userId && mylevel === 10"
-            secondary
-            size="small"
-            @click="pendingLeave = true"
-          >
-            Quitter
-          </DsfrButton>
-          <ActionMember
-            v-else-if="cell"
-            v-bind="cell"
-          />
+    <div class="flex justify-between gap-5 flex-wrap">
+      <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
+      <p>Total: {{ membersRows.length }}</p>
+    </div>
+    <div id="members-table">
+      <DsfrDataTable
+        v-model:current-page="currentPage"
+        no-caption
+        title="Membres du groupe"
+        :headers-row="headers"
+        :rows="membersRows"
+        pagination
+      >
+        <template #cell="{ colKey, cell }">
+          <template v-if="colKey === 'actions'">
+            <DsfrButton
+              v-if="cell.member?.id === userId && mylevel === 10"
+              secondary
+              size="small"
+              @click="pendingLeave = true"
+            >
+              Quitter
+            </DsfrButton>
+            <ActionMember
+              v-else-if="cell"
+              v-bind="cell"
+            />
+          </template>
+          <template v-else-if="colKey === 'email'">
+            <a :href="`mailto:${cell as string}`">{{ cell }}</a>
+          </template>
+          <template v-else-if="colKey === 'name'">
+            {{ cell.text }}
+          </template>
+          <template v-else-if="colKey === 'identifier'">
+            <strong>{{ cell }}</strong>
+          </template>
+          <template v-else>
+            {{ cell }}
+          </template>
         </template>
-        <template v-else-if="colKey === 'email'">
-          <a :href="`mailto:${cell as string}`">{{ cell }}</a>
-        </template>
-        <template v-else-if="colKey === 'name'">
-          {{ cell.text }}
-        </template>
-        <template v-else-if="colKey === 'identifier'">
-          <strong>{{ cell }}</strong>
-        </template>
-        <template v-else>
-          {{ cell }}
-        </template>
-      </template>
-    </DsfrDataTable>
+      </DsfrDataTable>
+    </div>
     <DsfrModal
       v-if="pendingLeave"
       v-model:opened="pendingLeave"
@@ -130,3 +138,9 @@ const headers: DsfrDataTableHeaderCell[] = [
     </DsfrModal>
   </div>
 </template>
+
+<style>
+#members-table .fr-table select {
+  max-width: 5rem;
+}
+</style>
