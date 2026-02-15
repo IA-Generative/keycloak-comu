@@ -17,6 +17,17 @@ export async function countGroupMetrics(): Promise<number> {
   return Number.parseInt(groupsResult.rows[0].count, 10)
 }
 
+export async function countTotalUsers(): Promise<number> {
+  const usersResult = await db.query(
+    `SELECT count(distinct(ugm.user_id))
+      FROM user_group_membership ugm 
+      JOIN keycloak_group g ON ugm.group_id  = g.id
+      WHERE g.realm_id = $1 AND g.parent_group = $2`,
+    [await db.getRealmId(), getRootGroup().id],
+  )
+  return Number.parseInt(usersResult.rows[0].count, 10)
+}
+
 export async function countMembersPerGroupMetrics(): Promise<number[]> {
   const groupsResult = await db.query(
     `SELECT count(*)

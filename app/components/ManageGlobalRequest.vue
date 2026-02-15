@@ -1,21 +1,26 @@
 <script setup lang="ts">
 import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
-import type { NotificationsDtoType } from '~~/shared/NotificationsDtoSchema.js'
 
-const props = defineProps<{
-  group: NotificationsDtoType['invites'][0]
-}>()
-
+const props = defineProps<{ request: GlobalRequestType }>()
 const emits = defineEmits<{
   (e: 'refresh'): void
 }>()
 
+const request = computed(() => props.request)
+
 const groupStore = useGroupStore()
 
+function getIdentity() {
+  if (request.value.userFirstName && request.value.userLastName) {
+    return `${request.value.userFirstName} ${request.value.userLastName}`
+  }
+  return 'Un utilisateur'
+}
+
 const inProgress = ref(false)
-async function triggerAction(fn: (groupId: string) => Promise<void>) {
+async function triggerAction(fn: (...args: any[]) => Promise<void>, args: any[]) {
   inProgress.value = true
-  await fn(props.group.id)
+  await fn(...args)
     .finally(() => inProgress.value = false)
   emits('refresh')
 }
@@ -24,16 +29,13 @@ async function triggerAction(fn: (groupId: string) => Promise<void>) {
 <template>
   <DsfrAlert
     small
-    type="info"
     class="fr-mb-2w flex justify-between gap-4"
+    type="info"
   >
     <div>
-      Vous avez été invité à rejoindre le groupe <NuxtLink :to="`/g/${group.id}`">
-        {{ group.name }}
+      {{ getIdentity() }} demande à rejoindre le groupe <NuxtLink :to="`/g/${request.groupId}`">
+        {{ request.groupName }}
       </NuxtLink>.<br>
-      <span class="fr-text--xs">
-        Vous acceptez implicitement les conditions d'utilisation du groupe en rejoignant celui-ci
-      </span>
     </div>
     <div class="flex gap-2 self-center">
       <DsfrButton
@@ -41,7 +43,7 @@ async function triggerAction(fn: (groupId: string) => Promise<void>) {
         icon="ri-check-line"
         icon-only
         :disabled="inProgress"
-        @click="triggerAction(groupStore.acceptInvite)"
+        @click="triggerAction(groupStore.acceptRequest, [request.groupId, request.userId])"
       />
       <DsfrButton
         size="md"
@@ -49,7 +51,7 @@ async function triggerAction(fn: (groupId: string) => Promise<void>) {
         icon="ri-close-line"
         icon-only
         :disabled="inProgress"
-        @click="triggerAction(groupStore.declineInvite)"
+        @click="triggerAction(groupStore.declineRequest, [request.groupId, request.userId])"
       />
     </div>
   </DsfrAlert>

@@ -1,5 +1,6 @@
 import prom from 'prom-client'
 import * as repoMetrics from '../repository/metrics.js'
+import { exportMetricsForFeatureFlags } from './feature-flags.js'
 
 const config = useRuntimeConfig()
 
@@ -12,6 +13,17 @@ const groupCountGauge = new prom.Gauge({
   name: 'group_count',
   help: 'Total number of groups',
   labelNames: ['type'] as const,
+})
+
+const usersCountGauge = new prom.Gauge({
+  name: 'users_count',
+  help: 'Total number of users',
+})
+
+const featureFlagsGauge = new prom.Gauge({
+  name: 'feature_flags',
+  help: 'Feature flags status',
+  labelNames: ['name'] as const,
 })
 
 // quantile of members per group
@@ -64,6 +76,8 @@ function assignHistoPrometheusMetrics(metric: prom.Histogram<string>, values: Pr
 
 export async function retrieveGroupMetrics() {
   assignGaugePrometheusMetrics(groupCountGauge, repoMetrics.countGroupMetrics())
+  assignGaugePrometheusMetrics(usersCountGauge, repoMetrics.countTotalUsers())
+  exportMetricsForFeatureFlags(featureFlagsGauge)
 
   teamsPerGroupHisto.reset()
   assignHistoPrometheusMetrics(teamsPerGroupHisto, repoMetrics.countTeamsPerGroupMetrics())

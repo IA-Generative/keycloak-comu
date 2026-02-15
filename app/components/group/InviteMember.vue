@@ -65,7 +65,7 @@ watch(newMemberEmail, async (newVal) => {
   debouncedSearch(newVal)
 })
 
-const isOpen = computed(() => suggestions.value.length > 0 && newMemberEmail && suggestions.value[0]!.email !== newMemberEmail.value)
+const isOpen = computed(() => suggestions.value.length > 0 && newMemberEmail)
 const activeIndex = ref(-1)
 
 function moveDown() {

@@ -26,7 +26,11 @@ const membersRows = computed(() => {
           return -1
         if (userId.value === b.id)
           return 1
-        return 0
+        const fullNameA = `${a.first_name || ''} ${a.last_name || ''}`.trim()
+        const fullNameB = `${b.first_name || ''} ${b.last_name || ''}`.trim()
+        if (fullNameA && fullNameB)
+          return fullNameA.localeCompare(fullNameB)
+        return a.email.localeCompare(b.email)
       }
       if (a.membershipLevel > b.membershipLevel)
         return -1
@@ -59,46 +63,57 @@ const headers: DsfrDataTableHeaderCell[] = [
   { label: 'Email', key: 'email' },
   { label: '', key: 'actions', headerAttrs: { class: 'w-1/12' } },
 ]
+const currentPage = ref<number>(0)
+const rowsPerPage = ref<number>(20)
 </script>
 
 <template>
   <div>
-    <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
-    <DsfrDataTable
-      no-caption
-      title="Membres du groupe"
-      :headers-row="headers"
-      :rows="membersRows"
-    >
-      <template #cell="{ colKey, cell }">
-        <template v-if="colKey === 'actions'">
-          <DsfrButton
-            v-if="cell.member?.id === userId && mylevel === 10"
-            secondary
-            size="small"
-            @click="pendingLeave = true"
-          >
-            Quitter
-          </DsfrButton>
-          <ActionMember
-            v-else-if="cell"
-            v-bind="cell"
-          />
+    <div class="flex justify-between gap-5 flex-wrap">
+      <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
+      <p>Total: {{ membersRows.length }}</p>
+    </div>
+    <div>
+      <DsfrDataTable
+        v-model:current-page="currentPage"
+        v-model:rows-per-page="rowsPerPage"
+        no-caption
+        title="Membres du groupe"
+        :headers-row="headers"
+        :rows="membersRows"
+        pagination
+        :pagination-options="[10, 20, 50, 100]"
+      >
+        <template #cell="{ colKey, cell }">
+          <template v-if="colKey === 'actions'">
+            <DsfrButton
+              v-if="cell.member?.id === userId && mylevel === 10"
+              secondary
+              size="small"
+              @click="pendingLeave = true"
+            >
+              Quitter
+            </DsfrButton>
+            <ActionMember
+              v-else-if="cell"
+              v-bind="cell"
+            />
+          </template>
+          <template v-else-if="colKey === 'email'">
+            <a :href="`mailto:${cell as string}`">{{ cell }}</a>
+          </template>
+          <template v-else-if="colKey === 'name'">
+            {{ cell.text }}
+          </template>
+          <template v-else-if="colKey === 'identifier'">
+            <strong>{{ cell }}</strong>
+          </template>
+          <template v-else>
+            {{ cell }}
+          </template>
         </template>
-        <template v-else-if="colKey === 'email'">
-          <a :href="`mailto:${cell as string}`">{{ cell }}</a>
-        </template>
-        <template v-else-if="colKey === 'name'">
-          {{ cell.text }}
-        </template>
-        <template v-else-if="colKey === 'identifier'">
-          <strong>{{ cell }}</strong>
-        </template>
-        <template v-else>
-          {{ cell }}
-        </template>
-      </template>
-    </DsfrDataTable>
+      </DsfrDataTable>
+    </div>
     <DsfrModal
       v-if="pendingLeave"
       v-model:opened="pendingLeave"
@@ -126,3 +141,30 @@ const headers: DsfrDataTableHeaderCell[] = [
     </DsfrModal>
   </div>
 </template>
+
+<style>
+select[id$="pagination-options"] {
+  max-width: 5.5rem;
+}
+div.fr-table__wrapper+div>div {
+  flex-direction: column;
+  justify-content: center !important;
+  gap: 0.5rem;
+}
+div.fr-table__wrapper+div>div div {
+  flex-grow: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(1) {
+  justify-self: end !important;
+  right: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(2) {
+  display: none;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(3) {
+  align-self: end;
+}
+</style>
