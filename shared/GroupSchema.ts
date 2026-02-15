@@ -4,10 +4,16 @@ import MembershipLevel from './MembershipLevel.js'
 import TeamDtoSchema from './TeamSchema.js'
 import GroupSettingsDtoSchema from './GroupSettingsSchema.js'
 
+const GroupMemberDtoSchema = UserDtoSchema.extend({
+  membershipLevel: MembershipLevel,
+})
+
+export type GroupMemberDto = z.infer<typeof GroupMemberDtoSchema>
+
 const GroupDtoSchema = z.object({
   id: z.string(),
   name: z.string(),
-  members: z.array(UserDtoSchema.extend({ membershipLevel: MembershipLevel })),
+  members: z.array(GroupMemberDtoSchema),
   teams: TeamDtoSchema,
   invites: z.array(UserDtoSchema),
   requests: z.array(UserDtoSchema),

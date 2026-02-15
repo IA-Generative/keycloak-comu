@@ -1,15 +1,11 @@
 <script setup lang="ts">
 import { DsfrButton, DsfrModal, DsfrSelect } from '@gouvminint/vue-dsfr'
 import fetcher from '~/composables/useApi.js'
+import type { GroupMemberDto } from '~~/shared/GroupSchema.js'
+import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
 
 const props = defineProps<{
-  member: {
-    id: string
-    email: string
-    first_name?: string
-    last_name?: string
-    membershipLevel: number
-  }
+  member: GroupMemberDto
   mylevel: number
   group: GroupDtoType
 }>()
@@ -49,9 +45,9 @@ async function changeMemberLevel(userId: string, newLevel: number) {
 
 const targetMemberLevel = computed(() => props.member.membershipLevel)
 const options = computed(() => [
-  { value: 10, text: 'Membre' },
-  { value: 20, text: 'Administrateur' },
-  { value: 30, text: 'Propriétaire' },
+  { value: 10, text: MembershipLevelNames[10] as string },
+  { value: 20, text: MembershipLevelNames[20] as string },
+  { value: 30, text: MembershipLevelNames[30] as string },
 ].filter(option => props.mylevel >= 30 || option.value <= props.mylevel))
 </script>
 

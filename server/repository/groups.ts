@@ -500,7 +500,6 @@ export async function searchUsers(options: { query: string, excludeGroupId?: str
 
 export async function setGroupSettings(groupId: string, settings: Partial<GroupSettings>) {
   for (const [key, value] of Object.entries(settings)) {
-    console.log(key, value)
     await setAttribute(groupId, `${SETTING_PREFIX}${key}` as keyof GroupSettings, [value === null ? '' : value.toString()])
   }
 }

@@ -10,4 +10,4 @@ export const MembershipLevelNames: Record<MembershipLevelType, string> = {
   10: 'Membre',
   20: '💂 Administrateur',
   30: '👑 Propriétaire',
-}
+} as const
