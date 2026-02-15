@@ -5,19 +5,28 @@ const config = useRuntimeConfig()
 const groupStore = useGroupStore()
 const id = useRoute().params.id
 
-const group = ref<GroupDtoType | null>(null)
+const group = computed<GroupDtoType | null>(() => groupStore.group)
 
 async function fetchData() {
-  const data = await groupStore.fetchGroup(id as string)
-  group.value = data
+  await groupStore.fetchGroup(id as string)
   useHead({
-    title: `${config.public.appTitle} - Gestion du groupe ${data?.name}`,
+    title: `${config.public.appTitle} - Gestion du groupe ${group.value?.name}`,
   })
 }
 
 onBeforeMount(fetchData)
 
-setInterval(fetchData, 30000)
+let interval: NodeJS.Timeout
+onMounted(() => {
+  interval = setInterval(() => {
+    groupStore.refreshGroup()
+  }, 30000)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(interval)
+})
+
 definePageMeta({
   redirect: to => `/g/${to.params.id}/base`,
 })
@@ -31,7 +40,7 @@ definePageMeta({
     <SideMenu />
     <div class="mt-5 md:mt-0">
       <NuxtPage
-        :myLevel="groupStore.mylevel"
+        :my-level="groupStore.mylevel"
       />
       <GroupAccess />
     </div>

@@ -64,6 +64,7 @@ const headers: DsfrDataTableHeaderCell[] = [
   { label: '', key: 'actions', headerAttrs: { class: 'w-1/12' } },
 ]
 const currentPage = ref<number>(0)
+const rowsPerPage = ref<number>(20)
 </script>
 
 <template>
@@ -72,14 +73,16 @@ const currentPage = ref<number>(0)
       <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
       <p>Total: {{ membersRows.length }}</p>
     </div>
-    <div id="members-table">
+    <div>
       <DsfrDataTable
         v-model:current-page="currentPage"
+        v-model:rows-per-page="rowsPerPage"
         no-caption
         title="Membres du groupe"
         :headers-row="headers"
         :rows="membersRows"
         pagination
+        :pagination-options="[10, 20, 50, 100]"
       >
         <template #cell="{ colKey, cell }">
           <template v-if="colKey === 'actions'">
@@ -140,7 +143,28 @@ const currentPage = ref<number>(0)
 </template>
 
 <style>
-#members-table .fr-table select {
-  max-width: 5rem;
+select[id$="pagination-options"] {
+  max-width: 5.5rem;
+}
+div.fr-table__wrapper+div>div {
+  flex-direction: column;
+  justify-content: center !important;
+  gap: 0.5rem;
+}
+div.fr-table__wrapper+div>div div {
+  flex-grow: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(1) {
+  justify-self: end !important;
+  right: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(2) {
+  display: none;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(3) {
+  align-self: end;
 }
 </style>
