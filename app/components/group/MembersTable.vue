@@ -3,6 +3,7 @@ import { MembershipLevelNames } from '~~/shared/MembershipLevel.js'
 import { DsfrButton, DsfrDataTable, DsfrModal } from '@gouvminint/vue-dsfr'
 import type { DsfrDataTableHeaderCell } from '@gouvminint/vue-dsfr'
 import ActionMember from './ActionMember.vue'
+import type { GroupMemberDto } from '~~/shared/GroupSchema.js'
 
 const groupStore = useGroupStore()
 const group = computed(() => groupStore.group as GroupDtoType)
@@ -18,30 +19,31 @@ const amIOwner = computed(() => {
   return mylevel.value >= 30
 })
 
-const membersRows = computed(() => {
+// don't know why but an interface cause type error in DsfrDataTable ¯\_(ツ)_/¯
+// eslint-disable-next-line ts/consistent-type-definitions
+type MemberRow = {
+  identifier: string
+  role: { text: string, value: number }
+  lastName: { text: string, id: string }
+  firstName: { text: string, id: string }
+  email: string
+  actions: { member: GroupMemberDto, group: GroupDtoType, mylevel: number, onRefresh: () => void } | undefined
+}
+const membersRows = computed<MemberRow[]>(() => {
   return group.value.members
-    .toSorted((a, b) => {
-      if (a.membershipLevel === b.membershipLevel) {
-        if (userId.value === a.id)
-          return -1
-        if (userId.value === b.id)
-          return 1
-        const fullNameA = `${a.first_name || ''} ${a.last_name || ''}`.trim()
-        const fullNameB = `${b.first_name || ''} ${b.last_name || ''}`.trim()
-        if (fullNameA && fullNameB)
-          return fullNameA.localeCompare(fullNameB)
-        return a.email.localeCompare(b.email)
-      }
-      if (a.membershipLevel > b.membershipLevel)
-        return -1
-      return 1
-    })
     .map((member) => {
       return {
         identifier: member.id === $keycloak?.tokenParsed?.sub ? ' (Vous)' : '',
-        role: MembershipLevelNames[member.membershipLevel] || 'Inconnu',
-        name: {
-          text: `${member.first_name || ''} ${member.last_name || ''}`.trim() || member.email,
+        role: {
+          text: MembershipLevelNames[member.membershipLevel] || 'Inconnu',
+          value: member.membershipLevel,
+        },
+        lastName: {
+          text: `${member.last_name || ''}`.trim(),
+          id: member.id,
+        },
+        firstName: {
+          text: `${member.first_name || ''}`.trim(),
           id: member.id,
         },
         email: member.email,
@@ -52,18 +54,48 @@ const membersRows = computed(() => {
               mylevel: mylevel.value,
               onRefresh: () => groupStore.refreshGroup(),
             }
-          : null),
+          : undefined),
       }
     }) ?? []
 })
 const headers: DsfrDataTableHeaderCell[] = [
   { label: '', key: 'identifier', headerAttrs: { class: 'w-1/12' } },
   { label: 'Rôle', key: 'role', headerAttrs: { class: 'w-1/12' } },
-  { label: 'Nom', key: 'name' },
+  { label: 'Nom', key: 'lastName' },
+  { label: 'Prénom', key: 'firstName' },
   { label: 'Email', key: 'email' },
   { label: '', key: 'actions', headerAttrs: { class: 'w-1/12' } },
 ]
 const currentPage = ref<number>(0)
+const rowsPerPage = ref<number>(20)
+
+const sortBy = ref<string>('role')
+const sortDesc = ref<boolean>(true)
+
+function sortFn(a: MemberRow, b: MemberRow): number {
+  switch (sortBy.value) {
+    case 'role':
+      return sortDesc.value
+        ? (a.role.value) - (b.role.value)
+        : (b.role.value) - (a.role.value)
+    case 'email':
+      return sortDesc.value
+        ? a[sortBy.value].localeCompare(b[sortBy.value])
+        : b[sortBy.value].localeCompare(a[sortBy.value])
+    case 'lastName':
+    case 'firstName': {
+      const nameA = a[sortBy.value]?.text || ''
+      const nameB = b[sortBy.value]?.text || ''
+      return sortDesc.value
+        ? nameA.localeCompare(nameB)
+        : nameB.localeCompare(nameA)
+    }
+    default:
+      return sortDesc.value
+        ? (b.role.value) - (a.role.value)
+        : (a.role.value) - (b.role.value)
+  }
+}
 </script>
 
 <template>
@@ -72,19 +104,25 @@ const currentPage = ref<number>(0)
       <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
       <p>Total: {{ membersRows.length }}</p>
     </div>
-    <div id="members-table">
+    <div>
       <DsfrDataTable
         v-model:current-page="currentPage"
+        v-model:rows-per-page="rowsPerPage"
+        v-model:sorted-by="sortBy"
         no-caption
         title="Membres du groupe"
         :headers-row="headers"
         :rows="membersRows"
         pagination
+        :pagination-options="[10, 20, 50, 100]"
+        :sortable-rows="['lastName', 'firstName', 'email', 'role']"
+        :sorted-desc="sortDesc"
+        :sort-fn="(a: unknown, b: unknown) => sortFn(a as MemberRow, b as MemberRow)"
       >
         <template #cell="{ colKey, cell }">
           <template v-if="colKey === 'actions'">
             <DsfrButton
-              v-if="cell.member?.id === userId && mylevel === 10"
+              v-if="(cell as MemberRow['actions'])?.member?.id === userId && mylevel === 10"
               secondary
               size="small"
               @click="pendingLeave = true"
@@ -92,18 +130,24 @@ const currentPage = ref<number>(0)
               Quitter
             </DsfrButton>
             <ActionMember
-              v-else-if="cell"
-              v-bind="cell"
+              v-else-if="(cell as MemberRow['actions'])"
+              v-bind="(cell as MemberRow['actions'])"
             />
           </template>
           <template v-else-if="colKey === 'email'">
             <a :href="`mailto:${cell as string}`">{{ cell }}</a>
           </template>
-          <template v-else-if="colKey === 'name'">
-            {{ cell.text }}
+          <template v-else-if="colKey === 'lastName'">
+            {{ (cell as MemberRow[typeof colKey]).text }}
+          </template>
+          <template v-else-if="colKey === 'firstName'">
+            {{ (cell as MemberRow[typeof colKey]).text }}
           </template>
           <template v-else-if="colKey === 'identifier'">
             <strong>{{ cell }}</strong>
+          </template>
+          <template v-else-if="colKey === 'role'">
+            {{ (cell as MemberRow[typeof colKey]).text }}
           </template>
           <template v-else>
             {{ cell }}
@@ -140,7 +184,28 @@ const currentPage = ref<number>(0)
 </template>
 
 <style>
-#members-table .fr-table select {
-  max-width: 5rem;
+select[id$="pagination-options"] {
+  max-width: 5.5rem;
+}
+div.fr-table__wrapper+div>div {
+  flex-direction: column;
+  justify-content: center !important;
+  gap: 0.5rem;
+}
+div.fr-table__wrapper+div>div div {
+  flex-grow: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(1) {
+  justify-self: end !important;
+  right: 0;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(2) {
+  display: none;
+}
+
+div.fr-table__wrapper+div>div div:nth-child(3) {
+  align-self: end;
 }
 </style>
