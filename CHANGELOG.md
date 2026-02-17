@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.1](https://github.com/IA-Generative/keycloak-comu/compare/v0.13.0...v0.13.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* reset editing state and links on group change ([1ab11bc](https://github.com/IA-Generative/keycloak-comu/commit/1ab11bc782c108bd93ba7f6c0da981496a90b623))
+
 ## [0.13.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.12.0...v0.13.0) (2026-02-17)
 
 
