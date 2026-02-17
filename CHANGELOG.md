@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.12.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.3...v0.12.0) (2026-02-17)
+
+
+### Features
+
+* add myLevel prop handling in settings and teams components for access control ([698dccb](https://github.com/IA-Generative/keycloak-comu/commit/698dccb5407627ecef559cd6460fffadea7fb4af))
+* add users count metric and update metrics retrieval logic ([493e90d](https://github.com/IA-Generative/keycloak-comu/commit/493e90d6d7cfa158b2ec8ad1c0c4e83320ef4b94))
+* enhance MembersTable with pagination and improved data handling ([8579f24](https://github.com/IA-Generative/keycloak-comu/commit/8579f24a701985428b8b0819ba05090158b687c1))
+* implement feature flags for metrics and internal search functionality ([f341530](https://github.com/IA-Generative/keycloak-comu/commit/f341530e3bfdb8ac95186164f6d942e4a07218a3))
+* implement notifications feature with invite and request management ([3eae921](https://github.com/IA-Generative/keycloak-comu/commit/3eae9212ff8cc4ca80f3ca04a27a7529e7856f0d))
+* refactor header component to manage notifications and user links ([1b2bf41](https://github.com/IA-Generative/keycloak-comu/commit/1b2bf41c4475080145bab70371c19aebfca4a8d5))
+* update membership level handling and improve group data fetching ([5274bcf](https://github.com/IA-Generative/keycloak-comu/commit/5274bcfa9d9cfd1ef81f1a568c8ce0a038f27dc8))
+
+
+### Bug Fixes
+
+* change menu item text from 'Utilisateurs' to 'Membres' ([89790a0](https://github.com/IA-Generative/keycloak-comu/commit/89790a0a20273c652dbd14d8d295b30ffc205e6c))
+* change required permission level for editing group description to ADMIN ([dd462ba](https://github.com/IA-Generative/keycloak-comu/commit/dd462ba63d730823b3cdb66b842ebd61fd829238))
+* enhance link management in LinkForm component with improved input handling and user feedback ([85d02b7](https://github.com/IA-Generative/keycloak-comu/commit/85d02b7292ef3ebb3b8c723f159b7037d3f967db))
+* enhance member sorting in MembersTable by full name and email ([0776484](https://github.com/IA-Generative/keycloak-comu/commit/0776484f9e625000dcd92755854bc3febea3a64e))
+* simplify isOpen computed property logic in InviteMember component ([fe90fa8](https://github.com/IA-Generative/keycloak-comu/commit/fe90fa8f954c33fb3de8daca0c87398c59e884b3))
+* update link removal logic to reset to empty link when only one link remains ([89790a0](https://github.com/IA-Generative/keycloak-comu/commit/89790a0a20273c652dbd14d8d295b30ffc205e6c))
+* update menu item active state logic to use currentPath computed property ([956baf4](https://github.com/IA-Generative/keycloak-comu/commit/956baf45fc8bdf5c633e97ec3a22d4b04fdbf85e))
+
 ## [0.11.3](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.2...v0.11.3) (2026-02-12)
 
 
