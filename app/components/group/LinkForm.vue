@@ -15,6 +15,11 @@ const editingLinks = ref(false)
 
 const links = ref(group.value.links)
 
+watch(() => group.value.id, () => {
+  editingLinks.value = false
+  links.value = group.value.links
+})
+
 const isLastLinkEmpty = computed(() => {
   return links.value.length === 0 || !links.value.slice(-1)[0]
 })
