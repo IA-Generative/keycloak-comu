@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.13.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.12.0...v0.13.0) (2026-02-17)
+
+
+### Features
+
+* remove automatic group refresh interval in group page ([d53f416](https://github.com/IA-Generative/keycloak-comu/commit/d53f4163433f09a1123da65a5ff75b2d7f5f5a45))
+
 ## [0.12.0](https://github.com/IA-Generative/keycloak-comu/compare/v0.11.3...v0.12.0) (2026-02-17)
 
 
