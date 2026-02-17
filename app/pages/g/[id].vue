@@ -16,6 +16,17 @@ async function fetchData() {
 
 onBeforeMount(fetchData)
 
+let interval: NodeJS.Timeout
+onMounted(() => {
+  interval = setInterval(() => {
+    groupStore.refreshGroup()
+  }, 30000)
+})
+
+onBeforeUnmount(() => {
+  clearInterval(interval)
+})
+
 definePageMeta({
   redirect: to => `/g/${to.params.id}/base`,
 })
