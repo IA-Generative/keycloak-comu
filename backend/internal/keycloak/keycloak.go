@@ -18,7 +18,7 @@ type KeycloakClient struct {
 }
 
 func NewKeycloakClient(cfg config.KeycloakConfig, logger *zap.Logger) (*KeycloakClient, error) {
-	client := gocloak.NewClient(cfg.URL)
+	client := gocloak.NewClient(cfg.InternalURL)
 	ctx := context.Background()
 	token, err := client.LoginAdmin(ctx, cfg.Admin.Username, cfg.Admin.Password, cfg.Admin.Realm)
 	if err != nil {

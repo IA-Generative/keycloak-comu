@@ -125,7 +125,7 @@ func defaultConfig() *Config {
 		},
 		Keycloak: KeycloakConfig{
 			URL:           "http://localhost:8081",
-			InternalURL:   "http://keycloak:8080",
+			InternalURL:   "",
 			Realm:         "mirai",
 			RootGroupPath: "/",
 			Admin: KeycloakAdminConfig{
@@ -168,7 +168,7 @@ func applyEnvOverrides(config *Config) {
 	config.OIDC.ClientID = getenv("OIDC_CLIENT_ID", config.OIDC.ClientID)
 	config.OIDC.SwaggerClientID = getenv("OIDC_SWAGGER_CLIENT_ID", config.OIDC.SwaggerClientID)
 	config.Keycloak.URL = getenv("KEYCLOAK_URL", config.Keycloak.URL)
-	config.Keycloak.InternalURL = getenv("KEYCLOAK_INTERNAL_URL", config.Keycloak.InternalURL)
+	config.Keycloak.InternalURL = getenv("KEYCLOAK_INTERNAL_URL", config.Keycloak.InternalURL, config.Keycloak.URL)
 	config.Keycloak.Realm = getenv("KEYCLOAK_REALM", config.Keycloak.Realm)
 	config.Keycloak.Admin.Realm = getenv("KEYCLOAK_ADMIN_REALM", config.Keycloak.Admin.Realm)
 	config.Keycloak.Admin.Username = getenv("KEYCLOAK_ADMIN_USERNAME", config.Keycloak.Admin.Username)
