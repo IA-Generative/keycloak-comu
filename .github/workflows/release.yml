@@ -39,10 +39,6 @@ jobs:
         echo "$PR"
         echo "pr_branch_name=$PR" >> $GITHUB_OUTPUT
 
-    - name: Install pnpm
-      if: ${{ steps.export-pr.outputs.pr_branch_name }}
-      uses: pnpm/action-setup@v4
-
     - name: Checkout to PR branch
       if: ${{ steps.export-pr.outputs.pr_branch_name }}
       uses: actions/checkout@v4
@@ -53,15 +49,16 @@ jobs:
     - name: Update Chart.yaml with new version and document it
       if: ${{ steps.export-pr.outputs.pr_branch_name }}
       run: |
-        export VERSION=$(jq -r .version < package.json)
-        yq e -i '.appVersion = env(VERSION)' charts/keycloak-comu/Chart.yaml
+        export VERSION=$(echo "${{ steps.release.outputs.tag_name }}" | sed 's/^v//')
+        yq e -i '.appVersion = env(VERSION)' helm/Chart.yaml
 
-        export CHART_VERSION=$(yq .version charts/keycloak-comu/Chart.yaml)
-        export NEW_CHART_VERSION=$(pnpx semver -i patch $CHART_VERSION)
-        echo $NEW_CHART_VERSION
-        yq e -i '.version = env(NEW_CHART_VERSION)' charts/keycloak-comu/Chart.yaml
+        CHART_VERSION=$(yq .version helm/Chart.yaml)
+        IFS='.' read -r major minor patch <<< "$CHART_VERSION"
+        export NEW_CHART_VERSION="$major.$minor.$((patch + 1))"
+        echo "$NEW_CHART_VERSION"
+        yq e -i '.version = env(NEW_CHART_VERSION)' helm/Chart.yaml
 
-        docker run --rm --volume "$(pwd)/charts/keycloak-comu:/helm-docs" -u $(id -u) docker.io/jnorwood/helm-docs:latest
+        docker run --rm --volume "$(pwd)/helm:/helm-docs" -u $(id -u) docker.io/jnorwood/helm-docs:latest
         git config --global user.name "Arnaud Tardif"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         git add .

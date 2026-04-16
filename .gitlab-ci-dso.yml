@@ -22,8 +22,14 @@ generate_var:
   image: ghcr.io/this-is-tobi/tools/curl:latest
   stage: read-secret
   script:
-  - VERSION=$(jq -r .version < package.json)
-  - echo "PATCH=$VERSION" >> vars.env
+  - |
+    # first use tag var then fallback to .release-please-manifest.json if tag var is not set
+    if [ -n "$CI_COMMIT_TAG" ]; then
+      VERSION="$CI_COMMIT_TAG"
+    else
+      VERSION=$(jq -r '.["."]' .release-please-manifest.json)
+    fi
+    echo "PATCH=$VERSION" >> vars.env
   - cat vars.env
   artifacts:
     reports:
@@ -35,8 +41,9 @@ build:
   needs: [generate_var, read_secret]
   variables:
     WORKING_DIR: ./
-    DOCKERFILE: ./Dockerfile
-    IMAGE_NAMES: app:${PATCH}
+    DOCKERFILE: ./backend/Dockerfile
+    IMAGE_NAMES: server:${PATCH}
+    EXTRA_BUILD_ARGS: --build-arg VERSION=${PATCH}
   stage: docker-build
   extends:
   - .kaniko:build-push
