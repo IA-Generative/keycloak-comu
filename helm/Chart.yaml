@@ -2,13 +2,10 @@ apiVersion: v2
 name: keycloak-comu
 description: Keycloak Community - Group management application
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
-
+version: 0.1.1
+appVersion: "1.0.0"
 maintainers:
   - name: IA-Generative
-
-
 keywords:
   - keycloak
   - community
