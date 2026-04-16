@@ -3,7 +3,6 @@
   "packages": {
     ".": {
       "release-type": "go",
-      "component": "keycloak-comu",
       "initial-version": "0.1.0",
       "include-component-in-tag": false,
       "versioning": "prerelease",

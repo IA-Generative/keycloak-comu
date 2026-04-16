@@ -49,7 +49,7 @@ jobs:
     - name: Update Chart.yaml with new version and document it
       if: ${{ steps.export-pr.outputs.pr_branch_name }}
       run: |
-        export VERSION=$(echo "${{ steps.release.outputs.tag_name }}" | sed 's/^v//')
+        export VERSION=$(jq -r '.["."]' < .release-please-manifest.json)
         yq e -i '.appVersion = env(VERSION)' helm/Chart.yaml
 
         CHART_VERSION=$(yq .version helm/Chart.yaml)
