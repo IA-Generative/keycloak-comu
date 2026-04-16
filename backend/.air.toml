@@ -1,0 +1,12 @@
+root = "."
+tmp_dir = "tmp"
+
+[build]
+  cmd = "go build -o ./tmp/server ./cmd/server"
+  bin = "./tmp/server"
+  include_ext = ["go", "yaml", "yml", "json", "html"]
+  exclude_dir = ["tmp", "vendor", "docs"]
+  delay = 400
+
+[log]
+  time = true

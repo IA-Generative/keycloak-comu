@@ -1,0 +1,58 @@
+server:
+  env: development
+  port: "8080"
+  public_url: http://localhost:8080
+  app_title: "Keycloak Community"
+  version: "unknown"
+  read_timeout_seconds: 10
+  write_timeout_seconds: 15
+  idle_timeout_seconds: 30
+  cors:
+    allowed_origins:
+      - http://localhost:5173
+      - http://127.0.0.1:5173
+      - http://localhost:8080
+    allowed_methods:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+      - OPTIONS
+    allowed_headers:
+      - Authorization
+      - Content-Type
+      - Accept
+    allow_credentials: true
+    max_age_seconds: 300
+
+database:
+  url: postgres://keycloak:password@localhost:5432/keycloak?sslmode=disable
+
+oidc:
+  issuer_url: http://localhost:8081/realms/mirai
+  internal_issuer_url: http://keycloak:8080/realms/mirai
+  jwks_url: http://localhost:8081/realms/mirai/protocol/openid-connect/certs
+  client_id: keycloak-comu
+  swagger_client_id: keycloak-comu-swagger
+
+keycloak:
+  url: http://localhost:8081
+  internal_url: http://keycloak:8080
+  realm: mirai
+  admin:
+    realm: master
+    username: admin
+    password: admin
+  root_group_path: "/comu"
+
+smtp:
+  enabled: true
+  host: mailhog
+  port: 1025
+  from: noreply@keycloak-comu.local
+  username: ""
+  password: ""
+
+frontend:
+  enabled: true
