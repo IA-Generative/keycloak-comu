@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/IA-Generative/keycloak-comu/compare/v1.0.1...v1.1.0) (2026-04-17)
+
+
+### Features
+
+* implement notifications streaming and broker for real-time updates ([9845f53](https://github.com/IA-Generative/keycloak-comu/commit/9845f531c9232a8a5e85c1085eeb6e272ce8eef7))
+
 ## [1.0.1](https://github.com/IA-Generative/keycloak-comu/compare/v1.0.0...v1.0.1) (2026-04-16)
 
 
