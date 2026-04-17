@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.1](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.0...v1.1.1) (2026-04-17)
+
+
+### Bug Fixes
+
+* improve team deletion logic by querying database directly ([051e5fb](https://github.com/IA-Generative/keycloak-comu/commit/051e5fb75e309a7830a06aa86ab2a42cbbb002dc))
+
 ## [1.1.0](https://github.com/IA-Generative/keycloak-comu/compare/v1.0.1...v1.1.0) (2026-04-17)
 
 
