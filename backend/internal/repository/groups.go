@@ -584,19 +584,21 @@ func (r *KeycloakRepository) EditTeam(ctx context.Context, input ports.EditTeamI
 }
 
 func (r *KeycloakRepository) DeleteTeam(ctx context.Context, input ports.DeleteTeamInput) error {
-	parentGroup, err := r.kc.Client.GetGroup(ctx, r.kc.GetToken(), r.realm, input.ParentID)
+	var g groupRow
+
+	err := r.db.GetContext(ctx, &g, `
+		SELECT g.id, g.name
+		FROM keycloak_group g
+		WHERE g.name = $1 AND g.realm_id = $2 AND g.parent_group = $3`,
+		input.Name, r.realmID, input.ParentID)
 	if err != nil {
-		return err
+		return fmt.Errorf("team not found")
 	}
 
-	if parentGroup.SubGroups != nil {
-		for _, g := range *parentGroup.SubGroups {
-			if deref(g.Name) == input.Name {
-				return r.kc.Client.DeleteGroup(ctx, r.kc.GetToken(), r.realm, deref(g.ID))
-			}
-		}
+	if g.ID == "" {
+		return fmt.Errorf("team not found")
 	}
-	return fmt.Errorf("team not found")
+	return r.kc.Client.DeleteGroup(ctx, r.kc.GetToken(), r.realm, g.ID)
 }
 
 // ── Settings & Attributes (writes via KC) ──────────────────────────────────
