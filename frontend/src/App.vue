@@ -3,7 +3,7 @@ import '@gouvfr/dsfr/dist/dsfr.min.css'
 import '@gouvminint/vue-dsfr/styles'
 
 import { DsfrFooter, useScheme } from '@gouvminint/vue-dsfr'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import { handleOidcCallbackIfPresent, getCurrentUser, login, logout } from '@/composables/useOidc'
 import { useNotificationsStore } from '@/stores/notifications'
@@ -30,13 +30,19 @@ onMounted(async () => {
       username.value = user.profile?.preferred_username ?? ''
       loggedIn.value = true
       await notificationsStore.fetchNotifications()
+      notificationsStore.startStream()
       loadFeatureFlags()
     } else {
+      notificationsStore.stopStream()
       await login()
     }
   } catch (err) {
     console.error('Auth init failed', err)
   }
+})
+
+onUnmounted(() => {
+  notificationsStore.stopStream()
 })
 
 const themeLight = {
@@ -79,7 +85,7 @@ const afterMandatoryLinks = computed(() => {
 
 <template>
   <div class="flex flex-col min-h-screen">
-    <Header :logged-in="loggedIn" :logo-text="appConfig.value?.appTitle" @logout="doLogout" @login="login" />
+    <Header :logged-in="loggedIn" :logo-text="appConfig?.appTitle" @logout="doLogout" @login="login" />
 
     <div class="fr-container fr-mt-4w grow">
       <RouterView v-if="loggedIn" />

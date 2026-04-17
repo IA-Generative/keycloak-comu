@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, watch } from 'vue'
+import { computed, onMounted, watch } from 'vue'
 import { DsfrModal } from '@gouvminint/vue-dsfr'
 import ManageGlobalRequest from '@/components/ManageGlobalRequest.vue'
 import InviteAlert from '@/components/InviteAlert.vue'
@@ -23,13 +23,11 @@ const requests = computed(() => notificationsStore.requests)
 
 function reloadNotifications() {
   if (props.isAuthenticated) {
-    notificationsStore.fetchNotifications()
+    void notificationsStore.fetchNotifications()
   }
 }
 
-let reloadInterval: ReturnType<typeof setInterval> | undefined
 onMounted(() => {
-  reloadInterval = setInterval(reloadNotifications, 30000)
   reloadNotifications()
 })
 
@@ -38,17 +36,12 @@ watch(() => props.displaying, (newVal) => {
     reloadNotifications()
   }
 })
-onUnmounted(() => {
-  if (reloadInterval) {
-    clearInterval(reloadInterval)
-  }
-})
 
 async function refresh(cb?: (() => Promise<void>) | (() => void)) {
   const res = await notificationsStore.fetchNotifications()
   if (cb) await cb()
 
-  if (!((res as any).invites?.length + (res as any).requests?.length)) {
+  if (!((res.invites?.length ?? 0) + (res.requests?.length ?? 0))) {
     emits('close')
   }
 }

@@ -122,7 +122,7 @@ instanceId: UNKNOWN
 app:
   env: production
   port: "8080"
-  publicUrl: "https://keycloak-comu.example.com"
+  publicUrl: ""
   appTitle: "Keycloak Community"
 
   oidc:

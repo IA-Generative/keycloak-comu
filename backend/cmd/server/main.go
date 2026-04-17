@@ -73,7 +73,8 @@ func main() {
 
 	// Application service
 
-	service := groupsapp.NewService(repo, mailer, metricsService, log)
+	notificationBroker := groupsapp.NewNotificationBroker()
+	service := groupsapp.NewService(repo, mailer, metricsService, notificationBroker, log)
 
 	router := api.NewRouter(cfg, db, authenticator, service, flags, log)
 

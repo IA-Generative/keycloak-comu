@@ -125,6 +125,7 @@ func NewRouter(cfg *appconfig.Config, db *sqlx.DB, authenticator *auth.Authentic
 	})
 
 	router.Route("/api", func(apiRouter chi.Router) {
+		registerNotificationStreamRoute(apiRouter, groupService, logger)
 		api := humachi.New(apiRouter, newHumaConfig(cfg))
 		registerAuthRoutes(api, cfg)
 		registerPublicConfigRoutes(api, cfg)

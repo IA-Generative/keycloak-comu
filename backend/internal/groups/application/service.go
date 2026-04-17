@@ -28,23 +28,26 @@ var (
 )
 
 type Service struct {
-	repo    ports.Repository
-	mailer  ports.Mailer
-	metrics ports.MetricsRecorder
-	log     *zap.Logger
+	repo     ports.Repository
+	mailer   ports.Mailer
+	metrics  ports.MetricsRecorder
+	notifier *NotificationBroker
+	log      *zap.Logger
 }
 
 func NewService(
 	groups ports.Repository,
 	mailer ports.Mailer,
 	metrics ports.MetricsRecorder,
+	notifier *NotificationBroker,
 	log *zap.Logger,
 ) *Service {
 	return &Service{
-		repo:    groups,
-		mailer:  mailer,
-		metrics: metrics,
-		log:     log,
+		repo:     groups,
+		mailer:   mailer,
+		metrics:  metrics,
+		notifier: notifier,
+		log:      log,
 	}
 }
 
@@ -86,6 +89,40 @@ func countOwners(group *domain.Group) int {
 		}
 	}
 	return count
+}
+
+func adminNotificationRecipients(group *domain.Group) []string {
+	userIDs := make([]string, 0, len(group.Members))
+	for _, member := range group.Members {
+		if member.MembershipLevel >= domain.LevelAdmin {
+			userIDs = append(userIDs, member.ID)
+		}
+	}
+	return userIDs
+}
+
+func inviteNotificationRecipients(group *domain.Group) []string {
+	userIDs := make([]string, 0, len(group.Invites))
+	for _, invite := range group.Invites {
+		userIDs = append(userIDs, invite.ID)
+	}
+	return userIDs
+}
+
+func (s *Service) publishNotifications(userIDs ...string) {
+	if s.notifier == nil {
+		return
+	}
+	s.notifier.Publish(userIDs...)
+}
+
+func (s *Service) SubscribeToNotifications(userID string) (<-chan struct{}, func()) {
+	if s.notifier == nil {
+		closed := make(chan struct{})
+		close(closed)
+		return closed, func() {}
+	}
+	return s.notifier.Subscribe(userID)
 }
 
 // CreateGroup creates a new group with the caller as owner.
@@ -136,7 +173,11 @@ func (s *Service) DeleteGroup(ctx context.Context, groupID string, requestorID s
 	if _, err := s.guard(group, requestorID, domain.LevelOwner); err != nil {
 		return err
 	}
+	usersToNotify := append(adminNotificationRecipients(group), inviteNotificationRecipients(group)...)
 	err = s.repo.DeleteGroup(ctx, groupID)
+	if err == nil {
+		s.publishNotifications(usersToNotify...)
+	}
 	return err
 }
 
@@ -175,6 +216,7 @@ func (s *Service) InviteUser(ctx context.Context, groupID string, email string, 
 	if err := s.repo.InviteMemberToGroup(ctx, groupID, user.ID); err != nil {
 		return err
 	}
+	s.publishNotifications(user.ID)
 	_ = s.mailer.SendGroupInvite(ctx, user.Email, user.FirstName+" "+user.LastName, group.ID, group.Name)
 	return nil
 }
@@ -198,12 +240,20 @@ func (s *Service) AcceptInvite(ctx context.Context, groupID string, userID strin
 	if err := s.repo.UninviteMemberFromGroup(ctx, groupID, userID); err != nil {
 		return err
 	}
-	return s.repo.AddMemberToGroup(ctx, groupID, userID)
+	if err := s.repo.AddMemberToGroup(ctx, groupID, userID); err != nil {
+		return err
+	}
+	s.publishNotifications(userID)
+	return nil
 }
 
 // DeclineInvite declines a pending invitation.
 func (s *Service) DeclineInvite(ctx context.Context, groupID string, userID string) error {
-	return s.repo.UninviteMemberFromGroup(ctx, groupID, userID)
+	if err := s.repo.UninviteMemberFromGroup(ctx, groupID, userID); err != nil {
+		return err
+	}
+	s.publishNotifications(userID)
+	return nil
 }
 
 // CancelInvite cancels a sent invitation (ADMIN+).
@@ -215,7 +265,11 @@ func (s *Service) CancelInvite(ctx context.Context, groupID string, targetUserID
 	if _, err := s.guard(group, requestorID, domain.LevelAdmin); err != nil {
 		return err
 	}
-	return s.repo.UninviteMemberFromGroup(ctx, groupID, targetUserID)
+	if err := s.repo.UninviteMemberFromGroup(ctx, groupID, targetUserID); err != nil {
+		return err
+	}
+	s.publishNotifications(targetUserID)
+	return nil
 }
 
 // RequestJoin creates a join request for a group.
@@ -248,6 +302,7 @@ func (s *Service) RequestJoin(ctx context.Context, groupID string, userID string
 	if err := s.repo.RequestJoinToGroup(ctx, groupID, userID); err != nil {
 		return err
 	}
+	s.publishNotifications(adminNotificationRecipients(group)...)
 
 	// Notify admins/owners
 	requester, _ := s.repo.GetUserByID(ctx, userID)
@@ -292,6 +347,7 @@ func (s *Service) AcceptRequest(ctx context.Context, groupID string, targetUserI
 	if err := s.repo.AddMemberToGroup(ctx, groupID, targetUserID); err != nil {
 		return err
 	}
+	s.publishNotifications(adminNotificationRecipients(group)...)
 	_ = s.mailer.SendJoinValidation(ctx, requester.Email, group.ID, group.Name)
 	return nil
 }
@@ -305,12 +361,24 @@ func (s *Service) DeclineRequest(ctx context.Context, groupID string, targetUser
 	if _, err := s.guard(group, requestorID, domain.LevelAdmin); err != nil {
 		return err
 	}
-	return s.repo.CancelRequestJoinToGroup(ctx, groupID, targetUserID)
+	if err := s.repo.CancelRequestJoinToGroup(ctx, groupID, targetUserID); err != nil {
+		return err
+	}
+	s.publishNotifications(adminNotificationRecipients(group)...)
+	return nil
 }
 
 // CancelRequest allows a user to cancel their own request.
 func (s *Service) CancelRequest(ctx context.Context, groupID string, userID string) error {
-	return s.repo.CancelRequestJoinToGroup(ctx, groupID, userID)
+	group, err := s.repo.GetGroupDetails(ctx, groupID, userID)
+	if err != nil {
+		return err
+	}
+	if err := s.repo.CancelRequestJoinToGroup(ctx, groupID, userID); err != nil {
+		return err
+	}
+	s.publishNotifications(adminNotificationRecipients(group)...)
+	return nil
 }
 
 // EditMembership changes a member's access level.
@@ -355,7 +423,11 @@ func (s *Service) EditMembership(ctx context.Context, input ports.EditMembership
 		return ErrCannotDemoteHigherLevel
 	}
 
-	return s.repo.SetUserLevelInGroup(ctx, input.GroupID, input.UserID, input.Level)
+	if err := s.repo.SetUserLevelInGroup(ctx, input.GroupID, input.UserID, input.Level); err != nil {
+		return err
+	}
+	s.publishNotifications(requestorID, input.UserID)
+	return nil
 }
 
 // KickMember removes a member from a group (ADMIN+).
@@ -386,7 +458,11 @@ func (s *Service) KickMember(ctx context.Context, groupID string, targetUserID s
 		return ErrCannotKickSameLevel
 	}
 
-	return s.repo.KickMemberFromGroup(ctx, groupID, targetUserID)
+	if err := s.repo.KickMemberFromGroup(ctx, groupID, targetUserID); err != nil {
+		return err
+	}
+	s.publishNotifications(requestorID, targetUserID)
+	return nil
 }
 
 // LeaveGroup removes the caller from a group.
@@ -401,12 +477,20 @@ func (s *Service) LeaveGroup(ctx context.Context, groupID string, userID string)
 	if myLevel == domain.LevelOwner && countOwners(group) <= 1 {
 		// If last member, delete the group
 		if len(group.Members) <= 1 {
-			return s.repo.DeleteGroup(ctx, groupID)
+			if err := s.repo.DeleteGroup(ctx, groupID); err != nil {
+				return err
+			}
+			s.publishNotifications(userID)
+			return nil
 		}
 		return ErrCannotLeaveOnlyOwner
 	}
 
-	return s.repo.KickMemberFromGroup(ctx, groupID, userID)
+	if err := s.repo.KickMemberFromGroup(ctx, groupID, userID); err != nil {
+		return err
+	}
+	s.publishNotifications(userID)
+	return nil
 }
 
 // EditTeam creates or updates a sub-team (ADMIN+).
