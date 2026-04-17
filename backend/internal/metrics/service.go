@@ -134,7 +134,7 @@ func (s *Service) ObserveGroupOperation(operation string, success bool) {
 }
 
 func (s *Service) ObserveEmailSent(status string) {
-	s.emailsSent.WithLabelValues(status, s.instanceID, s.version).Inc()
+	s.emailsSent.WithLabelValues(status).Inc()
 }
 
 // ── Periodic collection ────────────────────────────────────────────────────
