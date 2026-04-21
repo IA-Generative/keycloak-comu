@@ -1,11 +1,19 @@
 import { client } from '@/client/client.gen'
 import * as api from '@/client/sdk.gen'
-import { getBearerToken } from './useOidc'
+import { getBearerToken, login } from './useOidc';
 
 export interface NotificationsStreamConnection {
   close: () => void
   completed: Promise<void>
 }
+
+client.interceptors.response.use(async (res) => {
+  if (res.status === 401) {
+    console.warn('Unauthorized request:', res);
+    await login(); // Trigger login flow on 401 responses
+  }
+  return res;
+});
 
 // The generated client types will come from the OpenAPI spec.
 // Before generation, we define minimal placeholders for build safety.
