@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.4](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.3...v1.1.4) (2026-04-21)
+
+
+### Bug Fixes
+
+* handle unauthorized requests by triggering login flow on 401 responses ([ea417f2](https://github.com/IA-Generative/keycloak-comu/commit/ea417f28a9b46484298431af56952aa3ee51c04c))
+
 ## [1.1.3](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.2...v1.1.3) (2026-04-21)
 
 
