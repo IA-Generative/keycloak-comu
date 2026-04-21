@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Business Logic here: backend/internal/groups/README.md
 import { ref, computed } from 'vue'
 import { MembershipLevelNames } from '@/shared/MembershipLevel'
 import { DsfrButton, DsfrDataTable, DsfrModal } from '@gouvminint/vue-dsfr'
@@ -17,6 +18,8 @@ getUserId().then(id => currentUserId.value = id)
 
 const mylevel = computed(() => group.value.members?.find(m => m.id === currentUserId.value)?.membershipLevel || 0)
 
+const canManageMembers = computed(() => mylevel.value >= 20)
+
 const amIOwner = computed(() => {
   return mylevel.value >= 30
 })
@@ -28,7 +31,7 @@ type MemberRow = {
   lastName: { text: string, id: string }
   firstName: { text: string, id: string }
   email: string
-  actions: { member: GroupMemberDto, group: GroupDtoType, mylevel: number, onRefresh: () => void } | undefined
+  actions: { member: GroupMemberDto, group: GroupDtoType, mylevel: number } | undefined
 }
 const membersRows = computed<MemberRow[]>(() => {
   return (group.value.members ?? [])
@@ -53,7 +56,6 @@ const membersRows = computed<MemberRow[]>(() => {
             member,
             group: group.value,
             mylevel: mylevel.value,
-            onRefresh: () => groupStore.refreshGroup(),
           }
           : undefined),
       }
@@ -102,7 +104,7 @@ function sortFn(a: MemberRow, b: MemberRow): number {
 <template>
   <div>
     <div class="flex justify-between gap-5 flex-wrap">
-      <h3>{{ amIOwner ? 'Gérer les membres' : 'Membres' }}</h3>
+      <h3>{{ canManageMembers ? 'Gérer les membres' : 'Membres' }}</h3>
       <p>Total: {{ membersRows.length }}</p>
     </div>
     <div>
@@ -116,22 +118,23 @@ function sortFn(a: MemberRow, b: MemberRow): number {
               size="small" @click="pendingLeave = true">
               Quitter
             </DsfrButton>
-            <ActionMember v-else-if="(cell as MemberRow['actions'])" v-bind="(cell as MemberRow['actions'])" />
+            <ActionMember v-else-if="(cell as MemberRow['actions'])" :member="(cell as MemberRow['actions'])!.member"
+              :group="(cell as MemberRow['actions'])!.group" :mylevel="(cell as MemberRow['actions'])!.mylevel" />
           </template>
           <template v-else-if="colKey === 'email'">
             <a :href="`mailto:${cell as string}`">{{ cell }}</a>
           </template>
           <template v-else-if="colKey === 'lastName'">
-            {{ (cell as MemberRow[typeof colKey]).text }}
+            {{ (cell as MemberRow['lastName']).text }}
           </template>
           <template v-else-if="colKey === 'firstName'">
-            {{ (cell as MemberRow[typeof colKey]).text }}
+            {{ (cell as MemberRow['firstName']).text }}
           </template>
           <template v-else-if="colKey === 'identifier'">
             <strong>{{ cell }}</strong>
           </template>
           <template v-else-if="colKey === 'role'">
-            {{ (cell as MemberRow[typeof colKey]).text }}
+            {{ (cell as MemberRow['role']).text }}
           </template>
           <template v-else>
             {{ cell }}

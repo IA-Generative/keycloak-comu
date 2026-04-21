@@ -10,21 +10,22 @@ import (
 )
 
 var (
-	ErrInsufficientPermissions = errors.New("insufficient permissions")
-	ErrCannotLeaveOnlyOwner    = errors.New("cannot leave group as the only owner")
-	ErrCannotKickSelf          = errors.New("cannot kick yourself")
-	ErrCannotKickSameLevel     = errors.New("cannot kick user with same or higher level")
-	ErrCannotDemoteOnlyOwner   = errors.New("cannot demote the only owner")
-	ErrCannotGrantEqualLevel   = errors.New("cannot grant level equal to yours")
-	ErrCannotDemoteHigherLevel = errors.New("cannot demote user with higher level")
-	ErrUserAlreadyMember       = errors.New("user is already a member")
-	ErrUserAlreadyRequesting   = errors.New("user is already requesting to join")
-	ErrUserNotInvited          = errors.New("user not invited")
-	ErrUserNotRequesting       = errors.New("user is not requesting to join")
-	ErrGroupNotFound           = errors.New("group not found")
-	ErrUserNotFound            = errors.New("user not found")
-	ErrGroupAlreadyExists      = errors.New("group with this name already exists")
-	ErrInvalidLevel            = errors.New("invalid membership level")
+	ErrInsufficientPermissions      = errors.New("insufficient permissions")
+	ErrCannotLeaveOnlyOwner         = errors.New("cannot leave group as the only owner")
+	ErrCannotKickSelf               = errors.New("cannot kick yourself")
+	ErrCannotKickSameLevel          = errors.New("cannot kick user with same or higher level")
+	ErrCannotDemoteOnlyOwner        = errors.New("cannot demote the only owner")
+	ErrCannotGrantEqualLevel        = errors.New("cannot grant level equal to yours")
+	ErrCannotGrantHigherLevel       = errors.New("cannot grant level higher than yours")
+	ErrCannotDemoteHigherEqualLevel = errors.New("cannot demote user with higher or equal level")
+	ErrUserAlreadyMember            = errors.New("user is already a member")
+	ErrUserAlreadyRequesting        = errors.New("user is already requesting to join")
+	ErrUserNotInvited               = errors.New("user not invited")
+	ErrUserNotRequesting            = errors.New("user is not requesting to join")
+	ErrGroupNotFound                = errors.New("group not found")
+	ErrUserNotFound                 = errors.New("user not found")
+	ErrGroupAlreadyExists           = errors.New("group with this name already exists")
+	ErrInvalidLevel                 = errors.New("invalid membership level")
 )
 
 type Service struct {
@@ -409,18 +410,25 @@ func (s *Service) EditMembership(ctx context.Context, input ports.EditMembership
 	}
 
 	// Can't demote the only owner
-	if targetMember.MembershipLevel == domain.LevelOwner && input.Level < domain.LevelOwner && countOwners(group) <= 1 {
-		return ErrCannotDemoteOnlyOwner
-	}
-
-	// Non-owner can't grant equal level
-	if requestorLevel != domain.LevelOwner && input.Level >= requestorLevel {
-		return ErrCannotGrantEqualLevel
-	}
-
-	// Can't demote user with higher level (unless owner)
-	if requestorLevel != domain.LevelOwner && targetMember.MembershipLevel >= requestorLevel {
-		return ErrCannotDemoteHigherLevel
+	if requestorLevel == domain.LevelOwner {
+		if targetMember.ID == requestorID && input.Level < domain.LevelOwner && countOwners(group) <= 1 {
+			return ErrCannotDemoteOnlyOwner
+		}
+	} else {
+		// Self demotion/granting rules
+		if targetMember.ID == requestorID {
+			if input.Level > requestorLevel {
+				return ErrCannotGrantHigherLevel
+			}
+		} else {
+			if input.Level >= requestorLevel {
+				return ErrCannotGrantEqualLevel
+			}
+			// Can't change level of users with higher or equal level
+			if targetMember.MembershipLevel >= requestorLevel {
+				return ErrCannotDemoteHigherEqualLevel
+			}
+		}
 	}
 
 	if err := s.repo.SetUserLevelInGroup(ctx, input.GroupID, input.UserID, input.Level); err != nil {

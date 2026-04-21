@@ -174,7 +174,7 @@ func mapServiceError(err error) error {
 		errors.Is(err, groupsapp.ErrCannotKickSameLevel),
 		errors.Is(err, groupsapp.ErrCannotDemoteOnlyOwner),
 		errors.Is(err, groupsapp.ErrCannotGrantEqualLevel),
-		errors.Is(err, groupsapp.ErrCannotDemoteHigherLevel),
+		errors.Is(err, groupsapp.ErrCannotDemoteHigherEqualLevel),
 		errors.Is(err, groupsapp.ErrUserNotInvited),
 		errors.Is(err, groupsapp.ErrUserNotRequesting),
 		errors.Is(err, groupsapp.ErrInvalidLevel):

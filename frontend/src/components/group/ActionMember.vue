@@ -1,4 +1,5 @@
 <script setup lang="ts">
+// Business Logic here: backend/internal/groups/README.md
 import { ref, computed, nextTick } from 'vue'
 import { DsfrButton, DsfrModal, DsfrSelect } from '@gouvminint/vue-dsfr'
 import * as backend from '@/composables/useBackend'
@@ -19,6 +20,7 @@ getUserId().then(id => currentUserId.value = id)
 const itsMe = computed(() => currentUserId.value === props.member.id)
 const groupStore = useGroupStore()
 const dialogOpened = ref(false)
+const ownerCount = computed(() => props.group.members?.filter(member => member.membershipLevel === 30).length ?? 0)
 
 function openDialog() {
   dialogOpened.value = true
@@ -43,12 +45,52 @@ async function changeMemberLevel(userId: string, newLevel: number) {
   }
 }
 
-const targetMemberLevel = computed(() => props.member.membershipLevel)
-const options = computed(() => [
-  { value: 10, text: MembershipLevelNames[10] as string },
-  { value: 20, text: MembershipLevelNames[20] as string },
-  { value: 30, text: MembershipLevelNames[30] as string },
-].filter(option => props.mylevel >= 30 || option.value <= props.mylevel))
+const targetMemberLevel = computed(() => String(props.member.membershipLevel))
+const availableRoleOptions = computed< { value: number, text: string }[] | null>(() => {
+  const baseOptions = [
+    { value: 10, text: MembershipLevelNames[10] as string },
+    { value: 20, text: MembershipLevelNames[20] as string },
+    { value: 30, text: MembershipLevelNames[30] as string },
+  ]
+
+  if (props.mylevel < 20) {
+    return null
+  }
+
+  if (props.mylevel >= 30) {
+    if (props.member.membershipLevel === 30 && ownerCount.value <= 1) {
+      return baseOptions.filter(option => option.value === 30)
+    }
+    return baseOptions
+  }
+
+  if (itsMe.value) {
+    return baseOptions.filter(option => option.value <= props.mylevel)
+  }
+
+  if (props.member.membershipLevel >= props.mylevel) {
+    return null
+  }
+
+  return baseOptions.filter(option => option.value < props.mylevel)
+})
+
+const canKickMember = computed(() => !itsMe.value && props.mylevel >= 20 && props.member.membershipLevel < props.mylevel)
+const displayName = computed(() => {
+  const fullName = `${props.member.first_name || ''} ${props.member.last_name || ''}`.trim()
+  return fullName || props.member.email
+})
+
+const canLeaveGroup = computed(() => {
+  if (itsMe.value) {
+    // Owner can leave only if there's another owner
+    if (props.member.membershipLevel === 30) {
+      return ownerCount.value > 1
+    }
+    return true
+  }
+  return false
+})
 </script>
 
 <template>
@@ -58,12 +100,14 @@ const options = computed(() => [
     </DsfrButton>
     <DsfrModal v-if="dialogOpened" v-model:opened="dialogOpened" title="" @close="dialogOpened = false">
       <template #default>
-        <DsfrSelect v-if="mylevel >= 20 && options.length > 0" v-model="targetMemberLevel"
-          :label="`Rôle de ${(`${member.first_name} ${member.last_name}`) || member.email}`" :disabled="isLoading"
-          :options="options" @update:model-value="(v: number | string) => changeMemberLevel(member.id, Number(v))" />
+        <DsfrSelect v-if="availableRoleOptions && availableRoleOptions.length > 1" :model-value="targetMemberLevel"
+          :label="`Rôle de ${displayName}`" :disabled="isLoading" :options="availableRoleOptions"
+          @update:model-value="(v: number | string) => changeMemberLevel(member.id, Number(v))" />
         <DsfrButton v-if="itsMe" class="fr-mt-4w self-end" type="button" label="Quitter le groupe"
-          @click="groupStore.leaveGroup()" />
-        <DsfrButton v-else class="fr-mt-4w self-end" type="button" label="Retirer du groupe"
+          @click="groupStore.leaveGroup()" 
+          :disabled="!canLeaveGroup"
+          />
+        <DsfrButton v-else-if="canKickMember" class="fr-mt-4w self-end" type="button" label="Retirer du groupe"
           @click="groupStore.kickMember(member.id, group.id); dialogOpened = false" />
       </template>
     </DsfrModal>
