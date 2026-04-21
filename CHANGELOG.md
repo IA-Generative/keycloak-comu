@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.3](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.2...v1.1.3) (2026-04-21)
+
+
+### Bug Fixes
+
+* update membership level rules and enhance group management logic ([84e8073](https://github.com/IA-Generative/keycloak-comu/commit/84e8073d35faf384ab0d2a4949b0ef35139f3cc6))
+
 ## [1.1.2](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.1...v1.1.2) (2026-04-17)
 
 
