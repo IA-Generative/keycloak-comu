@@ -4,6 +4,7 @@ import { DsfrHeader } from '@gouvminint/vue-dsfr'
 import type { DsfrHeaderMenuLinkProps } from '@gouvminint/vue-dsfr'
 import { useNotificationsStore } from '@/stores/notifications'
 import NotificationsList from '@/components/NotificationsList.vue'
+import NotificationsPopUp from '@/components/NotificationsPopUp.vue'
 
 const props = defineProps<{
   loggedIn: boolean
@@ -93,6 +94,15 @@ const quickLinks = computed<DsfrHeaderMenuLinkProps[]>(() => {
 
 <template>
   <DsfrHeader home-to="/" :quick-links="quickLinks" :logo-text="logoText" class="grow-0" />
-  <NotificationsList :displaying="isDisplayingNotifications" :is-authenticated="loggedIn"
-    @close="isDisplayingNotifications = false" />
+  <NotificationsPopUp
+    class=""
+    v-if="props.loggedIn && notificationsStore.notificationsLength > 0"
+    :count="notificationsStore.notificationsLength" 
+    @click="isDisplayingNotifications = true"
+  />
+  <NotificationsList
+    :displaying="isDisplayingNotifications"
+    :is-authenticated="loggedIn"
+    @close="isDisplayingNotifications = false"
+  />
 </template>

@@ -2,15 +2,15 @@
 import { ref } from 'vue'
 import { RouterLink } from 'vue-router'
 import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
-import type { NotificationsDtoType } from '@/shared/types'
+import type { GroupSummary } from '@/shared/types'
 import { useGroupStore } from '@/stores/group'
 
 const props = defineProps<{
-  group: NotificationsDtoType['invites'][0]
+  group: GroupSummary
 }>()
 
 const emits = defineEmits<{
-  (e: 'refresh'): void
+  refresh: []
 }>()
 
 const groupStore = useGroupStore()

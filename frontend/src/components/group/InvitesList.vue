@@ -25,7 +25,7 @@ async function declineRequest(userId: string) {
 </script>
 
 <template>
-  <div v-if="group.invites?.length > 0">
+  <div v-if="group.invites && group.invites?.length > 0">
     <h3>Invitations en attente</h3>
     <div class="flex flex-col">
       <div v-for="invite in group.invites" :key="invite.id" small type="info"
@@ -41,7 +41,7 @@ async function declineRequest(userId: string) {
       </div>
     </div>
   </div>
-  <div v-if="group.requests?.length > 0">
+  <div v-if="group.requests && group.requests.length > 0" id="requests">
     <h3>Demandes d'adhésion</h3>
     <div class="flex flex-col">
       <div v-for="request in group.requests" :key="request.id" small type="info"
