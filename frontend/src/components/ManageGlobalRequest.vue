@@ -1,5 +1,5 @@
-<script setup lang="ts">
-import { computed, ref } from 'vue'
+           <script setup lang="ts">
+import { computed, ref, watch } from 'vue'
 import { RouterLink } from 'vue-router'
 import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
 import type { GlobalRequestType } from '@/shared/types'
@@ -7,7 +7,7 @@ import { useGroupStore } from '@/stores/group'
 
 const props = defineProps<{ request: GlobalRequestType }>()
 const emits = defineEmits<{
-  (e: 'refresh'): void
+  refresh: []
 }>()
 
 const request = computed(() => props.request)
@@ -33,7 +33,7 @@ async function triggerAction(fn: (...args: any[]) => Promise<void>, args: any[])
 <template>
   <DsfrAlert small class="fr-mb-2w flex justify-between gap-4" type="info">
     <div>
-      {{ getIdentity() }} demande à rejoindre le groupe <RouterLink :to="`/g/${request.groupId}`">
+      {{ getIdentity() }} demande à rejoindre le groupe <RouterLink :to="`/g/${request.groupId}/users`">
         {{ request.groupName }}
       </RouterLink>.<br>
     </div>
