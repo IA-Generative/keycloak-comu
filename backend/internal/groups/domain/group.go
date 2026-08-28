@@ -28,7 +28,8 @@ type Team struct {
 }
 
 type GroupSettings struct {
-	AutoAcceptRequests bool `json:"autoAcceptRequests"`
+	AutoAcceptRequests *bool `json:"autoAcceptRequests,omitempty"`
+	SearchVisibility   *bool `json:"searchVisible,omitempty"`
 }
 
 type Group struct {

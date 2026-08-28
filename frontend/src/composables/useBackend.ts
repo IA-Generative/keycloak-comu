@@ -1,6 +1,7 @@
 import { client } from '@/client/client.gen'
 import * as api from '@/client/sdk.gen'
 import { getBearerToken, login } from './useOidc';
+import type { UpdateSettingsInputBody } from '@/client';
 
 export interface NotificationsStreamConnection {
   close: () => void
@@ -151,8 +152,8 @@ export async function deleteTeam(parentId: string, name: string) {
 
 // ── Settings ────────────────────────────────────────────────────────────
 
-export async function updateGroupSettings(groupId: string, autoAcceptRequests?: boolean) {
-  await api.updateGroupSettings({ body: { groupId, autoAcceptRequests } })
+export async function updateGroupSettings(body: UpdateSettingsInputBody) {
+  await api.updateGroupSettings({ body })
 }
 
 export async function updateGroupLinks(groupId: string, links: string[]) {
