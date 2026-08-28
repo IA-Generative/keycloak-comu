@@ -293,7 +293,7 @@ func (s *Service) RequestJoin(ctx context.Context, groupID string, userID string
 	}
 
 	// Check autoAcceptRequests
-	if group.Settings.AutoAcceptRequests {
+	if group.Settings.AutoAcceptRequests != nil && *group.Settings.AutoAcceptRequests {
 		if err := s.repo.AddMemberToGroup(ctx, groupID, userID); err != nil {
 			return err
 		}

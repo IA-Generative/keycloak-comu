@@ -143,11 +143,14 @@ func (r *KeycloakRepository) GetGroupDetails(ctx context.Context, groupID string
 		Description: merged.description,
 		TOS:         merged.tos,
 		Links:       merged.links,
-		Settings:    domain.GroupSettings{AutoAcceptRequests: merged.autoAcceptRequests},
-		Members:     nonNil(groupMembers),
-		Invites:     nonNil(invites),
-		Requests:    nonNil(requests),
-		Teams:       nonNil(teams),
+		Settings: domain.GroupSettings{
+			AutoAcceptRequests: &merged.autoAcceptRequests,
+			SearchVisibility:   &merged.searchVisible,
+		},
+		Members:  nonNil(groupMembers),
+		Invites:  nonNil(invites),
+		Requests: nonNil(requests),
+		Teams:    nonNil(teams),
 	}, nil
 }
 
@@ -191,53 +194,67 @@ func (r *KeycloakRepository) SearchGroups(ctx context.Context, input ports.Searc
 	likePattern := "%" + input.Search + "%"
 	rootID := deref(r.rootGroupID)
 	offset := input.Page * input.PageSize
-	useTrgm := r.flags != nil && r.flags.IsEnabled("trgmSearch")
+	useTrgm := r.flags != nil && r.flags.IsEnabled("trgmSearch") && !input.Exact
+
+	baseCTE := `
+		WITH filtered AS (
+			SELECT g.id, g.name
+			FROM keycloak_group g
+			WHERE g.realm_id = $1
+				AND g.parent_group = $2
+				AND NOT EXISTS (
+					SELECT 1
+					FROM group_attribute ga
+					WHERE ga.group_id = g.id
+						AND ga.name = 'keycloak-comu.settings.searchVisible'
+						AND ga.value = 'false'
+				)
+				AND %s
+		)
+	`
+
+	var searchCondition string
+	var searchArgs []any
+	orderBy := ""
+
+	if useTrgm {
+		searchCondition = "(g.name ILIKE $3 OR word_similarity($4, g.name) > 0.2)"
+		searchArgs = []any{likePattern, input.Search}
+		orderBy = "ORDER BY (name ILIKE $3)::int DESC, word_similarity($4, name) DESC"
+	} else if input.Exact {
+		searchCondition = "g.name ILIKE $3"
+		searchArgs = []any{input.Search}
+	} else {
+		searchCondition = "g.name ILIKE $3"
+		searchArgs = []any{likePattern}
+	}
+
+	cte := fmt.Sprintf(baseCTE, searchCondition)
+	countQuery := cte + `SELECT count(*) FROM filtered`
+	baseArgs := []any{r.realmID, rootID}
+	countArgs := append(baseArgs, searchArgs...)
 
 	// Count total matches
 	var total int
-	if useTrgm {
-		if err := r.db.GetContext(ctx, &total, `
-			SELECT count(*) FROM keycloak_group
-			WHERE (name ILIKE $1 OR word_similarity($2, name) > 0.2) AND realm_id = $3 AND parent_group = $4`,
-			likePattern, input.Search, r.realmID, rootID); err != nil {
-			return nil, fmt.Errorf("count groups: %w", err)
-		}
-	} else {
-		if err := r.db.GetContext(ctx, &total, `
-			SELECT count(*) FROM keycloak_group
-			WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $3`,
-			likePattern, r.realmID, rootID); err != nil {
-			return nil, fmt.Errorf("count groups: %w", err)
-		}
+	if err := r.db.GetContext(ctx, &total, countQuery, countArgs...); err != nil {
+		return nil, fmt.Errorf("count groups: %w", err)
 	}
 
 	// Fetch page
+	limitPos := 3 + len(searchArgs)
+	offsetPos := limitPos + 1
+	selectQuery := cte + "SELECT id, name FROM filtered"
+	if orderBy != "" {
+		selectQuery += "\n" + orderBy
+	}
+	selectQuery += fmt.Sprintf("\nLIMIT $%d OFFSET $%d", limitPos, offsetPos)
+
+	selectArgs := append(baseArgs, searchArgs...)
+	selectArgs = append(selectArgs, input.PageSize, offset)
+
 	var groups []groupRow
-	if useTrgm && !input.Exact {
-		if err := r.db.SelectContext(ctx, &groups, `
-			SELECT id, name FROM keycloak_group
-			WHERE (name ILIKE $1 OR word_similarity($2, name) > 0.2) AND realm_id = $3 AND parent_group = $4
-			ORDER BY (name ILIKE $1)::int DESC, word_similarity($2, name) DESC
-			LIMIT $5 OFFSET $6`,
-			likePattern, input.Search, r.realmID, rootID, input.PageSize, offset); err != nil {
-			return nil, err
-		}
-	} else if input.Exact {
-		if err := r.db.SelectContext(ctx, &groups, `
-			SELECT id, name FROM keycloak_group
-			WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $3
-			LIMIT $4 OFFSET $5`,
-			input.Search, r.realmID, rootID, input.PageSize, offset); err != nil {
-			return nil, err
-		}
-	} else {
-		if err := r.db.SelectContext(ctx, &groups, `
-			SELECT id, name FROM keycloak_group
-			WHERE name ILIKE $1 AND realm_id = $2 AND parent_group = $3
-			LIMIT $4 OFFSET $5`,
-			likePattern, r.realmID, rootID, input.PageSize, offset); err != nil {
-			return nil, err
-		}
+	if err := r.db.SelectContext(ctx, &groups, selectQuery, selectArgs...); err != nil {
+		return nil, err
 	}
 
 	// Fetch owners for all returned groups
@@ -609,7 +626,12 @@ func (r *KeycloakRepository) SetGroupSettings(ctx context.Context, input ports.U
 		return err
 	}
 	attrs := safeAttrs(kcGroup.Attributes)
-	attrs[settingsPrefix+"autoAcceptRequests"] = []string{boolToStr(input.Settings.AutoAcceptRequests)}
+	if input.Settings.AutoAcceptRequests != nil {
+		attrs[settingsPrefix+"autoAcceptRequests"] = []string{boolToStr(*input.Settings.AutoAcceptRequests)}
+	}
+	if input.Settings.SearchVisibility != nil {
+		attrs[settingsPrefix+"searchVisible"] = []string{boolToStr(*input.Settings.SearchVisibility)}
+	}
 	kcGroup.Attributes = &attrs
 	return r.kc.Client.UpdateGroup(ctx, r.kc.GetToken(), r.realm, *kcGroup)
 }
@@ -671,6 +693,7 @@ type mergedAttrs struct {
 	description        string
 	tos                string
 	autoAcceptRequests bool
+	searchVisible      bool
 }
 
 func mergeAttributes(rows []attributeRow) mergedAttrs {
@@ -692,6 +715,8 @@ func mergeAttributes(rows []attributeRow) mergedAttrs {
 			m.tos = r.Value
 		case settingsPrefix + "autoAcceptRequests":
 			m.autoAcceptRequests = r.Value == "true"
+		case settingsPrefix + "searchVisible":
+			m.searchVisible = r.Value == "true"
 		}
 	}
 	if m.links == nil {

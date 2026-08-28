@@ -106,6 +106,7 @@ type updateSettingsInput struct {
 	Body struct {
 		GroupID            string `json:"groupId" format:"uuid"`
 		AutoAcceptRequests *bool  `json:"autoAcceptRequests,omitempty"`
+		SearchVisibility   *bool  `json:"searchVisible,omitempty"`
 	}
 }
 
@@ -287,7 +288,10 @@ func registerGroupRoutes(api huma.API, service *groupsapp.Service, logger *zap.L
 		}
 		settings := domain.GroupSettings{}
 		if input.Body.AutoAcceptRequests != nil {
-			settings.AutoAcceptRequests = *input.Body.AutoAcceptRequests
+			settings.AutoAcceptRequests = input.Body.AutoAcceptRequests
+		}
+		if input.Body.SearchVisibility != nil {
+			settings.SearchVisibility = input.Body.SearchVisibility
 		}
 		if err := service.UpdateSettings(ctx, ports.UpdateSettingsInput{
 			GroupID:  input.Body.GroupID,
