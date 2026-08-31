@@ -89,7 +89,7 @@ func (r *KeycloakRepository) GetUserSettings(ctx context.Context, userID string)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 
 	settings := &domain.UserSettings{}
 	for rows.Next() {
@@ -101,6 +101,9 @@ func (r *KeycloakRepository) GetUserSettings(ctx context.Context, userID string)
 			b := value == "true"
 			settings.AutoAcceptInvites = &b
 		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
 	}
 	return settings, nil
 }

@@ -42,14 +42,14 @@ func sanitize(s string) string {
 func newHumaConfig(cfg *appconfig.Config) huma.Config {
 	config := huma.DefaultConfig("Keycloak Community API", "1.0.0")
 	config.OpenAPIPath = "/openapi"
-	config.DocsRenderer = huma.DocsRendererSwaggerUI
+	config.DocsRenderer = huma.DocsRendererStoplightElements
 	config.CreateHooks = nil
-	config.OpenAPI.Servers = []*huma.Server{{URL: cfg.Server.PublicURL + "/api"}}
-	config.OpenAPI.Security = []map[string][]string{{"Authorization": {"basic"}}}
-	config.OpenAPI.Components = &huma.Components{SecuritySchemes: map[string]*huma.SecurityScheme{
-		"Authorization": {
+	config.Servers = []*huma.Server{{URL: cfg.Server.PublicURL + "/api"}}
+	config.Security = []map[string][]string{{"bearerAuth": {}}}
+	config.Components = &huma.Components{SecuritySchemes: map[string]*huma.SecurityScheme{
+		"bearerAuth": {
 			Type:         "http",
-			Name:         "Authorization Code",
+			Name:         "Authorization",
 			Scheme:       "bearer",
 			BearerFormat: "JWT",
 		},
@@ -75,7 +75,7 @@ func WriteSpec(cfg *appconfig.Config, log *zap.Logger) {
 	if err != nil {
 		log.Panic("failed to create spec file", zap.Error(err))
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	enc := json.NewEncoder(f)
 	enc.SetIndent("", "\t")
@@ -220,6 +220,7 @@ func registerAuthRoutes(api huma.API, cfg *appconfig.Config) {
 		Path:        "/auth/config",
 		Tags:        []string{"auth"},
 		Summary:     "OIDC client settings",
+		Security:    []map[string][]string{},
 	}, func(_ context.Context, _ *struct{}) (*authConfigOutput, error) {
 		issuer := strings.TrimRight(cfg.OIDC.IssuerURL, "/")
 		output := &authConfigOutput{}

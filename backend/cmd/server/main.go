@@ -30,7 +30,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	defer log.Sync()
+	defer func() { _ = log.Sync() }()
 
 	// Fast path: write OpenAPI spec without connecting to any external service.
 	if cfg.Server.WriteSpecOnly {
@@ -43,7 +43,7 @@ func main() {
 	if err != nil {
 		log.Fatal("postgres connection failed", logger.Error(err))
 	}
-	defer db.Close()
+	defer func() { _ = db.Close() }()
 
 	authenticator, err := auth.NewAuthenticator(cfg.OIDC)
 	if err != nil {
