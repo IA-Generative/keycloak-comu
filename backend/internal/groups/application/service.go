@@ -2,7 +2,11 @@ package application
 
 import (
 	"context"
+	"crypto/rand"
 	"errors"
+	"math/big"
+	"regexp"
+	"strings"
 
 	"github.com/IA-Generative/keycloak-comu-new/backend/internal/groups/domain"
 	"github.com/IA-Generative/keycloak-comu-new/backend/internal/groups/ports"
@@ -26,7 +30,10 @@ var (
 	ErrUserNotFound                 = errors.New("user not found")
 	ErrGroupAlreadyExists           = errors.New("group with this name already exists")
 	ErrInvalidLevel                 = errors.New("invalid membership level")
+	ErrPredefinedInviteNotFound     = errors.New("predefined invitation not found")
 )
+
+var predefinedInviteCodePattern = regexp.MustCompile(`^[A-Za-z0-9]{7}$`)
 
 type Service struct {
 	repo     ports.Repository
@@ -245,6 +252,149 @@ func (s *Service) AcceptInvite(ctx context.Context, groupID string, userID strin
 		return err
 	}
 	s.publishNotifications(userID)
+	return nil
+}
+
+// ListPredefinedInvites returns predefined invite links for a group (ADMIN+).
+func (s *Service) ListPredefinedInvites(ctx context.Context, groupID, requestorID string) ([]domain.PredefinedInvite, error) {
+	group, err := s.repo.GetGroupDetails(ctx, groupID, requestorID)
+	if err != nil {
+		return nil, err
+	}
+	if _, err := s.guard(group, requestorID, domain.LevelAdmin); err != nil {
+		return nil, err
+	}
+	return s.repo.ListPredefinedInvites(ctx, groupID)
+}
+
+// CreatePredefinedInvite creates a new invite link (ADMIN+, role ≤ caller level).
+func (s *Service) CreatePredefinedInvite(ctx context.Context, input ports.PredefinedInviteLinkInput, requestorID string) (*domain.PredefinedInvite, error) {
+	group, err := s.repo.GetGroupDetails(ctx, input.GroupID, requestorID)
+	if err != nil {
+		return nil, err
+	}
+	callerLevel, err := s.guard(group, requestorID, domain.LevelAdmin)
+	if err != nil {
+		return nil, err
+	}
+	if roleLevel(input.Role) > callerLevel {
+		return nil, ErrCannotGrantHigherLevel
+	}
+
+	existing, err := s.repo.ListPredefinedInvites(ctx, input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	for _, inv := range existing {
+		if inviteMatchesInput(inv, input) {
+			return &inv, nil
+		}
+	}
+
+	code, err := s.uniqueInviteCode(ctx)
+	if err != nil {
+		return nil, err
+	}
+	input.Code = code
+	return s.repo.CreatePredefinedInvite(ctx, input)
+}
+
+// DeletePredefinedInvite deletes an invite link (ADMIN+).
+func (s *Service) DeletePredefinedInvite(ctx context.Context, groupID, code, requestorID string) error {
+	if !predefinedInviteCodePattern.MatchString(code) {
+		return ErrPredefinedInviteNotFound
+	}
+	group, err := s.repo.GetGroupDetails(ctx, groupID, requestorID)
+	if err != nil {
+		return err
+	}
+	if _, err := s.guard(group, requestorID, domain.LevelAdmin); err != nil {
+		return err
+	}
+	existing, err := s.repo.GetPredefinedInviteByCode(ctx, code)
+	if err != nil {
+		return err
+	}
+	if existing == nil || existing.GroupID != groupID {
+		return ErrPredefinedInviteNotFound
+	}
+	return s.repo.DeletePredefinedInvite(ctx, groupID, code)
+}
+
+// AcceptInviteByCode accepts a predefined invitation code.
+func (s *Service) AcceptInviteByCode(ctx context.Context, code string, userID string) error {
+	code = strings.TrimSpace(code)
+	if !predefinedInviteCodePattern.MatchString(code) {
+		return ErrPredefinedInviteNotFound
+	}
+
+	invite, err := s.repo.GetPredefinedInviteByCode(ctx, code)
+	if err != nil {
+		return err
+	}
+	if invite == nil {
+		return ErrPredefinedInviteNotFound
+	}
+
+	group, err := s.repo.GetGroupDetails(ctx, invite.GroupID, userID)
+	if err != nil {
+		return err
+	}
+
+	// Find existing membership
+	var existing *domain.GroupMember
+	for i := range group.Members {
+		if group.Members[i].ID == userID {
+			existing = &group.Members[i]
+			break
+		}
+	}
+
+	if existing != nil {
+		return s.applyInviteToExistingMember(ctx, invite, existing, group)
+	}
+
+	if err := s.repo.ConsumePredefinedInvite(ctx, invite, userID); err != nil {
+		return err
+	}
+	s.publishNotifications(userID)
+	return nil
+}
+
+// applyInviteToExistingMember upgrades role and adds teams for an already-joined user.
+func (s *Service) applyInviteToExistingMember(ctx context.Context, invite *domain.PredefinedInvite, member *domain.GroupMember, group *domain.Group) error {
+	changed := false
+
+	inviteLevel := roleLevel(invite.Role)
+	if inviteLevel > member.MembershipLevel {
+		if err := s.repo.SetUserLevelInGroup(ctx, invite.GroupID, member.ID, inviteLevel); err != nil {
+			return err
+		}
+		changed = true
+	}
+
+	currentTeams := make(map[string]struct{})
+	for _, team := range group.Teams {
+		for _, memberID := range team.Members {
+			if memberID == member.ID {
+				currentTeams[team.Name] = struct{}{}
+				break
+			}
+		}
+	}
+	for _, teamName := range invite.Teams {
+		if _, alreadyIn := currentTeams[teamName]; alreadyIn {
+			continue
+		}
+		if err := s.repo.AddUserToTeamByName(ctx, invite.GroupID, teamName, member.ID); err != nil {
+			return err
+		}
+		changed = true
+	}
+
+	if changed {
+		s.publishNotifications(member.ID)
+	}
 	return nil
 }
 
@@ -586,4 +736,81 @@ func (s *Service) SetUserSettings(ctx context.Context, userID string, settings d
 // SearchUsers searches users by email/name.
 func (s *Service) SearchUsers(ctx context.Context, search string, excludeGroupID string) ([]domain.User, error) {
 	return s.repo.SearchUsers(ctx, search, excludeGroupID)
+}
+
+const inviteCodeAlphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+
+func (s *Service) uniqueInviteCode(ctx context.Context) (string, error) {
+	max := big.NewInt(int64(len(inviteCodeAlphabet)))
+	for range 32 {
+		b := make([]byte, 7)
+		for i := range b {
+			n, err := rand.Int(rand.Reader, max)
+			if err != nil {
+				return "", err
+			}
+			b[i] = inviteCodeAlphabet[n.Int64()]
+		}
+		code := string(b)
+		existing, err := s.repo.GetPredefinedInviteByCode(ctx, code)
+		if err != nil {
+			return "", err
+		}
+		if existing == nil {
+			return code, nil
+		}
+	}
+	return "", errors.New("failed to generate unique invite code")
+}
+
+// GetPredefinedInvitePreview returns invite info (code valid, not expired, not exhausted) with group TOS – does not consume.
+func (s *Service) GetPredefinedInvitePreview(ctx context.Context, code string) (*domain.PredefinedInvite, error) {
+	code = strings.TrimSpace(code)
+	if !predefinedInviteCodePattern.MatchString(code) {
+		return nil, ErrPredefinedInviteNotFound
+	}
+	invite, err := s.repo.GetPredefinedInviteByCode(ctx, code)
+	if err != nil {
+		return nil, err
+	}
+	if invite == nil {
+		return nil, ErrPredefinedInviteNotFound
+	}
+	if group, err := s.repo.GetGroupDetails(ctx, invite.GroupID, ""); err == nil && group != nil {
+		invite.GroupTOS = group.TOS
+	}
+	return invite, nil
+}
+
+func roleLevel(role string) int {
+	switch strings.ToLower(role) {
+	case "owner":
+		return domain.LevelOwner
+	case "admin":
+		return domain.LevelAdmin
+	default:
+		return domain.LevelMember
+	}
+}
+
+func inviteMatchesInput(inv domain.PredefinedInvite, input ports.PredefinedInviteLinkInput) bool {
+	if !strings.EqualFold(inv.Role, input.Role) {
+		return false
+	}
+	if inv.RedirectURL != strings.TrimSpace(input.RedirectURL) {
+		return false
+	}
+	if len(inv.Teams) != len(input.Teams) {
+		return false
+	}
+	teamSet := make(map[string]struct{}, len(inv.Teams))
+	for _, t := range inv.Teams {
+		teamSet[t] = struct{}{}
+	}
+	for _, t := range input.Teams {
+		if _, ok := teamSet[t]; !ok {
+			return false
+		}
+	}
+	return true
 }

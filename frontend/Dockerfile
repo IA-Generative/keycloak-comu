@@ -1,12 +1,14 @@
-FROM node:24-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
-COPY package.json pnpm-lock.yaml* .dsfr.yml ./
-RUN npm i
+RUN npm install -g pnpm
+
+COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* .dsfr.yml ./
+RUN pnpm install --frozen-lockfile
 
 COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["pnpm", "run", "dev"]

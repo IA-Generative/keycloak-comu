@@ -32,7 +32,9 @@ export async function getCurrentUser(): Promise<User | null> {
 }
 
 export async function login(): Promise<void> {
-  await (await getManager()).signinRedirect()
+  await (await getManager()).signinRedirect({
+    redirect_uri: window.location.origin + window.location.pathname,
+  })
 }
 
 export async function logout(): Promise<void> {

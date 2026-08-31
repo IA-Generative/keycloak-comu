@@ -1,10 +1,10 @@
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue'
+import { ref, onMounted } from 'vue'
 import { DsfrTable } from '@gouvminint/vue-dsfr'
 import { getCurrentUser } from '@/composables/useOidc'
 
 const userProfile = ref<any>(null)
-onBeforeMount(async () => {
+onMounted(async () => {
   const user = await getCurrentUser()
   if (user?.profile) {
     userProfile.value = user.profile

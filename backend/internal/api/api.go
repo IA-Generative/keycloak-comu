@@ -63,6 +63,7 @@ func WriteSpec(cfg *appconfig.Config, log *zap.Logger) {
 	registerAuthRoutes(api, cfg)
 	registerPublicConfigRoutes(api, cfg)
 	registerGroupRoutes(api, nil, log)
+	registerInviteRoutes(api, nil, log)
 	registerUserRoutes(api, nil, log)
 	registerFeatureFlagRoutes(api, nil)
 
@@ -130,6 +131,7 @@ func NewRouter(cfg *appconfig.Config, db *sqlx.DB, authenticator *auth.Authentic
 		registerAuthRoutes(api, cfg)
 		registerPublicConfigRoutes(api, cfg)
 		registerGroupRoutes(api, groupService, logger)
+		registerInviteRoutes(api, groupService, logger)
 		registerUserRoutes(api, groupService, logger)
 		registerFeatureFlagRoutes(api, flags)
 	})
@@ -165,6 +167,8 @@ func mapServiceError(err error) error {
 		return huma.Error404NotFound(err.Error())
 	case errors.Is(err, groupsapp.ErrUserNotFound):
 		return huma.Error404NotFound(err.Error())
+	case errors.Is(err, groupsapp.ErrPredefinedInviteNotFound):
+		return huma.Error404NotFound(err.Error())
 	case errors.Is(err, groupsapp.ErrUserAlreadyMember),
 		errors.Is(err, groupsapp.ErrUserAlreadyRequesting),
 		errors.Is(err, groupsapp.ErrGroupAlreadyExists):
@@ -174,6 +178,7 @@ func mapServiceError(err error) error {
 		errors.Is(err, groupsapp.ErrCannotKickSameLevel),
 		errors.Is(err, groupsapp.ErrCannotDemoteOnlyOwner),
 		errors.Is(err, groupsapp.ErrCannotGrantEqualLevel),
+		errors.Is(err, groupsapp.ErrCannotGrantHigherLevel),
 		errors.Is(err, groupsapp.ErrCannotDemoteHigherEqualLevel),
 		errors.Is(err, groupsapp.ErrUserNotInvited),
 		errors.Is(err, groupsapp.ErrUserNotRequesting),

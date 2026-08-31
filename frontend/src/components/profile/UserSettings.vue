@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, onBeforeMount } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import { DsfrSegmentedSet } from '@gouvminint/vue-dsfr'
 import * as backend from '@/composables/useBackend'
 import { yesNoOptions } from '@/shared/schemas'
@@ -19,7 +19,7 @@ async function getSettings() {
 }
 
 watch(props, getSettings)
-onBeforeMount(getSettings)
+onMounted(getSettings)
 
 async function updateSettings(key: string, value: boolean) {
   await backend.updateUserSettings({

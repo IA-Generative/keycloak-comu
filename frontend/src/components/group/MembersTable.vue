@@ -118,7 +118,7 @@ function sortFn(a: MemberRow, b: MemberRow): number {
               size="small" @click="pendingLeave = true">
               Quitter
             </DsfrButton>
-            <ActionMember v-else-if="(cell as MemberRow['actions'])" :member="(cell as MemberRow['actions'])!.member"
+            <ActionMember v-else-if="(cell as MemberRow['actions'])?.group" :member="(cell as MemberRow['actions'])!.member"
               :group="(cell as MemberRow['actions'])!.group" :mylevel="(cell as MemberRow['actions'])!.mylevel" />
           </template>
           <template v-else-if="colKey === 'email'">

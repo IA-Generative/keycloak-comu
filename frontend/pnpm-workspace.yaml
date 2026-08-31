@@ -1,0 +1,7 @@
+onlyBuiltDependencies:
+  - "@gouvfr/dsfr"
+  - esbuild
+
+allowBuilds:
+  esbuild: true
+  "@gouvfr/dsfr": true

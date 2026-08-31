@@ -48,7 +48,7 @@ type EditTeamInput struct {
 
 type DeleteTeamInput struct {
 	ParentID string
-	Name   string
+	Name     string
 }
 
 type UpdateLinksInput struct {
@@ -64,6 +64,14 @@ type UpdateTOSInput struct {
 type UpdateSettingsInput struct {
 	GroupID  string
 	Settings domain.GroupSettings
+}
+
+type PredefinedInviteLinkInput struct {
+	GroupID     string
+	Code        string
+	Role        string
+	RedirectURL string
+	Teams       []string
 }
 
 type Repository interface {
@@ -82,6 +90,13 @@ type Repository interface {
 	// Invites
 	InviteMemberToGroup(ctx context.Context, groupID string, userID string) error
 	UninviteMemberFromGroup(ctx context.Context, groupID string, userID string) error
+	// Predefined invite links
+	ListPredefinedInvites(ctx context.Context, groupID string) ([]domain.PredefinedInvite, error)
+	CreatePredefinedInvite(ctx context.Context, input PredefinedInviteLinkInput) (*domain.PredefinedInvite, error)
+	DeletePredefinedInvite(ctx context.Context, groupID, code string) error
+	GetPredefinedInviteByCode(ctx context.Context, code string) (*domain.PredefinedInvite, error)
+	ConsumePredefinedInvite(ctx context.Context, invite *domain.PredefinedInvite, userID string) error
+	AddUserToTeamByName(ctx context.Context, groupID string, teamName string, userID string) error
 
 	// Requests
 	RequestJoinToGroup(ctx context.Context, groupID string, userID string) error
