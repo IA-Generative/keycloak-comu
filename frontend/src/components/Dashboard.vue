@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount } from 'vue'
+import { computed, onMounted } from 'vue'
 import { DsfrAlert, DsfrButton, DsfrTile } from '@gouvminint/vue-dsfr'
 import { useDashboardStore } from '@/stores/dashboard'
 import GroupSearchTable from '@/components/GroupSearchTable.vue'
@@ -7,7 +7,12 @@ import GroupSearchTable from '@/components/GroupSearchTable.vue'
 const dashboardStore = useDashboardStore()
 const groups = computed(() => dashboardStore.groups)
 const isLoading = computed(() => dashboardStore.isLoading)
-onBeforeMount(dashboardStore.getGroups)
+onMounted(() => {
+  dashboardStore.getGroups().catch((err) => {
+    console.error('Error fetching groups:', err)
+  })
+
+ })
 </script>
 
 <template>

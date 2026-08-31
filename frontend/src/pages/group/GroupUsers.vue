@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import MembersTable from '@/components/group/MembersTable.vue'
 import InvitesList from '@/components/group/InvitesList.vue'
 import InviteMember from '@/components/group/InviteMember.vue'
+import PredefinedInviteLinksSection from '@/components/group/invite-links/PredefinedInviteLinksSection.vue'
 import { useGroupStore } from '@/stores/group'
 import type { GroupDtoType } from '@/shared/types'
 

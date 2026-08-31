@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/Nerzal/gocloak/v13"
 	"github.com/jmoiron/sqlx"
@@ -202,12 +203,15 @@ func (r *KeycloakRepository) SearchGroups(ctx context.Context, input ports.Searc
 			FROM keycloak_group g
 			WHERE g.realm_id = $1
 				AND g.parent_group = $2
-				AND NOT EXISTS (
-					SELECT 1
-					FROM group_attribute ga
-					WHERE ga.group_id = g.id
-						AND ga.name = 'keycloak-comu.settings.searchVisible'
-						AND ga.value = 'false'
+				AND (
+					g.name ILIKE $3
+					OR NOT EXISTS (
+						SELECT 1
+						FROM group_attribute ga
+						WHERE ga.group_id = g.id
+							AND ga.name = 'keycloak-comu.settings.searchVisible'
+							AND ga.value = 'false'
+					)
 				)
 				AND %s
 		)
@@ -218,20 +222,20 @@ func (r *KeycloakRepository) SearchGroups(ctx context.Context, input ports.Searc
 	orderBy := ""
 
 	if useTrgm {
-		searchCondition = "(g.name ILIKE $3 OR word_similarity($4, g.name) > 0.2)"
+		searchCondition = "(g.name ILIKE $4 OR word_similarity($5, g.name) > 0.2)"
 		searchArgs = []any{likePattern, input.Search}
-		orderBy = "ORDER BY (name ILIKE $3)::int DESC, word_similarity($4, name) DESC"
+		orderBy = "ORDER BY (name ILIKE $4)::int DESC, word_similarity($5, name) DESC"
 	} else if input.Exact {
-		searchCondition = "g.name ILIKE $3"
+		searchCondition = "g.name ILIKE $4"
 		searchArgs = []any{input.Search}
 	} else {
-		searchCondition = "g.name ILIKE $3"
+		searchCondition = "g.name ILIKE $4"
 		searchArgs = []any{likePattern}
 	}
 
 	cte := fmt.Sprintf(baseCTE, searchCondition)
 	countQuery := cte + `SELECT count(*) FROM filtered`
-	baseArgs := []any{r.realmID, rootID}
+	baseArgs := []any{r.realmID, rootID, input.Search}
 	countArgs := append(baseArgs, searchArgs...)
 
 	// Count total matches
@@ -241,7 +245,7 @@ func (r *KeycloakRepository) SearchGroups(ctx context.Context, input ports.Searc
 	}
 
 	// Fetch page
-	limitPos := 3 + len(searchArgs)
+	limitPos := len(baseArgs) + len(searchArgs) + 1
 	offsetPos := limitPos + 1
 	selectQuery := cte + "SELECT id, name FROM filtered"
 	if orderBy != "" {
@@ -533,7 +537,185 @@ func (r *KeycloakRepository) UninviteMemberFromGroup(ctx context.Context, groupI
 	return r.removeFromGroupAttribute(ctx, groupID, "invite", userID)
 }
 
+func (r *KeycloakRepository) GetPredefinedInviteByCode(ctx context.Context, code string) (*domain.PredefinedInvite, error) {
+	prefix := "invite." + code + "."
+	pattern := prefix + "%"
+
+	type predefinedInviteAttrRow struct {
+		GroupID   string `db:"group_id"`
+		GroupName string `db:"group_name"`
+		Name      string `db:"name"`
+		Value     string `db:"value"`
+	}
+
+	var rows []predefinedInviteAttrRow
+	err := r.db.SelectContext(ctx, &rows, `
+		SELECT g.id AS group_id, g.name AS group_name, ga.name, ga.value
+		FROM keycloak_group g
+		JOIN group_attribute ga ON ga.group_id = g.id
+		WHERE g.realm_id = $1
+			AND g.parent_group = $2
+			AND ga.name LIKE $3`,
+		r.realmID, deref(r.rootGroupID), pattern)
+	if err != nil {
+		return nil, err
+	}
+	if len(rows) == 0 {
+		return nil, nil
+	}
+
+	invite := &domain.PredefinedInvite{
+		Code:      code,
+		GroupID:   rows[0].GroupID,
+		GroupName: rows[0].GroupName,
+		Role:      "member",
+		Teams:     []string{},
+	}
+
+	for _, row := range rows {
+		if row.GroupID != invite.GroupID {
+			return nil, fmt.Errorf("predefined invitation code %s is duplicated across groups", code)
+		}
+		suffix := strings.TrimPrefix(row.Name, prefix)
+		switch suffix {
+		case "redirectUrl":
+			invite.RedirectURL = row.Value
+		case "role":
+			invite.Role = strings.ToLower(strings.TrimSpace(row.Value))
+		case "teams":
+			invite.Teams = parseInviteTeams(row.Value)
+		}
+	}
+
+	return invite, nil
+}
+
+func (r *KeycloakRepository) ConsumePredefinedInvite(ctx context.Context, invite *domain.PredefinedInvite, userID string) error {
+	if err := r.kc.Client.AddUserToGroup(ctx, r.kc.GetToken(), r.realm, userID, invite.GroupID); err != nil {
+		return fmt.Errorf("add user to group from predefined invitation: %w", err)
+	}
+	if err := r.setUserLevelViaKC(ctx, invite.GroupID, userID, parseInviteRole(invite.Role)); err != nil {
+		return fmt.Errorf("set membership level from predefined invitation: %w", err)
+	}
+	for _, teamName := range invite.Teams {
+		if err := r.AddUserToTeamByName(ctx, invite.GroupID, teamName, userID); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (r *KeycloakRepository) AddUserToTeamByName(ctx context.Context, groupID string, teamName string, userID string) error {
+	if teamName == "" {
+		return nil
+	}
+	var teamID string
+	err := r.db.GetContext(ctx, &teamID, `
+		SELECT g.id
+		FROM keycloak_group g
+		WHERE g.parent_group = $1
+			AND g.realm_id = $2
+			AND g.name = $3`,
+		groupID, r.realmID, teamName)
+	if err != nil {
+		return fmt.Errorf("team %s not found: %w", teamName, err)
+	}
+	if err := r.kc.Client.AddUserToGroup(ctx, r.kc.GetToken(), r.realm, userID, teamID); err != nil {
+		return fmt.Errorf("add user to team %s: %w", teamName, err)
+	}
+	return nil
+}
+
 // ── Requests (writes via KC) ───────────────────────────────────────────────
+
+func (r *KeycloakRepository) ListPredefinedInvites(ctx context.Context, groupID string) ([]domain.PredefinedInvite, error) {
+	var groupName string
+	if err := r.db.GetContext(ctx, &groupName, `SELECT name FROM keycloak_group WHERE id = $1 AND realm_id = $2`, groupID, r.realmID); err != nil {
+		return nil, fmt.Errorf("get group name: %w", err)
+	}
+
+	var rows []attributeRow
+	if err := r.db.SelectContext(ctx, &rows, `
+		SELECT ga.name, ga.value
+		FROM group_attribute ga
+		WHERE ga.group_id = $1 AND ga.name LIKE 'invite.%.%'`, groupID); err != nil {
+		return nil, fmt.Errorf("list predefined invites: %w", err)
+	}
+
+	byCode := map[string]*domain.PredefinedInvite{}
+	var order []string
+	for _, row := range rows {
+		parts := strings.SplitN(strings.TrimPrefix(row.Name, "invite."), ".", 2)
+		if len(parts) != 2 {
+			continue
+		}
+		code, key := parts[0], parts[1]
+		if _, ok := byCode[code]; !ok {
+			byCode[code] = &domain.PredefinedInvite{Code: code, GroupID: groupID, GroupName: groupName, Role: "member", Teams: []string{}}
+			order = append(order, code)
+		}
+		inv := byCode[code]
+		switch key {
+		case "role":
+			inv.Role = strings.ToLower(strings.TrimSpace(row.Value))
+		case "redirectUrl":
+			inv.RedirectURL = row.Value
+		case "teams":
+			inv.Teams = parseInviteTeams(row.Value)
+		}
+	}
+
+	result := make([]domain.PredefinedInvite, 0, len(order))
+	for _, code := range order {
+		result = append(result, *byCode[code])
+	}
+	return result, nil
+}
+
+func (r *KeycloakRepository) CreatePredefinedInvite(ctx context.Context, input ports.PredefinedInviteLinkInput) (*domain.PredefinedInvite, error) {
+	kcGroup, err := r.kc.Client.GetGroup(ctx, r.kc.GetToken(), r.realm, input.GroupID)
+	if err != nil {
+		return nil, err
+	}
+	attrs := safeAttrs(kcGroup.Attributes)
+	setPredefinedInviteAttrs(attrs, input)
+	kcGroup.Attributes = &attrs
+	if err := r.kc.Client.UpdateGroup(ctx, r.kc.GetToken(), r.realm, *kcGroup); err != nil {
+		return nil, err
+	}
+	return r.GetPredefinedInviteByCode(ctx, input.Code)
+}
+
+func (r *KeycloakRepository) DeletePredefinedInvite(ctx context.Context, groupID, code string) error {
+	kcGroup, err := r.kc.Client.GetGroup(ctx, r.kc.GetToken(), r.realm, groupID)
+	if err != nil {
+		return err
+	}
+	attrs := safeAttrs(kcGroup.Attributes)
+	prefix := "invite." + code + "."
+	for k := range attrs {
+		if strings.HasPrefix(k, prefix) {
+			delete(attrs, k)
+		}
+	}
+	kcGroup.Attributes = &attrs
+	return r.kc.Client.UpdateGroup(ctx, r.kc.GetToken(), r.realm, *kcGroup)
+}
+
+func setPredefinedInviteAttrs(attrs map[string][]string, input ports.PredefinedInviteLinkInput) {
+	prefix := "invite." + input.Code + "."
+	role := input.Role
+	if role == "" {
+		role = "member"
+	}
+	attrs[prefix+"role"] = []string{role}
+	if v := strings.TrimSpace(input.RedirectURL); v != "" {
+		attrs[prefix+"redirectUrl"] = []string{v}
+	}
+	if len(input.Teams) > 0 {
+		attrs[prefix+"teams"] = []string{strings.Join(input.Teams, ",")}
+	}
+}
 
 func (r *KeycloakRepository) RequestJoinToGroup(ctx context.Context, groupID string, userID string) error {
 	return r.addToGroupAttribute(ctx, groupID, "request", userID)
@@ -776,6 +958,29 @@ func boolToStr(b bool) string {
 		return "true"
 	}
 	return "false"
+}
+
+func parseInviteRole(role string) int {
+	switch strings.ToLower(strings.TrimSpace(role)) {
+	case "owner":
+		return domain.LevelOwner
+	case "admin":
+		return domain.LevelAdmin
+	default:
+		return domain.LevelMember
+	}
+}
+
+func parseInviteTeams(csv string) []string {
+	parts := strings.Split(csv, ",")
+	teams := make([]string, 0, len(parts))
+	for _, p := range parts {
+		team := strings.TrimSpace(p)
+		if team != "" {
+			teams = append(teams, team)
+		}
+	}
+	return teams
 }
 
 func nonNil[T any](s []T) []T {

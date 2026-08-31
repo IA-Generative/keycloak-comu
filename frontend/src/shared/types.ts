@@ -12,4 +12,11 @@ export type {
   SearchGroupResult,
   PaginatedResultSearchGroupResult as PaginatedResponse,
   UserSettings,
+  PredefinedInvite,
 } from '@/client/types.gen'
+
+export type InviteLinkParameters = {
+  role: string
+  redirectUrl: string | undefined
+  teams: string[] | undefined
+}

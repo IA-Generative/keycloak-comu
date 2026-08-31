@@ -18,6 +18,7 @@ go.work.sum
 frontend/node_modules/
 frontend/dist/
 frontend/src/client/
+frontend/.pnpm-store/
 
 # IDE
 .idea/

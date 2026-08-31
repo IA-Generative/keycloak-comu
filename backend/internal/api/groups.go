@@ -79,6 +79,13 @@ type implicitMemberActionInput struct {
 	}
 }
 
+type acceptInviteInput struct {
+	Body struct {
+		GroupID string `json:"groupId,omitempty" format:"uuid"`
+		Code    string `json:"code,omitempty" minLength:"7" maxLength:"7"`
+	}
+}
+
 type editMembershipInput struct {
 	Body struct {
 		GroupID string `json:"groupId" format:"uuid"`
@@ -350,7 +357,6 @@ func registerGroupRoutes(api huma.API, service *groupsapp.Service, logger *zap.L
 	})
 
 	// ── Invites ────────────────────────────────────────────────────────────
-
 	huma.Register(api, huma.Operation{
 		OperationID: "create-invite",
 		Method:      http.MethodPost,
@@ -377,12 +383,19 @@ func registerGroupRoutes(api huma.API, service *groupsapp.Service, logger *zap.L
 		Tags:        []string{"invites"},
 		Summary:     "Accept an invitation",
 		Security:    security,
-	}, func(ctx context.Context, input *implicitMemberActionInput) (*struct{}, error) {
+	}, func(ctx context.Context, input *acceptInviteInput) (*struct{}, error) {
 		p, err := requirePrincipal(ctx)
 		if err != nil {
 			return nil, err
 		}
-		if err := service.AcceptInvite(ctx, input.Body.GroupID, p.Subject); err != nil {
+		if input.Body.Code != "" {
+			err = service.AcceptInviteByCode(ctx, input.Body.Code, p.Subject)
+		} else if input.Body.GroupID != "" {
+			err = service.AcceptInvite(ctx, input.Body.GroupID, p.Subject)
+		} else {
+			return nil, huma.Error400BadRequest("groupId or code is required")
+		}
+		if err != nil {
 			logger.Warn("failed to accept invite", zap.String("userID", p.Subject), zap.String("groupID", input.Body.GroupID), zap.Error(err))
 			return nil, mapServiceError(err)
 		}
