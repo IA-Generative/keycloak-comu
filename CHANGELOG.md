@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.2.0](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.4...v1.2.0) (2026-08-31)
+
+
+### Features
+
+* add NotificationsPopUp component and integrate with header; refactor notifications handling ([bcf4b98](https://github.com/IA-Generative/keycloak-comu/commit/bcf4b98e25a44cc173c146d7cae05dc92a8cbbfa))
+* enhance group settings functionality ([f9fba52](https://github.com/IA-Generative/keycloak-comu/commit/f9fba52af86dd9a363c0b9407f42abe116237105))
+* Implement predefined invite links feature ([0c13f1e](https://github.com/IA-Generative/keycloak-comu/commit/0c13f1e3c051be2f1176826af6461111eaebe096))
+
+
+### Bug Fixes
+
+* ensure proper resource cleanup and error handling in various components ([11cc6f2](https://github.com/IA-Generative/keycloak-comu/commit/11cc6f2b4800f865db265d8adc25ce6e42d769b5))
+
 ## [1.1.4](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.3...v1.1.4) (2026-04-21)
 
 
