@@ -31,12 +31,18 @@ const menuItems = ref([{
   requiredLevel: 0,
 }, {
   id: '13',
+  to: `invites`,
+  active: computed(() => currentPath.value === 'invites'),
+  text: 'Invitations',
+  requiredLevel: 20,
+}, {
+  id: '14',
   to: `teams`,
   active: computed(() => currentPath.value === 'teams'),
   text: 'Équipes',
   requiredLevel: 10,
 }, {
-  id: '14',
+  id: '15',
   to: `settings`,
   active: computed(() => currentPath.value === 'settings'),
   text: 'Paramètres',

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeMount, onMounted, onBeforeUnmount } from 'vue'
+import { computed, onMounted, onBeforeUnmount } from 'vue'
 import { useRoute, RouterView } from 'vue-router'
 import { useGroupStore } from '@/stores/group'
 import SideMenu from '@/components/group/SideMenu.vue'
@@ -19,10 +19,9 @@ async function fetchData() {
   document.title = `${appConfig.value.appTitle} - Gestion du groupe ${group.value?.name}`
 }
 
-onBeforeMount(fetchData)
-
 let interval: ReturnType<typeof setInterval>
 onMounted(() => {
+  fetchData()
   interval = setInterval(() => {
     groupStore.refreshGroup()
   }, 30000)

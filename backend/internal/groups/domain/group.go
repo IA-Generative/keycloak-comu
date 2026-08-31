@@ -73,6 +73,16 @@ type UserSettings struct {
 	AutoAcceptInvites *bool `json:"autoAcceptInvites"`
 }
 
+type PredefinedInvite struct {
+	Code        string   `json:"code"`
+	GroupID     string   `json:"groupId"`
+	GroupName   string   `json:"groupName"`
+	GroupTOS    string   `json:"groupTos,omitempty"`
+	RedirectURL string   `json:"redirectUrl,omitempty"`
+	Role        string   `json:"role"`
+	Teams       []string `json:"teams,omitempty"`
+}
+
 type PaginatedResult[T any] struct {
 	Results  []T  `json:"results"`
 	Total    int  `json:"total"`

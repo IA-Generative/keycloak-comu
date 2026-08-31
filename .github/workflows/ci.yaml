@@ -14,6 +14,8 @@ on:
 jobs:
   lint:
     uses: ./.github/workflows/lint.yml
+    with:
+      go-version: "v1.26.2"
 
   build:
     permissions:

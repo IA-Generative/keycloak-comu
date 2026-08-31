@@ -30,8 +30,11 @@ FROM node:22-alpine AS frontend-builder
 
 WORKDIR /workspace/frontend
 
-COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci
+RUN npm install -g pnpm
+
+COPY frontend/package.json frontend/package-lock.json* frontend/pnpm-lock.yaml* frontend/pnpm-workspace.yaml* frontend/.dsfr.yml ./
+RUN pnpm install --frozen-lockfile
+
 COPY frontend/. ./
 COPY --from=builder /tmp/docs/openapi.json ./
 RUN HEY_API_INPUT=openapi.json npm run generate:client

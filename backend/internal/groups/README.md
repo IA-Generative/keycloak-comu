@@ -80,3 +80,16 @@ These events are separate from email delivery. Emails are sent only for selected
 - Persistence and external side effects are delegated through `ports.Repository`, `ports.Mailer`, and `ports.MetricsRecorder`.
 - `GetGroupDetails` currently acts as a pass-through to the repository and does not enforce an explicit membership check in the service layer.
 - Ownership invariants are validated before repository writes, so concurrent writes should be reviewed carefully if stronger atomic guarantees are needed.
+
+# Pre-definied invitations
+| Attribute key             | attribute value | description                                                          |
+| ------------------------- | --------------- | -------------------------------------------------------------------- |
+| invite.<code>.redirectUrl | string?         | URL to redirect the user to after they accept the invitation.        |
+| invite.<code>.expiresAt   | string?         | Invitation expiration date.                                          |
+| invite.<code>.countLeft   | string?         | Number of times the invitation can be used. Decremented on each use. |
+| invite.<code>.role        | string?         | Role assigned to the invited user.                                   |
+| invite.<code>.teams       | string?         | Teams assigned to the invited user. CSV format.                      |
+
+The code is a 7-character case-sensitive alphanumeric string. It is generated randomly and cannot be guessed.
+If the API request provides an invalid, expired, or already used code, the server returns a 404 error.
+If the invitation is valid, the server returns a 200 status with invitation details. The user can then accept the invitation and will be redirected to the URL provided in `invite.<code>.redirectUrl`.

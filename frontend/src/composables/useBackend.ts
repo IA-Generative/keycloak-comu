@@ -2,6 +2,7 @@ import { client } from '@/client/client.gen'
 import * as api from '@/client/sdk.gen'
 import { getBearerToken, login } from './useOidc';
 import type { UpdateSettingsInputBody } from '@/client';
+import type { InviteLinkParameters } from '@/shared/types';
 
 export interface NotificationsStreamConnection {
   close: () => void
@@ -11,7 +12,7 @@ export interface NotificationsStreamConnection {
 client.interceptors.response.use(async (res) => {
   if (res.status === 401) {
     console.warn('Unauthorized request:', res);
-    await login(); // Trigger login flow on 401 responses
+    // await login()
   }
   return res;
 });
@@ -24,7 +25,7 @@ client.setConfig({
 })
 
 client.interceptors.request.use(async (config) => {
-  if (config.url.endsWith('/auth/config')) {
+  if (config.url.endsWith('/auth/config') || config.url.match(/\/v1\/invites\/[^/]+$/)) {
     return config
   }
   const token = await getBearerToken()
@@ -100,12 +101,41 @@ export async function acceptInvite(groupId: string) {
   await api.acceptInvite({ body: { groupId } })
 }
 
+export async function acceptInviteByCode(code: string) {
+  await api.acceptInvite({ body: { code } })
+}
+
+export async function previewPredefinedInvite(code: string) {
+  const response = await client.get({
+    url: `/v1/invites/${code}`,
+    throwOnError: true,
+  }) as { data?: import('@/shared/types').PredefinedInvite }
+  if (!response.data) throw new Error('Failed to fetch invite preview')
+  return response.data
+}
+
 export async function declineInvite(groupId: string) {
   await api.declineInvite({ body: { groupId } })
 }
 
 export async function cancelInvite(groupId: string, userId: string) {
   await api.cancelInvite({ body: { groupId, userId } })
+}
+
+export async function listPredefinedInvites(groupId: string) {
+  const response = await api.listPredefinedInvites({ body: { groupId } })
+  if (!response.data) throw new Error('Failed to list predefined invites')
+  return response.data
+}
+
+export async function createPredefinedInvite(body: InviteLinkParameters & { groupId: string }) {
+  const response = await api.createPredefinedInvite({ body })
+  if (!response.data) throw new Error('Failed to create predefined invite')
+  return response.data
+}
+
+export async function deletePredefinedInvite(groupId: string, code: string) {
+  await api.deletePredefinedInvite({ body: { groupId, code } })
 }
 
 // ── Requests ────────────────────────────────────────────────────────────
