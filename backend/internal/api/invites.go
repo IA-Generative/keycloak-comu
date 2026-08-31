@@ -61,6 +61,7 @@ func registerInviteRoutes(api huma.API, service *groupsapp.Service, logger *zap.
 		Path:        "/v1/invites/{code}",
 		Tags:        []string{"invites"},
 		Summary:     "Preview a predefined invitation link",
+		Security:    []map[string][]string{},
 	}, func(ctx context.Context, input *invitePreviewInput) (*invitePreviewOutput, error) {
 		invite, err := service.GetPredefinedInvitePreview(ctx, input.Code)
 		logger.Debug("get-invite-preview", zap.String("code", input.Code), zap.Any("invite", invite), zap.Error(err))
