@@ -14,7 +14,11 @@ const router = createRouter({
       name: 'home',
       component: () => import('@/pages/IndexPage.vue'),
       children: [
-
+        {
+          path: '',
+          name: 'dashboard',
+          component: () => import('@/pages/Dashboard.vue'),
+        },
         {
           path: 'profile',
           name: 'profile',

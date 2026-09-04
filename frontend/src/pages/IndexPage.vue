@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { watchEffect, onUnmounted, ref, onMounted } from 'vue'
 import { DsfrFooter, useScheme } from '@gouvminint/vue-dsfr'
-import Dashboard from '@/components/Dashboard.vue'
 import { useAppConfig } from '@/composables/useAppConfig'
 import { computed } from 'vue'
 import { getCurrentUser, handleOidcCallbackIfPresent, login, logout } from '@/composables/useOidc'
 import { useNotificationsStore } from '@/stores/notifications'
 import Header from '@/components/Header.vue'
 import SnackBar from '@/components/SnackBar.vue'
-import router from '@/router'
 import { loadFeatureFlags } from '@/composables/feature-flags'
 
 const loggedIn = ref(false)
@@ -99,11 +97,14 @@ const afterMandatoryLinks = computed(() => {
 
 <template>
     <div class="flex flex-col min-h-screen">
-    <Header :logged-in="loggedIn" :logo-text="appConfig?.appTitle" @logout="doLogout" @login="login" />
-
-    <div v-if="loggedIn" class="fr-container fr-mt-4w grow">
-      <Dashboard v-if="router.currentRoute.value.path === '/' "/>
-      <RouterView />
+    <Header
+      :logged-in="loggedIn"
+      :logo-text="appConfig?.appTitle"
+      @logout="doLogout"
+      @login="login"
+    />
+    <div class="fr-container fr-mt-4w grow">
+      <RouterView v-if="loggedIn" />
       <SnackBar />
     </div>
     <div class="grow-0 bottom-0">
