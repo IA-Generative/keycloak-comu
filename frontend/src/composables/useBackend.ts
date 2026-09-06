@@ -1,6 +1,6 @@
 import { client } from '@/client/client.gen'
 import * as api from '@/client/sdk.gen'
-import { getBearerToken, login } from './useOidc';
+import { getBearerToken } from './useOidc';
 import type { UpdateSettingsInputBody } from '@/client';
 import type { InviteLinkParameters } from '@/shared/types';
 
@@ -9,12 +9,20 @@ export interface NotificationsStreamConnection {
   completed: Promise<void>
 }
 
+// Un 401 signifie que la requête est partie sans jeton exploitable. Le laisser
+// passer en se contentant d'un avertissement dans la console fait que l'appelant
+// croit avoir réussi : c'est ce qui faisait annoncer « Invitation acceptée » à
+// quelqu'un qui n'était pas authentifié, sans que rien ne soit enregistré.
+//
+// On ne déclenche PAS la connexion ici : un intercepteur global qui redirige
+// emporte la page en pleine action et perd l'intention de l'utilisateur. C'est à
+// l'appelant, qui sait ce qu'il était en train de faire, de la mémoriser puis
+// d'appeler `login()` — voir InvitePage.vue.
 client.interceptors.response.use(async (res) => {
   if (res.status === 401) {
-    console.warn('Unauthorized request:', res);
-    // await login()
+    console.warn('Requête non authentifiée :', res.url)
   }
-  return res;
+  return res
 });
 
 // The generated client types will come from the OpenAPI spec.
@@ -102,7 +110,10 @@ export async function acceptInvite(groupId: string) {
 }
 
 export async function acceptInviteByCode(code: string) {
-  await api.acceptInvite({ body: { code } })
+  // `throwOnError` n'est pas facultatif : sans lui le client rend un objet
+  // `{ data, error }` au lieu de lever, et l'appelant poursuit comme si
+  // l'acceptation avait abouti.
+  await api.acceptInvite({ body: { code }, throwOnError: true })
 }
 
 export async function previewPredefinedInvite(code: string) {

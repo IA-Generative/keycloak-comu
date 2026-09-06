@@ -20,21 +20,24 @@ const accepted = ref(false)
 const redirectUrl = ref<string | null>(null)
 const loggedIn = ref(false)
 
+// Mémorise qu'une acceptation était en cours avant de partir s'authentifier.
+// Sans cela, la personne revient de Keycloak sur une page identique et doit
+// deviner qu'il lui faut cliquer une seconde fois.
+const CLE_REPRISE = 'invitation-a-reprendre'
+
 onMounted(async () => {
   loading.value = true
-    try {
+  try {
     let user = await handleOidcCallbackIfPresent()
     if (!user) {
       user = await getCurrentUser()
-
-      console.log({user})
     }
-    if (user?.access_token) {
-      loggedIn.value = true
-    }
-  } catch (err) {
-    console.error('Auth init failed', err)
+    loggedIn.value = Boolean(user?.access_token)
   }
+  catch (err) {
+    console.error('Initialisation de l\'authentification impossible', err)
+  }
+
   try {
     invite.value = await previewPredefinedInvite(code)
   }
@@ -45,9 +48,29 @@ onMounted(async () => {
   finally {
     loading.value = false
   }
+
+  // Retour d'authentification alors qu'une acceptation était engagée : on la
+  // reprend, plutôt que de laisser la personne devant le même écran.
+  if (loggedIn.value && invite.value
+      && sessionStorage.getItem(CLE_REPRISE) === code) {
+    sessionStorage.removeItem(CLE_REPRISE)
+    await accepter()
+  }
 })
 
+// Sans session, l'acceptation partait sans jeton, le service répondait 401, et
+// l'interface annonçait malgré tout « Invitation acceptée ». On authentifie
+// d'abord ; `login()` revient sur cette même adresse.
 async function onAccept() {
+  if (!loggedIn.value) {
+    sessionStorage.setItem(CLE_REPRISE, code)
+    await login()
+    return
+  }
+  await accepter()
+}
+
+async function accepter() {
   loading.value = true
   try {
     await acceptInviteByCode(code)
@@ -65,6 +88,13 @@ async function onAccept() {
     if (status === 409) {
       addMessage({ type: 'info', text: 'Vous êtes déjà membre de ce groupe.' })
       await router.push(`/g/${invite.value?.groupId}`)
+    }
+    else if (status === 401) {
+      // La session a expiré entre l'affichage et le clic.
+      loggedIn.value = false
+      sessionStorage.setItem(CLE_REPRISE, code)
+      addMessage({ type: 'info', text: 'Votre session a expiré, veuillez vous reconnecter.' })
+      await login()
     }
     else {
       addMessage({ type: 'error', text: 'Impossible d\'accepter l\'invitation.' })
