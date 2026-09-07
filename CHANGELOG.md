@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.2.1](https://github.com/IA-Generative/keycloak-comu/compare/v1.2.0...v1.2.1) (2026-09-07)
+
+
+### Bug Fixes
+
+* 401 on accept invites for not logged in user ([1156f43](https://github.com/IA-Generative/keycloak-comu/commit/1156f434bdb69d4458d83d2d4fb8ce1ee2cb6416))
+* improve router logic ([fd25989](https://github.com/IA-Generative/keycloak-comu/commit/fd259890eba53480f5e7c17ba125425466f54a7a))
+
 ## [1.2.0](https://github.com/IA-Generative/keycloak-comu/compare/v1.1.4...v1.2.0) (2026-08-31)
 
 
