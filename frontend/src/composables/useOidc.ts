@@ -31,10 +31,14 @@ export async function getCurrentUser(): Promise<User | null> {
   })
 }
 
-export async function login(): Promise<void> {
-  await (await getManager()).signinRedirect({
-    redirect_uri: window.location.origin + window.location.pathname,
-  })
+export async function login(opts?: Parameters<typeof UserManager.prototype.signinRedirect>[0]): Promise<void> {
+  if (!opts) {
+    opts = {}
+  }
+  if (!opts.redirect_uri) {
+    opts.redirect_uri = window.location.origin + window.location.pathname
+  }
+  await (await getManager()).signinRedirect(opts)
 }
 
 export async function logout(): Promise<void> {
@@ -59,4 +63,19 @@ export async function getBearerToken(): Promise<string | null> {
 export async function getUserId(): Promise<string | null> {
   const user = await getCurrentUser()
   return user?.profile?.sub ?? null
+}
+
+
+export async function isLoggedIn(): Promise<boolean> {
+  const user = await getCurrentUser()
+  if (user?.expired) {
+    return false
+  }
+  if (!user) {
+    return false
+  }
+  if (user?.access_token) {
+    return true
+  }
+  return false
 }
