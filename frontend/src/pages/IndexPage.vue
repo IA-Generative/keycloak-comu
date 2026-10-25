@@ -8,6 +8,8 @@ import { useNotificationsStore } from '@/stores/notifications'
 import Header from '@/components/Header.vue'
 import SnackBar from '@/components/SnackBar.vue'
 import { loadFeatureFlags } from '@/composables/feature-flags'
+import { retenirProvenance } from '@/composables/useProvenance'
+import { useRouter } from 'vue-router'
 
 const loggedIn = ref(false)
 const username = ref('')
@@ -18,9 +20,20 @@ watchEffect(() => {
   document.title = `${appConfig.value.appTitle} - Accueil`
 })
 
+const router = useRouter()
+
 onMounted(async () => {
   try {
+    // Une autre application nous envoie créer un groupe (?q=, ?creer=1, ?retour=) : à retenir
+    // avant la connexion, qui fait perdre la query.
+    retenirProvenance(window.location.search)
+    const revenu = window.location.search.includes('code=')
     let user = await handleOidcCallbackIfPresent()
+    if (revenu) {
+      // La query gardée avant la connexion est de retour dans l'adresse : le routeur doit la voir.
+      retenirProvenance(window.location.search)
+      await router.replace({ path: window.location.pathname, query: Object.fromEntries(new URLSearchParams(window.location.search)) })
+    }
 
     if (user?.expired) {
       await login()

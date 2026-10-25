@@ -4,6 +4,8 @@ interface AppConfig {
   appTitle: string
   version: string
   rootGroupPath: string
+  /** Origines (https://hote) vers lesquelles « Revenir à … » peut renvoyer après une création demandée par une autre application. */
+  allowedReturnOrigins?: string[]
 }
 
 const state = ref<AppConfig>({
@@ -21,6 +23,7 @@ fetch('/api/config')
     if (!state.value.appTitle) state.value.appTitle = 'Keycloak Community'
     if (!state.value.version) state.value.version = 'unknown'
     if (!state.value.rootGroupPath.endsWith('/')) state.value.rootGroupPath+='/'
+    if (!Array.isArray(state.value.allowedReturnOrigins)) state.value.allowedReturnOrigins = []
   })
   .catch(() => {})
 

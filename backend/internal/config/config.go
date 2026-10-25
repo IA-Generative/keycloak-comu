@@ -30,8 +30,11 @@ type ServerConfig struct {
 	WriteTimeoutSeconds int        `yaml:"write_timeout_seconds"`
 	IdleTimeoutSeconds  int        `yaml:"idle_timeout_seconds"`
 	CORS                CORSConfig `yaml:"cors"`
-	WriteSpecOnly       bool       `yaml:"write_spec_only"`
-	InstanceID          string     `yaml:"instance_id"`
+	// Origines (https://hote) vers lesquelles le bouton « Revenir à … » peut renvoyer après la
+	// création d'un groupe demandée par une autre application (?retour=). Vide : jamais.
+	AllowedReturnOrigins []string `yaml:"allowed_return_origins"`
+	WriteSpecOnly        bool     `yaml:"write_spec_only"`
+	InstanceID           string   `yaml:"instance_id"`
 }
 
 type CORSConfig struct {
@@ -182,6 +185,7 @@ func applyEnvOverrides(config *Config) {
 	config.SMTP.Password = getenv("SMTP_PASSWORD", config.SMTP.Password)
 	config.SMTP.BaseURL = getenv("PUBLIC_URL", config.Server.PublicURL)
 	config.Server.CORS.AllowedOrigins = getCSV("CORS_ALLOWED_ORIGINS", config.Server.CORS.AllowedOrigins)
+	config.Server.AllowedReturnOrigins = getCSV("ALLOWED_RETURN_ORIGINS", config.Server.AllowedReturnOrigins)
 	config.Server.CORS.AllowedMethods = getCSV("CORS_ALLOWED_METHODS", config.Server.CORS.AllowedMethods)
 	config.Server.CORS.AllowedHeaders = getCSV("CORS_ALLOWED_HEADERS", config.Server.CORS.AllowedHeaders)
 	config.Server.CORS.AllowCredentials = getBool("CORS_ALLOW_CREDENTIALS", config.Server.CORS.AllowCredentials)

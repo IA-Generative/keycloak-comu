@@ -108,6 +108,7 @@ value: {{ . | quote }}
 {{ include "keycloak-comu.renderEnvVar" (dict "name" "KEYCLOAK_ADMIN_PASSWORD" "value" .Values.app.keycloak.adminPassword) }}
 {{ include "keycloak-comu.renderEnvVar" (dict "name" "KEYCLOAK_ROOT_GROUP_PATH" "value" .Values.app.keycloak.rootGroupPath) }}
 
+{{ include "keycloak-comu.renderEnvVar" (dict "name" "ALLOWED_RETURN_ORIGINS" "value" .Values.app.allowedReturnOrigins) }}
 {{ include "keycloak-comu.renderEnvVar" (dict "name" "CORS_ALLOWED_ORIGINS" "value" .Values.app.cors.allowedOrigins) }}
 {{ include "keycloak-comu.renderEnvVar" (dict "name" "CORS_ALLOWED_METHODS" "value" .Values.app.cors.allowedMethods) }}
 {{ include "keycloak-comu.renderEnvVar" (dict "name" "CORS_ALLOWED_HEADERS" "value" .Values.app.cors.allowedHeaders) }}

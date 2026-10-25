@@ -136,6 +136,10 @@ app:
     clientId: "keycloak-comu"
     swaggerClientId: "keycloak-comu-swagger"
 
+  # Origines (https://hote) vers lesquelles « Revenir à … » peut renvoyer après la création d'un
+  # groupe demandée par une autre application (?retour=). Vide : jamais. Ex. "https://mescollections.fake-domain.name"
+  allowedReturnOrigins: ""
+
   cors:
     allowedOrigins: "*"
     allowedMethods: "GET,POST,PUT,PATCH,DELETE,OPTIONS"

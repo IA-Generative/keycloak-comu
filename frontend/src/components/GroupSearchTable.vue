@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { DsfrButton, DsfrDataTable, DsfrFieldset, DsfrSearchBar } from '@gouvminint/vue-dsfr'
+import { DsfrAlert, DsfrButton, DsfrDataTable, DsfrFieldset, DsfrSearchBar } from '@gouvminint/vue-dsfr'
 import type { DsfrDataTableProps } from '@gouvminint/vue-dsfr'
 import * as backend from '@/composables/useBackend'
 import createGroup from '@/composables/createGroup'
 import { CreateGroupDtoSchema } from '@/shared/schemas'
 import { debounce } from '@/utils/functions'
 import type { SearchGroupResult } from '@/shared/types'
+import { useProvenance } from '@/composables/useProvenance'
+import { useAppConfig } from '@/composables/useAppConfig'
 
 const pageSize = ref(8)
 const headers: DsfrDataTableProps['headersRow'] = [
@@ -26,7 +28,12 @@ const headers: DsfrDataTableProps['headersRow'] = [
 ]
 const router = useRouter()
 
-const searchQuery = ref(router.currentRoute.value.query.q as string || '')
+// Une autre application a pu nous envoyer créer un groupe : son nom proposé prérempli la recherche.
+const { provenance, nomDuRetour, retourAutorise } = useProvenance()
+const appConfig = useAppConfig()
+const searchQuery = ref((router.currentRoute.value.query.q as string) || provenance.value.q || '')
+const venuPourCreer = computed(() => provenance.value.creer || !!retourAutorise(provenance.value.retour, appConfig.value.allowedReturnOrigins))
+const nomApplication = computed(() => nomDuRetour(provenance.value.retour))
 const searchResults = ref<{ results: SearchGroupResult[], total: number, page: number, pageSize: number, next: boolean }>({ results: [], total: 0, page: 0, pageSize: pageSize.value, next: false })
 
 const exactMatch = computed(() => {
@@ -78,6 +85,9 @@ function goExactMatch() {
 </script>
 
 <template>
+  <DsfrAlert v-if="venuPourCreer" type="info" small class="fr-mb-2w"
+    :title="nomApplication ? `Vous venez de ${nomApplication}` : 'Créer un groupe'"
+    description="Créez votre groupe ci-dessous (ou retrouvez-le s'il existe déjà), invitez vos collègues, puis revenez à votre application : un bouton vous y ramènera." />
   <DsfrFieldset legend="">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div class="grow">
