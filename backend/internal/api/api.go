@@ -206,6 +206,8 @@ type publicConfigOutput struct {
 		AppTitle      string `json:"appTitle"`
 		Version       string `json:"version"`
 		RootGroupPath string `json:"rootGroupPath"`
+		// Origines autorisées pour le retour vers l'application qui a demandé la création d'un groupe.
+		AllowedReturnOrigins []string `json:"allowedReturnOrigins"`
 	}
 }
 
@@ -260,6 +262,10 @@ func registerPublicConfigRoutes(api huma.API, cfg *appconfig.Config) {
 		output.Body.AppTitle = cfg.Server.AppTitle
 		output.Body.Version = cfg.Server.Version
 		output.Body.RootGroupPath = cfg.Keycloak.RootGroupPath
+		output.Body.AllowedReturnOrigins = cfg.Server.AllowedReturnOrigins
+		if output.Body.AllowedReturnOrigins == nil {
+			output.Body.AllowedReturnOrigins = []string{}
+		}
 		return output, nil
 	})
 }

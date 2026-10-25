@@ -6,6 +6,8 @@ import SideMenu from '@/components/group/SideMenu.vue'
 import GroupAccess from '@/components/group/GroupAccess.vue'
 import type { GroupDtoType } from '@/shared/types'
 import { useAppConfig } from '@/composables/useAppConfig'
+import { useProvenance } from '@/composables/useProvenance'
+import { DsfrAlert, DsfrButton } from '@gouvminint/vue-dsfr'
 
 const appConfig = useAppConfig()
 const groupStore = useGroupStore()
@@ -13,6 +15,16 @@ const route = useRoute()
 const id = route.params.id
 
 const group = computed<GroupDtoType | null>(() => groupStore.group)
+
+// Venu d'une autre application pour créer ce groupe : lui proposer d'y revenir (origine autorisée seulement).
+const { provenance, retourAutorise, nomDuRetour, oublierProvenance } = useProvenance()
+const lienRetour = computed(() => retourAutorise(provenance.value.retour, appConfig.value.allowedReturnOrigins))
+const nomRetour = computed(() => nomDuRetour(provenance.value.retour))
+function revenir() {
+  const url = lienRetour.value
+  oublierProvenance()
+  window.location.assign(url)
+}
 
 async function fetchData() {
   await groupStore.fetchGroup(id as string)
@@ -33,6 +45,13 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
+  <div v-if="group && lienRetour" class="fr-container fr-mt-2w">
+    <DsfrAlert type="success" small :title="`Votre groupe « ${group.name} » est prêt`"
+      :description="`Invitez vos collègues ici, puis revenez à ${nomRetour} : vos groupes y seront relus.`" :closeable="true"
+      @close="oublierProvenance">
+      <DsfrButton class="fr-mt-1w" size="sm" @click="revenir">Revenir à {{ nomRetour }}</DsfrButton>
+    </DsfrAlert>
+  </div>
   <div v-if="group" class="fr-container grid layout">
     <SideMenu />
     <div class="mt-5 md:mt-0">

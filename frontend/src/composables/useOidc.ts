@@ -25,6 +25,19 @@ async function getManager(): Promise<UserManager> {
   return managerPromise
 }
 
+const CLE_QUERY_AVANT_CONNEXION = 'comu.query-avant-connexion'
+
+/** La query gardée avant la connexion, consommée une fois (vide s'il n'y en a pas). */
+export function queryAvantConnexion(): string {
+  try {
+    const q = sessionStorage.getItem(CLE_QUERY_AVANT_CONNEXION) || ''
+    sessionStorage.removeItem(CLE_QUERY_AVANT_CONNEXION)
+    return q
+  } catch {
+    return ''
+  }
+}
+
 export async function getCurrentUser(): Promise<User | null> {
   return (await getManager()).getUser().then((user) => {
     return user
@@ -37,6 +50,15 @@ export async function login(opts?: Parameters<typeof UserManager.prototype.signi
   }
   if (!opts.redirect_uri) {
     opts.redirect_uri = window.location.origin + window.location.pathname
+  }
+  // La query d'arrivée (?q=, ?retour=…) ne survit pas à l'aller-retour vers Keycloak : on la garde
+  // ici, handleOidcCallbackIfPresent la remet dans l'adresse au retour.
+  try {
+    if (window.location.search && !window.location.search.includes('code=')) {
+      sessionStorage.setItem(CLE_QUERY_AVANT_CONNEXION, window.location.search)
+    }
+  } catch {
+    /* sans stockage, la query se perd : comme avant */
   }
   await (await getManager()).signinRedirect(opts)
 }
@@ -51,7 +73,7 @@ export async function handleOidcCallbackIfPresent(): Promise<User | null> {
   }
 
   const user = await (await getManager()).signinRedirectCallback()
-  window.history.replaceState({}, document.title, window.location.pathname)
+  window.history.replaceState({}, document.title, window.location.pathname + queryAvantConnexion())
   return user
 }
 
